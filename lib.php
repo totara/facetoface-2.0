@@ -866,7 +866,7 @@ function facetoface_get_session_dates($sessionid) {
 
     $ret = array();
 
-    if ($dates = get_records('facetoface_sessions_dates', 'sessionid', $sessionid)) {
+    if ($dates = get_records('facetoface_sessions_dates', 'sessionid', $sessionid, 'timestart')) {
         $i = 0;
         foreach ($dates as $date) {
             $ret[$i++] = $date;
