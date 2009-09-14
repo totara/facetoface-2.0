@@ -82,7 +82,7 @@
 
         } else if ($cancelbooking) {
 
-            if (facetoface_user_cancel($session)) {
+            if (facetoface_user_cancel($session, false, false, $errorstr)) {
 
                 add_to_log($course->id, 'facetoface', 'cancel booking', "signup.php?id=$cm->id", $facetoface->id, $cm->id);
 
@@ -114,9 +114,12 @@
                 redirect($url, $message, $timemessage);
 
             } else {
-                add_to_log($course->id, 'facetoface', 'cancel booking (FAILED)', "signup.php?id=$cm->id", $facetoface->id, $cm->id);
-
-                $errorstr = get_string('error:cancelbooking', 'facetoface');
+                if ($errorstr === get_string('error:eventoccurred', 'facetoface')) {
+                    $reason='Too late to cancel';
+                } else {
+                    $reason='FAILED';
+                }
+                add_to_log($course->id, 'facetoface', "cancel booking ($reason)", "signup.php?id=$cm->id", $facetoface->id, $cm->id);
             }
 
         } elseif (!empty($addmanager)) {

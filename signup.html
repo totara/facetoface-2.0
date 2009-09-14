@@ -151,8 +151,17 @@ if ($signedup) {
     <td align="right" valign="top"><b><?php print_string('options', 'facetoface') ?>:</b></td>
     <td>
 <a href="<?php echo $CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions; ?>" alt="<?php echo get_string('seeattendees', 'facetoface'); ?>" title="<?php echo get_string('seeattendees', 'facetoface'); ?>"><?php echo get_string('seeattendees', 'facetoface'); ?></a>
+<?php
+        $timenow=time();
+        // Only show cancel link if session has not yet started
+        if (!facetoface_has_session_started($session, $timenow)) {
+?>
 <br />
-<a href="<?php echo $CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;cancelbooking=1&amp;backtoallsessions='.$backtoallsessions; ?>" alt="<?php echo get_string('cancelbooking', 'facetoface'); ?>" title="<?php echo get_string('cancelbooking','facetoface'); ?>"><?php echo get_string('cancelbooking', 'facetoface'); ?></a></td>
+<a href="<?php echo $CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;cancelbooking=1&amp;backtoallsessions='.$backtoallsessions; ?>" alt="<?php echo get_string('cancelbooking', 'facetoface'); ?>" title="<?php echo get_string('cancelbooking','facetoface'); ?>"><?php echo get_string('cancelbooking', 'facetoface'); ?></a>
+<?php
+        }
+?>
+</td>
 </tr>
 <?php
     } // end of $cancelbooking

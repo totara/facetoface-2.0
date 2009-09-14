@@ -83,7 +83,7 @@ if ($frm = data_submitted()) {
                 continue; // invalid userid
             }
 
-            if (facetoface_user_cancel($session, $removeuser)) {
+            if (facetoface_user_cancel($session, $removeuser, true, $cancelerr)) {
                 // Notify the user of the cancellation if the session hasn't started yet
                 $timenow = time();
                 if (!$suppressemail and !facetoface_has_session_started($session, $timenow)) {
@@ -91,6 +91,7 @@ if ($frm = data_submitted()) {
                 }
             }
             else {
+                $errors[] = $cancelerr;
                 $erruser = get_record('user', 'id', $removeuser, '','','','', 'id, firstname, lastname');
                 $errors[] = get_string('error:removeattendee', 'facetoface', fullname($erruser));
             }

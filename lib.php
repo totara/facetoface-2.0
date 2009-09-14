@@ -417,7 +417,7 @@ function facetoface_delete_session($formdata) {
                                              timecancelled = 0");
     if ($signedupusers and count($signedupusers) > 0) {
         foreach ($signedupusers as $user) {
-            if (facetoface_user_cancel($session, $user->userid)) {
+            if (facetoface_user_cancel($session, $user->userid, true)) {
                 facetoface_send_cancellation_notice($facetoface, $session, $user->userid);
             }
             else {
@@ -1275,12 +1275,25 @@ function facetoface_user_signup($session, $facetoface, $course, $discountcode,
  *
  * @param class $session record from the facetoface_sessions table
  * @param integer $userid ID of the user to remove from the session
+ * @param bool $forcecancel Forces cancellation of sessions that have already occurred
+ * @param string $errorstr Passed by reference. For setting error string in calling function
  */
-function facetoface_user_cancel($session, $userid=false) {
+function facetoface_user_cancel($session, $userid=false, $forcecancel=false, &$errorstr=null) {
 
     if (!$userid) {
         global $USER;
         $userid = $USER->id;
+    }
+
+    // if $forcecancel is set, cancel session even if already occurred
+    // used by facetotoface_delete_session()
+    if (!$forcecancel) {
+        $timenow = time();
+        // don't allow user to cancel a session that has already occurred
+        if (facetoface_has_session_started($session, $timenow)) {
+            $errorstr = get_string('error:eventoccurred', 'facetoface');
+            return false;
+        }
     }
 
     if (facetoface_user_cancel_submission($session->id, $userid)) {
@@ -1288,6 +1301,7 @@ function facetoface_user_cancel($session, $userid=false) {
         return true;
     }
 
+    $errorstr = get_string('error:cancelbooking', 'facetoface');
     return false;
 }
 
@@ -1776,6 +1790,13 @@ function facetoface_print_coursemodule_info($coursemodule) {
 
                     }
 
+                    // don't include the link to cancel a session if it has already occurred
+                    if (!facetoface_has_session_started($session, $timenow)) {
+                        $cancellink = '<tr><td><span style="font-size: 11px; font-weight: bold; line-height: 14px;"><a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;cancelbooking=1" alt="'.get_string('cancelbooking', 'facetoface').'" title="'.get_string('cancelbooking', 'facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a></span></td></tr>';
+                    } else {
+                        $cancellink = '';
+                    }
+
                     $table = '<table border="0" cellpadding="1" cellspacing="0" width="90%">'
                             .'<tr>'
                             .'<td colspan="4"><span style="font-size: 11px; font-weight: bold; line-height: 14px;">'.get_string('bookingstatus', 'facetoface').':</span></td>'
@@ -1791,9 +1812,7 @@ function facetoface_print_coursemodule_info($coursemodule) {
                             .'<tr>'
                             .'<td><span style="font-size: 11px; font-weight: bold; line-height: 14px;"><a href="'.$CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'" alt="'.get_string('seeattendees', 'facetoface').'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('seeattendees', 'facetoface').'</a></span></td>'
                             .'</tr>'
-                            .'<tr>'
-                            .'<td><span style="font-size: 11px; font-weight: bold; line-height: 14px;"><a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;cancelbooking=1" alt="'.get_string('cancelbooking', 'facetoface').'" title="'.get_string('cancelbooking', 'facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a></span></td>'
-                            .'</tr>'
+                            .$cancellink
                             .'<tr>'
                             .'<td><span style="font-size: 11px; font-weight: bold; line-height: 14px"><a href="'.$CFG->wwwroot.'/mod/facetoface/view.php?f='.$facetofaceid.'" alt="'.get_string('viewallsessions', 'facetoface').'" title="'.get_string('viewallsessions', 'facetoface').'">'.get_string('viewallsessions', 'facetoface').'</a></span></td>'
                             .'</tr>'

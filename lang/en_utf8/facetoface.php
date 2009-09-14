@@ -94,6 +94,7 @@ $string['error:emptymanageremail'] = 'Manager email address empty.';
 $string['error:emptylocation'] = 'Location was empty.';
 $string['error:emptyvenue'] = 'Venue was empty.';
 $string['error:enrolmentfailed'] = 'Could not enrol $a into the course.';
+$string['error:eventoccurred'] = 'You cannot cancel an event that has already occurred.';
 $string['error:incorrectcoursemodule'] = 'Course module is incorrect';
 $string['error:incorrectcoursemoduleid'] = 'Course Module ID was incorrect';
 $string['error:incorrectcoursemodulesession'] = 'Course Module Face-to-face Session was incorrect';

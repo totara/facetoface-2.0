@@ -98,6 +98,7 @@ $string['error:emptylocation'] = 'La ville est vide';
 $string['error:emptymanageremail'] = 'L\'adresse courriel du responsable est vide';
 $string['error:emptyvenue'] = 'Le lieu est vide';
 $string['error:enrolmentfailed'] = 'Impossible d\'inscrire $a dans ce cours.';
+$string['error:eventoccurred'] = 'Impossible de vous inscrire dans un cours passé.';
 $string['error:incorrectcoursemodule'] = 'Course module is incorrect';
 $string['error:incorrectcoursemoduleid'] = 'Course module is incorrect';
 $string['error:incorrectcoursemodulesession'] = 'Course Module Face-to-face Session was incorrect';
