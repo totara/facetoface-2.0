@@ -3,15 +3,20 @@ New features:
 - Calendar entries for students and teachers
 
 Improvements:
+- Add a new capability for determining whether or not overbooking is allowed
+- Split add/remove attendees into two difference capabilities
 - Allow users to enter duration like "1:20" (1 hour and 20 minutes)
 - Ability to set the user profile fields to be included in attendance exports
 - User search now looks in username and idnumber fields as well
 - Support for multiple third-party email addresses
 
 Bug fixes:
+- Prevent users from cancelling after the session has ended
+- Fix the order of how multi-day sessions appear
 - Check session capacity on the signup page (for direct links)
 - Fix backlinks on the attendance and signup pages
 - Add missing course parameter to user page links
+- Fix broken exports when user profile fields are missing
 - Proper redirections from error pages
 - Fix SQL error on new instances
 
