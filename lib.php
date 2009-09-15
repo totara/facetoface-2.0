@@ -1115,7 +1115,9 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
                         $worksheet->write_string($i,$j++,$finishtime);
                         $worksheet->write_string($i,$j++,$status);
                         foreach ($userfields as $field) {
-                            $worksheet->write_string($i,$j++,$student->{$field->shortname});
+                            // set to empty string if object property not set
+                            $fieldvalue = (isset($student->{$field->shortname})) ? $student->{$field->shortname} : '';
+                            $worksheet->write_string($i,$j++,$fieldvalue);
                         }
                         $worksheet->write_string($i,$j++,$attendee->grade);
                     }
