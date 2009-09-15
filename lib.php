@@ -738,6 +738,12 @@ function facetoface_print_sessions($courseid, $facetofaceid, $location) {
 
             // Defaults for normal users
             $stats = $session->capacity - $signupcount;
+            if (has_capability('mod/facetoface:viewattendees', $context)){
+                $stats = $signupcount.' / '.$session->capacity;
+            }
+            else {
+                $stats = max(0, $stats);
+            }
             $options = '';
 
             if ($session->datetimeknown && facetoface_has_session_started($session, $timenow)) {
@@ -751,7 +757,6 @@ function facetoface_print_sessions($courseid, $facetofaceid, $location) {
                         . '<a href="sessions.php?s='.$session->id.'&amp;d=1" title="'.get_string('deletesession', 'facetoface').'">'.get_string('delete').'</a> ';
                 }
                 if (has_capability('mod/facetoface:viewattendees', $context)){
-                    $stats = $signupcount.' / '.$session->capacity;
                     $options .= '<a href="attendees.php?s='.$session->id.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a> ';
                 }
 
@@ -788,12 +793,14 @@ function facetoface_print_sessions($courseid, $facetofaceid, $location) {
                         . '<a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;cancelbooking=1&amp;backtoallsessions='.$facetofaceid.'" alt="'.get_string('cancelbooking', 'facetoface').'" title="'.get_string('cancelbooking', 'facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
                 } else {
                     if (has_capability('mod/facetoface:viewattendees', $context)) {
-                        $stats = $signupcount.' / '.$session->capacity;
                         $options .= ' <a href="attendees.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a> ';
                     }
 
                     if ($bookedsession || ($status == get_string('bookingfull', 'facetoface'))) {
                         $spanclass = ' class="dimmed_text"';
+                        if (facetoface_session_has_capacity($session, $context)) {
+                            $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'">'.get_string('signup', 'facetoface').'</a>';
+                        }
                     } else {
                         $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'">'.get_string('signup', 'facetoface').'</a>';
                     }
@@ -1852,8 +1859,9 @@ function facetoface_print_coursemodule_info($coursemodule) {
                             continue;
                          }
 
-                        $signupcount = facetoface_get_num_attendees($session->id);
-                        if ($signupcount >= $session->capacity) continue;
+                        if (!facetoface_session_has_capacity($session, $context)) {
+                            continue;
+                        }
 
                         $multiday = '';
                         if ($session->datetimeknown) {
@@ -2410,4 +2418,26 @@ function facetoface_update_calendar_events($session, $eventtype)
     return $result;
 }
 
-?>
+/**
+ * Confirm that a user can be added to a session.
+ *
+ * @param class  $session Record from the facetoface_sessions table
+ * @param object $context A context object (record from context table)
+ * @return bool True if user can be added to session
+ **/
+function facetoface_session_has_capacity($session, $context) {
+
+    if (empty($session)) {
+        return false;
+    }
+
+    $signupcount = facetoface_get_num_attendees($session->id);
+    if ($signupcount >= $session->capacity) {
+        // if session is full, check if overbooking is allowed for this user
+        if (!has_capability('mod/facetoface:overbook', $context)) {
+            return false;
+        }
+    }
+
+    return true;
+}

@@ -166,8 +166,7 @@
 
         if ($confirm) {
 
-            $signupcount = facetoface_get_num_attendees($session->id);
-            if ($signupcount >= $session->capacity) {
+            if (!facetoface_session_has_capacity($session, $context)) {
                 error(get_string('sessionisfull', 'facetoface'), $CFG->wwwroot.'/course/view.php?id='.$course->id);
             }
             elseif (facetoface_get_user_submissions($facetoface->id, $USER->id)) {
@@ -263,8 +262,7 @@
         echo '<div class="notifyproblem" align="center"><span style="font-size: 12px; line-height: 18px;">'.$errorstr.'</span></div>';
     }
 
-    $signupcount = facetoface_get_num_attendees($session->id);
-    if (!$signedup and $signupcount >= $session->capacity) {
+    if (!$signedup && !facetoface_session_has_capacity($session, $context)) {
         print_error('sessionisfull', 'facetoface', $CFG->wwwroot.'/mod/facetoface/view.php?f='.$facetoface->id);
     }
     else {

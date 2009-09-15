@@ -143,6 +143,19 @@ $mod_facetoface_capabilities = array(
         ),
     ),
 
+    // Ability to overbook a session by signing up for it
+    // Users with mod/facetoface:addattendees can also overbook
+    'mod/facetoface:overbook' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'legacy' => array(
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'coursecreator' => CAP_ALLOW,
+            'admin' => CAP_ALLOW
+        ),
+    ),
+
 );
 
 ?>

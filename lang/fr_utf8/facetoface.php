@@ -115,6 +115,7 @@ $string['exportattendance'] = 'Exporter la présence';
 $string['facetoface'] = 'Inscriptions';
 $string['facetoface:addattendees'] = 'Ajouter des étudiants d\'une session de formation';
 $string['facetoface:editsessions'] = 'Ajouter, copier et supprimer des sessions de formation';
+$string['facetoface:overbook'] = 'Inscription à une session à pleine capacité.';
 $string['facetoface:removeattendees'] = 'Enlever des étudiants d\'une session de formation';
 $string['facetoface:signup'] = 'S\'inscrire à une session';
 $string['facetoface:takeattendance'] = 'Noter la présence';
