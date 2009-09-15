@@ -45,7 +45,7 @@ if ($frm = data_submitted()) {
 
     // Add button
     if ($add and !empty($frm->addselect) and confirm_sesskey()) {
-        require_capability('mod/facetoface:editattendees', $context);
+        require_capability('mod/facetoface:addattendees', $context);
 
         foreach ($frm->addselect as $adduser) {
             if (!$adduser = clean_param($adduser, PARAM_INT)) {
@@ -76,7 +76,7 @@ if ($frm = data_submitted()) {
     }
     // Remove button
     else if ($remove and !empty($frm->removeselect) and confirm_sesskey()) {
-        require_capability('mod/facetoface:editattendees', $context);
+        require_capability('mod/facetoface:removeattendees', $context);
 
         foreach ($frm->removeselect as $removeuser) {
             if (!$removeuser = clean_param($removeuser, PARAM_INT)) {

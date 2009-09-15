@@ -203,7 +203,8 @@
             echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;takeattendance=1">'.get_string('takeattendance', 'facetoface').'</a> - ';
         }
     }
-    if (has_capability('mod/facetoface:editattendees', $context)) {
+    if (has_capability('mod/facetoface:addattendees', $context) ||
+        has_capability('mod/facetoface:removeattendees', $context)) {
         // Add/remove attendees
         echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/editattendees.php?s='.$session->id.'">'.get_string('addremoveattendees', 'facetoface').'</a> - ';
     }
