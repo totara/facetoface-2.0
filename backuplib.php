@@ -255,5 +255,3 @@ function facetoface_check_backup_mods($course, $user_data=false, $backup_unique_
 
     return $info;
 }
-
-?>

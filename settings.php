@@ -1,4 +1,4 @@
-<?php  //$Id: settings.php,v 1.1 2008/11/03 05:30:22 fmarier Exp $
+<?php
 
     require_once($CFG->dirroot.'/mod/facetoface/lib.php');
 
@@ -24,8 +24,3 @@
       
 
       $settings->add(new admin_setting_configcheckbox('facetoface_disableicalcancel', get_string('setting:disableicalcancel_caption', 'facetoface'),get_string('setting:disableicalcancel', 'facetoface'), get_string('setting:disableicalcanceldefault', 'facetoface'), PARAM_BOOL));
-      
-
-?>
-
-

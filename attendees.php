@@ -244,5 +244,3 @@
     }
 
     print_footer($course);
-
-?>

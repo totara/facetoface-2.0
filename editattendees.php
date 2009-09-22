@@ -179,5 +179,3 @@ $url = $CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id;
 print '<a href="'.$url.'">'.get_string('goback', 'facetoface').'</a></p>';
 
 print_footer($course);
-
-?>

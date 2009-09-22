@@ -232,5 +232,3 @@ function restore_facetoface_sessions_dates($newsessionid, $sessioninfo, $restore
 
     return $status;
 }
-
-?>

@@ -271,5 +271,3 @@
     }
     echo '</td></tr></table>';
     print_footer($course);
-
-?>

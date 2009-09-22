@@ -4,5 +4,3 @@
     require_once('lib.php');
 
     facetoface_cron();
-
-?>
