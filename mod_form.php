@@ -112,7 +112,7 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $features->groupmembersonly = false;
         $features->outcomes = false;
         $features->gradecat = false;
-        $features->idnumber = false; // TODO: implement this!
+        $features->idnumber = true;
         $this->standard_coursemodule_elements($features);
 
         $this->add_action_buttons();
