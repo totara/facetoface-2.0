@@ -9,6 +9,8 @@ Improvements:
 - Ability to set the user profile fields to be included in attendance exports
 - User search now looks in username and idnumber fields as well
 - Support for multiple third-party email addresses
+- Support for ID number at the activity level
+- Move activity settings over to formslib
 
 Bug fixes:
 - Prevent users from cancelling after the session has ended
