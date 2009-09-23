@@ -168,13 +168,13 @@ function facetoface_hours_to_minutes($hours)
 function facetoface_fix_manager_messages($facetoface) {
 
     if (empty($facetoface->emailmanagerconfirmation)) {
-        $facetoface->confirmationinstrmngr = '';
+        $facetoface->confirmationinstrmngr = null;
     }
     if (empty($facetoface->emailmanagerreminder)) {
-        $facetoface->reminderinstrmngr = '';
+        $facetoface->reminderinstrmngr = null;
     }
     if (empty($facetoface->emailmanagercancellation)) {
-        $facetoface->cancellationinstrmngr = '';
+        $facetoface->cancellationinstrmngr = null;
     }
     if (empty($facetoface->thirdpartywaitlist)) {
         $facetoface->thirdpartywaitlist = 0;
