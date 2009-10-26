@@ -172,20 +172,20 @@ $string['options'] = 'Opties';
 $string['or'] = 'of';
 $string['order'] = 'Bestel';
 $string['place'] = 'Kamer';
-$string['placeholder:alldates'] = '[alldates]';
+$string['placeholder:facetofacename'] = '[facetofacename]';
+$string['placeholder:firstname'] = '[firstname]';
+$string['placeholder:lastname'] = '[lastname]';
 $string['placeholder:cost'] = '[cost]';
-$string['placeholder:details'] = 'Details';
-$string['placeholder:duration'] = 'Duur';
-$string['placeholder:facetofacename'] = 'Naam Afspraak';
-$string['placeholder:finishtime'] = 'Eindtijd';
-$string['placeholder:firstname'] = 'Voornaam';
-$string['placeholder:lastname'] = 'Achternaam';
-$string['placeholder:location'] = 'Lokatie';
-$string['placeholder:reminderperiod'] = 'Herinneringstijd';
-$string['placeholder:room'] = 'Locatie';
-$string['placeholder:sessiondate'] = 'Datum';
-$string['placeholder:starttime'] = 'Begintijd';
-$string['placeholder:venue'] = 'Plaats';
+$string['placeholder:alldates'] = '[alldates]';
+$string['placeholder:sessiondate'] = '[sessiondate]';
+$string['placeholder:starttime'] = '[starttime]';
+$string['placeholder:finishtime'] = '[finishtime]';
+$string['placeholder:duration'] = '[duration]';
+$string['placeholder:location'] = '[location]';
+$string['placeholder:venue'] = '[venue]';
+$string['placeholder:room'] = '[room]';
+$string['placeholder:details'] = '[details]';
+$string['placeholder:reminderperiod'] = '[reminderperiod]';
 $string['points'] = 'Punten';
 $string['pointsplural'] = 'Punten';
 $string['previoussessions'] = 'Eerdere afspraken';
@@ -228,10 +228,10 @@ $string['setting:defaultcancellationmessage'] = 'Standaard kennisgeving van afze
 $string['setting:defaultcancellationmessage_caption'] = 'Bericht van verwijderen boeking';
 $string['setting:defaultcancellationmessagedefault'] = 'Dit is een kennisgeving van het opzeggen van de boeking voor de volgende afspraak:
 
-***BOOKING CANCELLED***
+***BOEKING GEANNULEERD***
 
 Deelnemer: [firstname][lastname]
-Afspraak: {facetofacename]
+Afspraak: [facetofacename]
 
 Tijdsduur: [duration]
 Data: [alldates]
@@ -256,7 +256,7 @@ $string['setting:defaultconfirmationmessage_caption'] = 'Bevestigingsmelding';
 $string['setting:defaultconfirmationmessagedefault'] = 'Dit is een kennisgeving van het bevestigen van de boeking voor de volgende afspraak:
 
 Deelnemer: [firstname][lastname]
-Afspraak: {facetofacename]
+Afspraak: [facetofacename]
 kosten: [cost]
 
 Tijdsduur: [duration]
