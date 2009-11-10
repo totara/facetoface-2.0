@@ -1,6 +1,7 @@
 <?php
 
-require_once($CFG->libdir.'/gradelib.php');
+require_once "$CFG->libdir/gradelib.php";
+require_once "$CFG->dirroot/grade/lib.php";
 
 /**
  * Definitions for setting notification types
@@ -1017,6 +1018,41 @@ function facetoface_get_attendees($sessionid) {
 }
 
 /**
+ * Return all user fields to include in exports
+ */
+function facetoface_get_userfields()
+{
+    global $CFG;
+
+    static $userfields = null;
+    if (null == $userfields) {
+        $userfields = array();
+
+        if (function_exists('grade_export_user_fields')) {
+            $userfields = grade_export_user_fields();
+        }
+        else {
+            // Set default fields if the grade export patch is not
+            // detected (see MDL-17346)
+            $fieldnames = array('firstname', 'lastname', 'email', 'city',
+                                'idnumber', 'institution', 'department', 'address');
+            foreach ($fieldnames as $shortname) {
+                $field = new object();
+                $field->shortname = $shortname;
+                $field->fullname = get_string($shortname);
+                $userfields[] = $field;
+            }
+            $field = new object;
+            $field->shortname = 'managersemail';
+            $field->fullname = get_string('manageremail', 'facetoface');
+            $userfields[] = $field;
+        }
+    }
+
+    return $userfields;
+}
+
+/**
  * Download the list of users attending at least one of the sessions
  * for a given facetoface activity
  */
@@ -1026,28 +1062,6 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
     $timenow = time();
     $timeformat = str_replace(' ', '_', get_string('strftimedate'));
     $downloadfilename = clean_filename($facetofacename.'_'.userdate($timenow, $timeformat));
-
-    require_once $CFG->dirroot.'/grade/lib.php';
-    $userfields = array();
-    if (function_exists('grade_export_user_fields')) {
-        $userfields = grade_export_user_fields();
-    }
-    else {
-        // Set default fields if the grade export patch is not
-        // detected (see MDL-17346)
-        $fieldnames = array('firstname', 'lastname', 'email', 'city',
-                            'idnumber', 'institution', 'department', 'address');
-        foreach ($fieldnames as $shortname) {
-            $field = new object();
-            $field->shortname = $shortname;
-            $field->fullname = get_string($shortname);
-            $userfields[] = $field;
-        }
-        $field = new object;
-        $field->shortname = 'managersemail';
-        $field->fullname = get_string('manageremail', 'facetoface');
-        $userfields[] = $field;
-    }
 
     if ('ods' === $format) {
         // OpenDocument format (ISO/IEC 26300)
@@ -1072,15 +1086,39 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
     $worksheet->write_string(0,$pos++,get_string('timestart', 'facetoface'));
     $worksheet->write_string(0,$pos++,get_string('timefinish', 'facetoface'));
     $worksheet->write_string(0,$pos++,get_string('status', 'facetoface'));
+
+    $userfields = facetoface_get_userfields();
     foreach ($userfields as $field) {
         $worksheet->write_string(0,$pos++,$field->fullname);
     }
+
     $worksheet->write_string(0,$pos++,get_string('attendance', 'facetoface'));
 
+    facetoface_write_activity_attendance($worksheet, 1, $facetofaceid, $location, '');
+
+    $workbook->close();
+    exit;
+}
+
+/**
+ * Write in the worksheet the given facetoface attendance information
+ * filtered by location.
+ *
+ * @param object  $worksheet    Currently open worksheet
+ * @param integer $startingrow  Index of the starting row (usually 1)
+ * @param integer $facetofaceid ID of the facetoface activity
+ * @param string  $location     Location to filter by
+ * @param string  $activityname Name of the facetface activity (optional)
+ * @returns integer Index of the last row written
+ */
+function facetoface_write_activity_attendance($worksheet, $startingrow, $facetofaceid, $location, $activityname)
+{
+    $userfields = facetoface_get_userfields();
+    $timenow = time();
+
+    $i = $startingrow - 1;
     $sessions = facetoface_get_sessions($facetofaceid, $location);
     if (!empty($sessions)) {
-
-        $i = 0;
         foreach ($sessions as $session) {
 
             if ($session->datetimeknown) {
@@ -1127,6 +1165,10 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
                             $worksheet->write_string($i,$j++,$fieldvalue);
                         }
                         $worksheet->write_string($i,$j++,$attendee->grade);
+
+                        if (!empty($activityname)) {
+                            $worksheet->write_string($i, $j++, $activityname);
+                        }
                     }
                 }
             }
@@ -1143,12 +1185,15 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
                     $worksheet->write_string($i,$j++,'-');
                 }
                 $worksheet->write_string($i,$j++,'-');
+
+                if (!empty($activityname)) {
+                    $worksheet->write_string($i, $j++, $activityname);
+                }
             }
         }
     }
 
-    $workbook->close();
-    exit;
+    return $i;
 }
 
 /**
