@@ -1092,7 +1092,7 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
 
     $worksheet->write_string(0,$pos++,get_string('attendance', 'facetoface'));
 
-    facetoface_write_activity_attendance($worksheet, 1, $facetofaceid, $location, '');
+    facetoface_write_activity_attendance($worksheet, 1, $facetofaceid, $location, '', '');
 
     $workbook->close();
     exit;
@@ -1109,10 +1109,12 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
  * @param integer $startingrow  Index of the starting row (usually 1)
  * @param integer $facetofaceid ID of the facetoface activity
  * @param string  $location     Location to filter by
- * @param string  $activityname Name of the facetface activity (optional)
+ * @param string  $coursename   Name of the course (optional)
+ * @param string  $activityname Name of the facetoface activity (optional)
  * @returns integer Index of the last row written
  */
-function facetoface_write_activity_attendance($worksheet, $startingrow, $facetofaceid, $location, $activityname)
+function facetoface_write_activity_attendance($worksheet, $startingrow, $facetofaceid, $location,
+                                              $coursename, $activityname)
 {
     global $CFG;
 
@@ -1225,6 +1227,9 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                     }
                     $worksheet->write_string($i,$j++,$attendee->grade);
 
+                    if (!empty($coursename)) {
+                        $worksheet->write_string($i, $j++, $coursename);
+                    }
                     if (!empty($activityname)) {
                         $worksheet->write_string($i, $j++, $activityname);
                     }
@@ -1245,6 +1250,9 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                 }
                 $worksheet->write_string($i,$j++,'-');
 
+                if (!empty($coursename)) {
+                    $worksheet->write_string($i, $j++, $coursename);
+                }
                 if (!empty($activityname)) {
                     $worksheet->write_string($i, $j++, $activityname);
                 }
