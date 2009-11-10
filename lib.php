@@ -1029,7 +1029,10 @@ function facetoface_get_userfields()
         $userfields = array();
 
         if (function_exists('grade_export_user_fields')) {
-            $userfields = grade_export_user_fields();
+            $fieldnames = grade_export_user_fields();
+            foreach ($fieldnames as $key => $obj) {
+                $userfields[$obj->shortname] = $obj->fullname;
+            }
         }
         else {
             // Set default fields if the grade export patch is not
@@ -1037,15 +1040,9 @@ function facetoface_get_userfields()
             $fieldnames = array('firstname', 'lastname', 'email', 'city',
                                 'idnumber', 'institution', 'department', 'address');
             foreach ($fieldnames as $shortname) {
-                $field = new object();
-                $field->shortname = $shortname;
-                $field->fullname = get_string($shortname);
-                $userfields[] = $field;
+                $userfields[$shortname] = get_string($shortname);
             }
-            $field = new object;
-            $field->shortname = 'managersemail';
-            $field->fullname = get_string('manageremail', 'facetoface');
-            $userfields[] = $field;
+            $userfields['managersemail'] = get_string('manageremail', 'facetoface');
         }
     }
 
@@ -1088,8 +1085,8 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
     $worksheet->write_string(0,$pos++,get_string('status', 'facetoface'));
 
     $userfields = facetoface_get_userfields();
-    foreach ($userfields as $field) {
-        $worksheet->write_string(0,$pos++,$field->fullname);
+    foreach ($userfields as $shortname => $fullname) {
+        $worksheet->write_string(0, $pos++, $fullname);
     }
 
     $worksheet->write_string(0,$pos++,get_string('attendance', 'facetoface'));
@@ -1104,6 +1101,9 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
  * Write in the worksheet the given facetoface attendance information
  * filtered by location.
  *
+ * This function includes lots of custom SQL because it's otherwise
+ * way too slow.
+ *
  * @param object  $worksheet    Currently open worksheet
  * @param integer $startingrow  Index of the starting row (usually 1)
  * @param integer $facetofaceid ID of the facetoface activity
@@ -1113,25 +1113,84 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
  */
 function facetoface_write_activity_attendance($worksheet, $startingrow, $facetofaceid, $location, $activityname)
 {
+    global $CFG;
+
     $userfields = facetoface_get_userfields();
     $timenow = time();
-
     $i = $startingrow - 1;
-    $sessions = facetoface_get_sessions($facetofaceid, $location);
-    if (!empty($sessions)) {
+
+    $locationcondition = '';
+    if (!empty($location)) {
+        $locationcondition = "AND s.location='$location'";
+    }
+
+    // Fast version of "facetoface_get_attendees()" for all sessions
+    $sessionsignups = array();
+    $signups = get_records_sql("SELECT s.id AS submissionid, s.sessionid AS sessionid, u.*,
+                                       f.course AS courseid, 0 AS grade
+                                  FROM {$CFG->prefix}facetoface f
+                                  JOIN {$CFG->prefix}facetoface_submissions s ON s.facetoface = f.id
+                                  JOIN {$CFG->prefix}user u ON u.id = s.userid
+                                 WHERE f.id = $facetofaceid AND s.timecancelled = 0
+                              ORDER BY s.sessionid, u.firstname, u.lastname");
+    if ($signups) {
+        // Get all grades at once
+        $userids = array();
+        foreach ($signups as $signup) {
+            if ($signup->id > 0) {
+                $userids[] = $signup->id;
+            }
+        }
+        $grading_info = grade_get_grades(reset($signups)->courseid, 'mod', 'facetoface',
+                                         $facetofaceid, $userids);
+
+        foreach ($signups as $signup) {
+            $userid = $signup->id;
+
+            if ($customfields = facetoface_get_user_customfields($userid, $userfields)) {
+                foreach ($customfields as $fieldname => $value) {
+                    if (!isset($signup->$fieldname)) {
+                        $signup->$fieldname = $value;
+                    }
+                }
+            }
+
+            // Set grade
+            if (!empty($grading_info->items) and !empty($grading_info->items[0]->grades[$userid])) {
+                $signup->grade = $grading_info->items[0]->grades[$userid]->str_grade;
+            }
+
+            $sessionsignups[$signup->sessionid][] = $signup;
+        }
+    }
+
+    // Fast version of "facetoface_get_sessions($facetofaceid, $location)"
+    $sql = "SELECT s.id, s.datetimeknown, s.capacity, s.location, s.venue,
+                   d.timestart, d.timefinish
+              FROM {$CFG->prefix}facetoface_sessions s
+              JOIN {$CFG->prefix}facetoface_sessions_dates d ON s.id = d.sessionid
+             WHERE s.facetoface=$facetofaceid AND d.sessionid = s.id
+                   $locationcondition
+          ORDER BY s.datetimeknown, d.timestart";
+
+    if ($sessions = get_records_sql($sql)) {
         foreach ($sessions as $session) {
 
             if ($session->datetimeknown) {
                 // Display only the first date
-                $sessiondate = userdate($session->sessiondates[0]->timestart, get_string('strftimedate'));
-                $starttime   = userdate($session->sessiondates[0]->timestart, get_string('strftimetime'));
-                $finishtime  = userdate($session->sessiondates[0]->timefinish, get_string('strftimetime'));
+                $sessiondate = userdate($session->timestart, get_string('strftimedate'));
+                $starttime   = userdate($session->timestart, get_string('strftimetime'));
+                $finishtime  = userdate($session->timefinish, get_string('strftimetime'));
 
-                if (facetoface_has_session_started($session, $timenow)) {
+                if ($session->timestart < $timenow) {
                     $status = get_string('sessionover', 'facetoface');
                 }
                 else {
-                    $signupcount = facetoface_get_num_attendees($session->id);
+                    $signupcount = 0;
+                    if (!empty($sessionsignups[$session->id])) {
+                        $signupcount = count($sessionsignups[$session->id]);
+                    }
+
                     if ($signupcount >= $session->capacity) {
                         $status = get_string('bookingfull', 'facetoface');
                     } else {
@@ -1146,29 +1205,26 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                 $status      = get_string('wait-listed', 'facetoface');
             }
 
-            $attendees = facetoface_get_attendees($session->id);
-
-            if (!empty($attendees)) {
-                foreach ($attendees as $attendee) {
-                    $student = get_complete_user_data('id', $attendee->id);
-                    if (!empty($student)) {
-                        $i++; $j=0;
-                        $worksheet->write_string($i,$j++,$session->location);
-                        $worksheet->write_string($i,$j++,$session->venue);
-                        $worksheet->write_string($i,$j++,$sessiondate);
-                        $worksheet->write_string($i,$j++,$starttime);
-                        $worksheet->write_string($i,$j++,$finishtime);
-                        $worksheet->write_string($i,$j++,$status);
-                        foreach ($userfields as $field) {
-                            // set to empty string if object property not set
-                            $fieldvalue = (isset($student->{$field->shortname})) ? $student->{$field->shortname} : '';
-                            $worksheet->write_string($i,$j++,$fieldvalue);
+            if (!empty($sessionsignups[$session->id])) {
+                foreach ($sessionsignups[$session->id] as $attendee) {
+                    $i++; $j=0;
+                    $worksheet->write_string($i,$j++,$session->location);
+                    $worksheet->write_string($i,$j++,$session->venue);
+                    $worksheet->write_string($i,$j++,$sessiondate);
+                    $worksheet->write_string($i,$j++,$starttime);
+                    $worksheet->write_string($i,$j++,$finishtime);
+                    $worksheet->write_string($i,$j++,$status);
+                    foreach ($userfields as $shortname => $fullname) {
+                        $value = '-';
+                        if (!empty($attendee->$shortname)) {
+                            $value = $attendee->$shortname;
                         }
-                        $worksheet->write_string($i,$j++,$attendee->grade);
+                        $worksheet->write_string($i,$j++,$value);
+                    }
+                    $worksheet->write_string($i,$j++,$attendee->grade);
 
-                        if (!empty($activityname)) {
-                            $worksheet->write_string($i, $j++, $activityname);
-                        }
+                    if (!empty($activityname)) {
+                        $worksheet->write_string($i, $j++, $activityname);
                     }
                 }
             }
@@ -1181,7 +1237,7 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                 $worksheet->write_string($i,$j++,$starttime);
                 $worksheet->write_string($i,$j++,$finishtime);
                 $worksheet->write_string($i,$j++,$status);
-                foreach ($userfields as $field) {
+                foreach ($userfields as $unused) {
                     $worksheet->write_string($i,$j++,'-');
                 }
                 $worksheet->write_string($i,$j++,'-');
@@ -1194,6 +1250,46 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
     }
 
     return $i;
+}
+
+/**
+ * Return an object with all values for a user's custom fields.
+ *
+ * This is about 15 times faster than the custom field API.
+ *
+ * @param array $fieldstoinclude Limit the fields returned/cached to these ones (optional)
+ */
+function facetoface_get_user_customfields($userid, $fieldstoinclude=false)
+{
+    global $CFG;
+
+    // Cache all lookup
+    static $customfields = null;
+    if (null == $customfields) {
+        $customfields = array();
+    }
+
+    if (!empty($customfields[$userid])) {
+        return $customfields[$userid];
+    }
+
+    $ret = new object();
+
+    $sql = "SELECT if.shortname, id.data
+              FROM {$CFG->prefix}user_info_field if
+              JOIN {$CFG->prefix}user_info_data id ON id.fieldid = if.id
+             WHERE id.userid = $userid";
+    if ($customfields = get_records_sql($sql)) {
+        foreach ($customfields as $field) {
+            $fieldname = $field->shortname;
+            if (false === $fieldstoinclude or !empty($fieldstoinclude[$fieldname])) {
+                $ret->$fieldname = $field->data;
+            }
+        }
+    }
+
+    $customfields[$userid] = $ret;
+    return $ret;
 }
 
 /**
