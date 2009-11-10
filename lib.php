@@ -1082,6 +1082,7 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
     $worksheet->write_string(0,$pos++,get_string('date', 'facetoface'));
     $worksheet->write_string(0,$pos++,get_string('timestart', 'facetoface'));
     $worksheet->write_string(0,$pos++,get_string('timefinish', 'facetoface'));
+    $worksheet->write_string(0,$pos++,get_string('duration', 'facetoface'));
     $worksheet->write_string(0,$pos++,get_string('status', 'facetoface'));
 
     $userfields = facetoface_get_userfields();
@@ -1166,7 +1167,7 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
 
     // Fast version of "facetoface_get_sessions($facetofaceid, $location)"
     $sql = "SELECT s.id, s.datetimeknown, s.capacity, s.location, s.venue,
-                   d.timestart, d.timefinish
+                   s.duration, d.timestart, d.timefinish
               FROM {$CFG->prefix}facetoface_sessions s
               JOIN {$CFG->prefix}facetoface_sessions_dates d ON s.id = d.sessionid
              WHERE s.facetoface=$facetofaceid AND d.sessionid = s.id
@@ -1213,6 +1214,7 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                     $worksheet->write_string($i,$j++,$sessiondate);
                     $worksheet->write_string($i,$j++,$starttime);
                     $worksheet->write_string($i,$j++,$finishtime);
+                    $worksheet->write_number($i,$j++,(int)$session->duration);
                     $worksheet->write_string($i,$j++,$status);
                     foreach ($userfields as $shortname => $fullname) {
                         $value = '-';
@@ -1236,6 +1238,7 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                 $worksheet->write_string($i,$j++,$sessiondate);
                 $worksheet->write_string($i,$j++,$starttime);
                 $worksheet->write_string($i,$j++,$finishtime);
+                $worksheet->write_number($i,$j++,(int)$session->duration);
                 $worksheet->write_string($i,$j++,$status);
                 foreach ($userfields as $unused) {
                     $worksheet->write_string($i,$j++,'-');
