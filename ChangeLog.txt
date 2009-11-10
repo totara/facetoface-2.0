@@ -12,6 +12,7 @@ Improvements:
 - Support for ID number at the activity level
 - Move activity settings over to formslib
 - Add an index page for Face-to-face help pages
+- Optimised attendance exports
 
 Bug fixes:
 - Prevent users from cancelling after the session has ended
