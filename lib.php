@@ -1060,6 +1060,7 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
     $timeformat = str_replace(' ', '_', get_string('strftimedate'));
     $downloadfilename = clean_filename($facetofacename.'_'.userdate($timenow, $timeformat));
 
+    $dateformat = 0;
     if ('ods' === $format) {
         // OpenDocument format (ISO/IEC 26300)
         require_once($CFG->dirroot.'/lib/odslib.class.php');
@@ -1071,6 +1072,8 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
         require_once($CFG->dirroot.'/lib/excellib.class.php');
         $downloadfilename .= '.xls';
         $workbook = new MoodleExcelWorkbook('-');
+        $dateformat =& $workbook->add_format();
+        $dateformat->set_num_format('d mmm yy'); // TODO: use format specified in language pack
     }
 
     $workbook->send($downloadfilename);
@@ -1092,7 +1095,7 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
 
     $worksheet->write_string(0,$pos++,get_string('attendance', 'facetoface'));
 
-    facetoface_write_activity_attendance($worksheet, 1, $facetofaceid, $location, '', '');
+    facetoface_write_activity_attendance($worksheet, 1, $facetofaceid, $location, '', '', $dateformat);
 
     $workbook->close();
     exit;
@@ -1111,10 +1114,11 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
  * @param string  $location     Location to filter by
  * @param string  $coursename   Name of the course (optional)
  * @param string  $activityname Name of the facetoface activity (optional)
+ * @param object  $dateformat   Use to write out dates in the spreadsheet
  * @returns integer Index of the last row written
  */
 function facetoface_write_activity_attendance($worksheet, $startingrow, $facetofaceid, $location,
-                                              $coursename, $activityname)
+                                              $coursename, $activityname, $dateformat)
 {
     global $CFG;
 
@@ -1179,9 +1183,20 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
     if ($sessions = get_records_sql($sql)) {
         foreach ($sessions as $session) {
 
+            $sessiondate = false;
+            $starttime   = get_string('wait-listed', 'facetoface');
+            $finishtime  = get_string('wait-listed', 'facetoface');
+            $status      = get_string('wait-listed', 'facetoface');
+
             if ($session->datetimeknown) {
                 // Display only the first date
-                $sessiondate = userdate($session->timestart, get_string('strftimedate'));
+                if (method_exists($worksheet, 'write_date')) {
+                    // Needs the patch in MDL-20781
+                    $sessiondate = (int)$session->timestart;
+                }
+                else {
+                    $sessiondate = userdate($session->timestart, get_string('strftimedate'));
+                }
                 $starttime   = userdate($session->timestart, get_string('strftimetime'));
                 $finishtime  = userdate($session->timefinish, get_string('strftimetime'));
 
@@ -1201,19 +1216,23 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                     }
                 }
             }
-            else {
-                $sessiondate = get_string('wait-listed', 'facetoface');
-                $starttime   = get_string('wait-listed', 'facetoface');
-                $finishtime  = get_string('wait-listed', 'facetoface');
-                $status      = get_string('wait-listed', 'facetoface');
-            }
 
             if (!empty($sessionsignups[$session->id])) {
                 foreach ($sessionsignups[$session->id] as $attendee) {
                     $i++; $j=0;
                     $worksheet->write_string($i,$j++,$session->location);
                     $worksheet->write_string($i,$j++,$session->venue);
-                    $worksheet->write_string($i,$j++,$sessiondate);
+                    if (empty($sessiondate)) {
+                        $worksheet->write_string($i, $j++, $status); // session date
+                    }
+                    else {
+                        if (method_exists($worksheet, 'write_date')) {
+                            $worksheet->write_date($i, $j++, $sessiondate, $dateformat);
+                        }
+                        else {
+                            $worksheet->write_string($i, $j++, $sessiondate);
+                        }
+                    }
                     $worksheet->write_string($i,$j++,$starttime);
                     $worksheet->write_string($i,$j++,$finishtime);
                     $worksheet->write_number($i,$j++,(int)$session->duration);
@@ -1223,7 +1242,20 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                         if (!empty($attendee->$shortname)) {
                             $value = $attendee->$shortname;
                         }
-                        $worksheet->write_string($i,$j++,$value);
+
+                        if ('firstaccess' == $shortname or 'lastaccess' == $shortname or
+                            'lastlogin' == $shortname or 'currentlogin' == $shortname) {
+
+                            if (method_exists($worksheet, 'write_date')) {
+                                $worksheet->write_date($i, $j++, (int)$value, $dateformat);
+                            }
+                            else {
+                                $worksheet->write_string($i, $j++, userdate($value, get_string('strftimedate')));
+                            }
+                        }
+                        else {
+                            $worksheet->write_string($i,$j++,$value);
+                        }
                     }
                     $worksheet->write_string($i,$j++,$attendee->grade);
 
@@ -1240,7 +1272,17 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
                 $i++; $j=0;
                 $worksheet->write_string($i,$j++,$session->location);
                 $worksheet->write_string($i,$j++,$session->venue);
-                $worksheet->write_string($i,$j++,$sessiondate);
+                if (empty($sessiondate)) {
+                    $worksheet->write_string($i, $j++, $status); // session date
+                }
+                else {
+                    if (method_exists($worksheet, 'write_date')) {
+                        $worksheet->write_date($i, $j++, $sessiondate, $dateformat);
+                    }
+                    else {
+                        $worksheet->write_string($i, $j++, $sessiondate);
+                    }
+                }
                 $worksheet->write_string($i,$j++,$starttime);
                 $worksheet->write_string($i,$j++,$finishtime);
                 $worksheet->write_number($i,$j++,(int)$session->duration);
