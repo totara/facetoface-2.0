@@ -164,9 +164,9 @@ function facetoface_hours_to_minutes($hours)
 }
 
 /**
- * Turn undefined manager messages into empty strings
+ * Turn undefined manager messages into empty strings and deal with checkboxes
  */
-function facetoface_fix_manager_messages($facetoface) {
+function facetoface_fix_settings($facetoface) {
 
     if (empty($facetoface->emailmanagerconfirmation)) {
         $facetoface->confirmationinstrmngr = null;
@@ -180,6 +180,9 @@ function facetoface_fix_manager_messages($facetoface) {
     if (empty($facetoface->thirdpartywaitlist)) {
         $facetoface->thirdpartywaitlist = 0;
     }
+    if (empty($facetoface->showoncalendar)) {
+        $facetoface->showoncalendar = 0;
+    }
 }
 
 /**
@@ -191,7 +194,7 @@ function facetoface_add_instance($facetoface) {
 
     $facetoface->timemodified = time();
 
-    facetoface_fix_manager_messages($facetoface);
+    facetoface_fix_settings($facetoface);
     if ($facetoface->id = insert_record('facetoface', $facetoface)) {
         facetoface_grade_item_update($facetoface);
     }
@@ -207,7 +210,7 @@ function facetoface_update_instance($facetoface) {
 
     $facetoface->id = $facetoface->instance;
 
-    facetoface_fix_manager_messages($facetoface);
+    facetoface_fix_settings($facetoface);
     if ($return = update_record('facetoface', $facetoface)) {
         facetoface_grade_item_update($facetoface);
     }

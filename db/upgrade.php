@@ -1,4 +1,4 @@
-<?php  //$Id: upgrade.php,v 1.5 2008/10/30 23:59:43 fmarier Exp $
+<?php
 
 // This file keeps track of upgrades to 
 // the facetoface module
@@ -19,7 +19,7 @@
 
 function xmldb_facetoface_upgrade($oldversion=0) {
 
-    global $CFG, $THEME, $db;
+    global $CFG, $db;
 
     $result = true;
 
@@ -95,7 +95,21 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $result = $result && add_field($table, $field);
     }
 
+    if ($result && $oldversion < 2009111300) {
+        // New fields necessary for the training calendar
+        $table = new XMLDBTable('facetoface');
+        $field1 = new XMLDBField('shortname');
+        $field1->setAttributes(XMLDB_TYPE_CHAR, '32', null, null, null, null, null, null, 'timemodified');
+        $result = $result && add_field($table, $field1);
+
+        $field2 = new XMLDBField('description');
+        $field2->setAttributes(XMLDB_TYPE_TEXT, 'medium', null, null, null, null, null, null, 'shortname');
+        $result = $result && add_field($table, $field2);
+
+        $field3 = new XMLDBField('showoncalendar');
+        $field3->setAttributes(XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '1', 'description');
+        $result = $result && add_field($table, $field3);
+    }
+
     return $result;
 }
-
-?>
