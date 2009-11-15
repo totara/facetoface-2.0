@@ -111,5 +111,29 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $result = $result && add_field($table, $field3);
     }
 
+    if ($result && $oldversion < 2009111600) {
+
+        $table1 = new XMLDBTable('facetoface_session_field');
+        $table1->addFieldInfo('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null, null);
+        $table1->addFieldInfo('name', XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null);
+        $table1->addFieldInfo('shortname', XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null);
+        $table1->addFieldInfo('type', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '0');
+        $table1->addFieldInfo('possiblevalues', XMLDB_TYPE_TEXT, 'medium', null, null, null, null, null, null);
+        $table1->addFieldInfo('required', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '0');
+        $table1->addFieldInfo('defaultvalue', XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null);
+        $table1->addFieldInfo('isfilter', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '1');
+        $table1->addFieldInfo('showinsummary', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '1');
+        $table1->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $result = $result && create_table($table1);
+
+        $table2 = new XMLDBTable('facetoface_session_data');
+        $table2->addFieldInfo('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null, null);
+        $table2->addFieldInfo('fieldid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '0');
+        $table2->addFieldInfo('sessionid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '0');
+        $table2->addFieldInfo('data', XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null);
+        $table2->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $result = $result && create_table($table2);
+    }
+
     return $result;
 }

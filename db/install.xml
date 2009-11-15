@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/facetoface/db" VERSION="20070827" COMMENT="XMLDB file for Moodle mod/facetoface"
+<XMLDB PATH="mod/facetoface/db" VERSION="20091116" COMMENT="XMLDB file for Moodle mod/facetoface"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -71,7 +71,7 @@
         <KEY NAME="sessionid" TYPE="foreign" FIELDS="sessionid" REFTABLE="facetoface_sessions" REFFIELDS="id" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="facetoface_submissions" COMMENT="An entry is created here whenever a user signs up for a facetoface session." PREVIOUS="facetoface_sessions_dates">
+    <TABLE NAME="facetoface_submissions" COMMENT="An entry is created here whenever a user signs up for a facetoface session." PREVIOUS="facetoface_sessions_dates" NEXT="facetoface_session_field">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" SEQUENCE="true" ENUM="false" COMMENT="id of the table, please edit me" NEXT="facetoface"/>
         <FIELD NAME="facetoface" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" PREVIOUS="id" NEXT="sessionid"/>
@@ -97,6 +97,33 @@
         <INDEX NAME="mailedconfirmation" UNIQUE="false" FIELDS="mailedconfirmation" PREVIOUS="userid" NEXT="mailedreminder"/>
         <INDEX NAME="mailedreminder" UNIQUE="false" FIELDS="mailedreminder" PREVIOUS="mailedconfirmation"/>
       </INDEXES>
+    </TABLE>
+    <TABLE NAME="facetoface_session_field" COMMENT="Definitions of custom info fields for Face-to-face session" PREVIOUS="facetoface_submissions" NEXT="facetoface_session_data">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" ENUM="false" NEXT="name"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" ENUM="false" PREVIOUS="id" NEXT="shortname"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" ENUM="false" PREVIOUS="name" NEXT="type"/>
+        <FIELD NAME="type" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" PREVIOUS="shortname" NEXT="possiblevalues"/>
+        <FIELD NAME="possiblevalues" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" ENUM="false" COMMENT="CSV list of allowed values" PREVIOUS="type" NEXT="required"/>
+        <FIELD NAME="required" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" COMMENT="Whether or not this field is mandatory" PREVIOUS="possiblevalues" NEXT="defaultvalue"/>
+        <FIELD NAME="defaultvalue" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" ENUM="false" PREVIOUS="required" NEXT="isfilter"/>
+        <FIELD NAME="isfilter" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false" ENUM="false" COMMENT="Whether or not this field is a filter on the Training Calendar" PREVIOUS="defaultvalue" NEXT="showinsummary"/>
+        <FIELD NAME="showinsummary" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false" ENUM="false" COMMENT="Whether or not to show this field in attendance exports and lists of sessions" PREVIOUS="isfilter"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="facetoface_session_data" COMMENT="Contents of custom info fields for Face-to-face session" PREVIOUS="facetoface_session_field">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" ENUM="false" NEXT="fieldid"/>
+        <FIELD NAME="fieldid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" COMMENT="ID in facetoface_session_field" PREVIOUS="id" NEXT="sessionid"/>
+        <FIELD NAME="sessionid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" COMMENT="ID in facetoface_sessions" PREVIOUS="fieldid" NEXT="data"/>
+        <FIELD NAME="data" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" ENUM="false" COMMENT="Contents" PREVIOUS="sessionid"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
     </TABLE>
   </TABLES>
   <STATEMENTS>
