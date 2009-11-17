@@ -120,6 +120,7 @@ $navigation = build_navigation($navlinks);
 print_header_simple($pagetitle, '', $navigation, '', '', true,
                     update_module_button($cm->id, $course->id, $strfacetoface), navmenu($course, $cm));
 
+print_box_start();
 print_heading(get_string('addremoveattendees', 'facetoface'), 'center');
 
 /// Get the list of currently signed-up users
@@ -158,9 +159,7 @@ $availableusers = get_recordset_sql('SELECT id, firstname, lastname, email
 $usercount = count_records_select('user', $select) - $existingcount;
 
 /// Prints a form to add/remove users from the session
-print_simple_box_start('center');
 include('editattendees.html');
-print_simple_box_end();
 
 if (!empty($errors)) {
     $msg = '<p>';
@@ -178,4 +177,5 @@ print '<p style="text-align: center">';
 $url = $CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id;
 print '<a href="'.$url.'">'.get_string('goback', 'facetoface').'</a></p>';
 
+print_box_end();
 print_footer($course);

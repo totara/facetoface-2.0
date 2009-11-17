@@ -74,6 +74,7 @@
         notice(get_string('activityiscurrentlyhidden'));
     }
 
+    print_box_start();
     print_heading(get_string('allsessionsin', 'facetoface', $facetoface->name), "center");
 
     require('view.html');
@@ -85,4 +86,5 @@
         require('view_download.html');
     }
 
+    print_box_end();
     print_footer($course);

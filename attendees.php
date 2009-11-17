@@ -110,6 +110,7 @@
         $subheading = $facetoface->name.' - '.$session->location.'<br />'.get_string('wait-list', 'facetoface');
     }
 
+    print_box_start();
     print_heading($heading, 'center');
     echo '<center>';
     echo '<strong>'.$subheading.'</strong>';
@@ -243,4 +244,5 @@
         echo $table;
     }
 
+    print_box_end();
     print_footer($course);
