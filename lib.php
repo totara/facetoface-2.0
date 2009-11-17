@@ -913,6 +913,9 @@ function facetoface_get_session($sessionid) {
 function facetoface_get_sessions($facetofaceid, $location='') {
 
     global $CFG;
+
+    $sessions = null;
+    $brokensessions = null;
     if (empty($location)) {
         $sessions = get_records_sql("SELECT s.* FROM {$CFG->prefix}facetoface_sessions s,
                                         (SELECT sessionid, min(timestart) AS mintimestart
@@ -941,11 +944,15 @@ function facetoface_get_sessions($facetofaceid, $location='') {
                                               WHERE sessionid = s.id)");
     }
 
+    if (empty($sessions)) {
+        $sessions = array();
+    }
+
     // Broken sessions are sessions which have no dates associated
     // with them, they are only returned so that they are visible and
     // can be fixed by users.  The cause of these broken sessions
     // should be investigated and a bug should be filed.
-    if ($brokensessions) {
+    if (!empty($brokensessions)) {
         $courseid = get_field('facetoface', 'course', 'id', $facetofaceid);
         add_to_log($courseid, 'facetoface', 'broken sessions found', '', "facetofaceid=$facetofaceid");
         $sessions = array_merge($sessions, $brokensessions);
