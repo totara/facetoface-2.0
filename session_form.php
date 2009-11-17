@@ -1,0 +1,108 @@
+<?php
+
+require_once "$CFG->dirroot/lib/formslib.php";
+
+class mod_facetoface_session_form extends moodleform {
+
+    function definition()
+    {
+        $mform =& $this->_form;
+        $nbdays = $this->_customdata['nbdays'];
+
+        $mform->addElement('hidden', 'id', $this->_customdata['id']);
+        $mform->addElement('hidden', 'f', $this->_customdata['f']);
+        $mform->addElement('hidden', 's', $this->_customdata['s']);
+        $mform->addElement('hidden', 'c', $this->_customdata['c']);
+
+        $mform->addElement('header', 'general', get_string('general', 'form'));
+
+        $mform->addElement('text', 'location', get_string('location', 'facetoface'), 'size="30"');
+        $mform->addRule('location', null, 'required', null, 'client');
+        $mform->setType('location', PARAM_TEXT);
+        $mform->setHelpButton('location', array('location', get_string('location', 'facetoface'), 'facetoface'));
+
+        $mform->addElement('text', 'venue', get_string('venue', 'facetoface'), 'size="30"');
+        $mform->addRule('venue', null, 'required', null, 'client');
+        $mform->setType('venue', PARAM_TEXT);
+        $mform->setHelpButton('venue', array('venue', get_string('venue', 'facetoface'), 'facetoface'));
+
+        $mform->addElement('text', 'room', get_string('room', 'facetoface'), 'size="30"');
+        $mform->addRule('room', null, 'required', null, 'client');
+        $mform->setType('room', PARAM_TEXT);
+        $mform->setHelpButton('room', array('room', get_string('room', 'facetoface'), 'facetoface'));
+
+        $mform->addElement('selectyesno', 'datetimeknown', get_string('sessiondatetimeknown', 'facetoface'));
+        $mform->addRule('datetimeknown', null, 'required', null, 'client');
+        $mform->setDefault('datetimeknown', false);
+        $mform->setHelpButton('datetimeknown', array('sessiondatetimeknown', get_string('sessiondatetimeknown', 'facetoface'), 'facetoface'));
+
+        $repeatarray = array();
+        $repeatarray[] = &$mform->createElement('hidden', 'sessiondateid', 0);
+        $repeatarray[] = &$mform->createElement('date_time_selector', 'timestart', get_string('timestart', 'facetoface'));
+        $repeatarray[] = &$mform->createElement('date_time_selector', 'timefinish', get_string('timefinish', 'facetoface'));
+        $checkboxelement = &$mform->createElement('checkbox', 'datedelete', '', get_string('dateremove', 'facetoface'));
+        unset($checkboxelement->_attributes['id']); // necessary until MDL-20441 is fixed
+        $repeatarray[] = $checkboxelement;
+        $repeatarray[] = &$mform->createElement('html', '<br/>'); // spacer
+
+        $repeatcount = $nbdays;
+
+        $repeatoptions = array();
+        $repeatoptions['timestart']['disabledif'] = array('datetimeknown', 'eq', 0);
+        $repeatoptions['timefinish']['disabledif'] = array('datetimeknown', 'eq', 0);
+        $mform->setType('timestart', PARAM_INT);
+        $mform->setType('timefinish', PARAM_INT);
+
+        $this->repeat_elements($repeatarray, $repeatcount, $repeatoptions, 'date_repeats', 'date_add_fields',
+                               1, get_string('dateadd', 'facetoface'), true);
+
+        $mform->addElement('text', 'capacity', get_string('capacity', 'facetoface'), 'size="5"');
+        $mform->addRule('capacity', null, 'required', null, 'client');
+        $mform->setType('capacity', PARAM_INT);
+        $mform->setDefault('capacity', 10);
+        $mform->setHelpButton('capacity', array('capacity', get_string('capacity', 'facetoface'), 'facetoface'));
+
+        $mform->addElement('text', 'duration', get_string('duration', 'facetoface'), 'size="5"');
+        $mform->setType('duration', PARAM_TEXT);
+        $mform->setHelpButton('duration', array('duration', get_string('duration', 'facetoface'), 'facetoface'));
+
+        if (!get_config(NULL, 'facetoface_hidecost')) {
+            $mform->addElement('text', 'normalcost', get_string('normalcost', 'facetoface'), 'size="5"');
+            $mform->setType('normalcost', PARAM_TEXT);
+            $mform->setHelpButton('normalcost', array('normalcost', get_string('normalcost', 'facetoface'), 'facetoface'));
+
+            if (!get_config(NULL, 'facetoface_hidediscount')) {
+                $mform->addElement('text', 'discountcost', get_string('discountcost', 'facetoface'), 'size="5"');
+                $mform->setType('discountcost', PARAM_TEXT);
+                $mform->setHelpButton('discountcost', array('discountcost', get_string('discountcost', 'facetoface'), 'facetoface'));
+            }
+        }
+
+        $mform->addElement('htmleditor', 'details', get_string('details', 'facetoface'), '');
+        $mform->setType('details', PARAM_RAW);
+        $mform->setHelpButton('details', array('details', get_string('details', 'facetoface'), 'facetoface'));
+
+        $this->add_action_buttons();
+    }
+
+    function validation($data, $files)
+    {
+        $errors = parent::validation($data, $files);
+
+        if (!empty($data['datetimeknown'])) {
+            $datefound = false;
+            for ($i = 0; $i < $data['date_repeats']; $i++) {
+                if (empty($data['datedelete'][$i])) {
+                    $datefound = true;
+                    break;
+                }
+            }
+
+            if (!$datefound) {
+                $errors['datetimeknown'] = get_string('validation:needatleastonedate', 'facetoface');
+            }
+        }
+
+        return $errors;
+    }
+}

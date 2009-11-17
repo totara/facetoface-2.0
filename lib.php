@@ -93,7 +93,7 @@ function facetoface_cost($userid, $sessionid, $sessiondata, $htmloutput=true) {
  *
  * @param integer $duration duration in hours
  */
-function facetoface_duration($duration) {
+function format_duration($duration) {
 
     $components = explode(':', $duration);
 
@@ -313,11 +313,24 @@ function facetoface_add_session($session, $sessiondates)
 
     begin_sql();
     if ($session->id = insert_record('facetoface_sessions', $session)) {
-        foreach ($sessiondates as $date) {
+        if (empty($sessiondates)) {
+            // Insert a dummy date record
+            $date = new object();
             $date->sessionid = $session->id;
+            $date->timestart = 0;
+            $date->timefinish = 0;
             if (!insert_record('facetoface_sessions_dates', $date)) {
                 rollback_sql();
                 return false;
+            }
+        }
+        else {
+            foreach ($sessiondates as $date) {
+                $date->sessionid = $session->id;
+                if (!insert_record('facetoface_sessions_dates', $date)) {
+                    rollback_sql();
+                    return false;
+                }
             }
         }
 
@@ -352,11 +365,25 @@ function facetoface_update_session($session, $sessiondates) {
         rollback_sql();
         return false;
     }
-    foreach ($sessiondates as $date) {
+
+    if (empty($sessiondates)) {
+        // Insert a dummy date record
+        $date = new object();
         $date->sessionid = $session->id;
+        $date->timestart = 0;
+        $date->timefinish = 0;
         if (!insert_record('facetoface_sessions_dates', $date)) {
             rollback_sql();
             return false;
+        }
+    }
+    else {
+        foreach ($sessiondates as $date) {
+            $date->sessionid = $session->id;
+            if (!insert_record('facetoface_sessions_dates', $date)) {
+                rollback_sql();
+                return false;
+            }
         }
     }
 
@@ -405,19 +432,18 @@ function facetoface_get_facetoface_menu() {
  * Delete entry from the facetoface_sessions table along with all
  * related details in other tables
  *
- * @param class $formdata Data submitted by the form
+ * @param object $session Record from facetoface_sessions
  */
-function facetoface_delete_session($formdata) {
-
+function facetoface_delete_session($session)
+{
     global $CFG;
 
-    $session = facetoface_get_session($formdata->s);
     $facetoface = get_record('facetoface', 'id', $session->facetoface);
 
     // Cancel user signups (and notify users)
     $signedupusers = get_records_sql("SELECT DISTINCT userid
                                         FROM {$CFG->prefix}facetoface_submissions
-                                       WHERE sessionid = $formdata->s AND
+                                       WHERE sessionid = $session->id AND
                                              timecancelled = 0");
     if ($signedupusers and count($signedupusers) > 0) {
         foreach ($signedupusers as $user) {
@@ -442,15 +468,15 @@ function facetoface_delete_session($formdata) {
     }
 
     // Delete session details
-    if (!delete_records('facetoface_sessions', 'id', $formdata->s)) {
+    if (!delete_records('facetoface_sessions', 'id', $session->id)) {
         rollback_sql();
         return false;
     }
-    if (!delete_records('facetoface_sessions_dates', 'sessionid', $formdata->s)) {
+    if (!delete_records('facetoface_sessions_dates', 'sessionid', $session->id)) {
         rollback_sql();
         return false;
     }
-    if (!delete_records('facetoface_submissions', 'sessionid', $formdata->s)) {
+    if (!delete_records('facetoface_submissions', 'sessionid', $session->id)) {
         rollback_sql();
         return false;
     }
@@ -496,7 +522,7 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
     $msg = str_replace(get_string('placeholder:sessiondate', 'facetoface'), $sessiondate,$msg);
     $msg = str_replace(get_string('placeholder:starttime', 'facetoface'), $starttime,$msg);
     $msg = str_replace(get_string('placeholder:finishtime', 'facetoface'), $finishtime,$msg);
-    $msg = str_replace(get_string('placeholder:duration', 'facetoface'), facetoface_duration($session->duration),$msg);
+    $msg = str_replace(get_string('placeholder:duration', 'facetoface'), format_duration($session->duration),$msg);
     $msg = str_replace(get_string('placeholder:location', 'facetoface'), $session->location,$msg);
     $msg = str_replace(get_string('placeholder:venue', 'facetoface'), $session->venue,$msg);
     $msg = str_replace(get_string('placeholder:room', 'facetoface'), $session->room,$msg);
@@ -2644,4 +2670,57 @@ function facetoface_session_has_capacity($session, $context) {
     }
 
     return true;
+}
+
+/**
+ * Print the details of a session
+ *
+ * @param object $session Record from facetoface_sessions
+ */
+function facetoface_print_session($session)
+{
+    $table = new object();
+    $table->class = 'f2fsession';
+    $table->width = '50%';
+    $table->align = array('right', 'left');
+
+    $data = array($session->location, $session->venue, $session->room);
+
+    $table->data[] = array(get_string('location', 'facetoface'), $session->location);
+    $table->data[] = array(get_string('venue', 'facetoface'), $session->venue);
+    $table->data[] = array(get_string('room', 'facetoface'), $session->room);
+
+    if ($session->datetimeknown) {
+        $html = '';
+        foreach($session->sessiondates as $date) {
+            if (!empty($html)) {
+                $html .= '<br/>';
+            }
+            $timestart = userdate($date->timestart, get_string('strftimedatetime'));
+            $timefinish = userdate($date->timefinish, get_string('strftimedatetime'));
+            $html .= "$timestart &ndash; $timefinish";
+        }
+        $table->data[] = array(get_string('sessiondatetime', 'facetoface'), $html);
+    }
+    else {
+        $table->data[] = array(get_string('sessiondatetime', 'facetoface'), '<i>'.get_string('wait-listed', 'facetoface').'</i>');
+    }
+
+    $table->data[] = array(get_string('capacity', 'facetoface'), $session->capacity);
+
+    if (!empty($session->duration)) {
+        $table->data[] = array(get_string('duration', 'facetoface'), format_duration($session->duration));
+    }
+    if (!empty($session->normalcost)) {
+        $table->data[] = array(get_string('normalcost', 'facetoface'), format_cost($session->normalcost));
+    }
+    if (!empty($session->discountcost)) {
+        $table->data[] = array(get_string('discountcost', 'facetoface'), format_cost($session->discountcost));
+    }
+    if (!empty($session->details)) {
+        $details = clean_text($session->details, FORMAT_HTML);
+        $table->data[] = array(get_string('details', 'facetoface'), $details);
+    }
+
+    print_table($table);
 }

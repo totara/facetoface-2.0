@@ -2,15 +2,15 @@
 
 require_once '../../config.php';
 require_once 'lib.php';
+require_once 'session_form.php';
 
 $id = optional_param('id', 0, PARAM_INT); // Course Module ID
 $f = optional_param('f', 0, PARAM_INT); // facetoface Module ID
 $s = optional_param('s', 0, PARAM_INT); // facetoface session ID
 $c = optional_param('c', 0, PARAM_INT); // copy session
-$d = optional_param('d', 0, PARAM_INT); // copy session
-$cancelform = optional_param( 'cancel' );
+$d = optional_param('d', 0, PARAM_INT); // delete session
+$confirm = optional_param('confirm', false, PARAM_BOOL); // delete confirmation
 
-$maxnbdays = 30; // number of session date/time blocks in the form
 $nbdays = 1; // default number to show
 
 $session = null;
@@ -53,181 +53,128 @@ else {
     }
 }
 
-$sessiondate = array();
-$datetimestart = array();
-$datetimefinish = array();
-for ($i = 0; $i < $maxnbdays; $i++) {
-    $sessiondate[$i] = NULL;
-    $datetimestart[$i] = make_timestamp(2000, 1, 1, 9, 0, 0);
-    $datetimefinish[$i] = make_timestamp(2000, 1, 1, 12, 0, 0);
-}
-
-if ($s) {
-    $form = $session;
-    if($d) {
-        for ($i=0; $i < count($session->sessiondates); $i++) {
-            $sessiondate[$i] = userdate($session->sessiondates[$i]->timestart, get_string('strftimedate'));
-            $datetimestart[$i] = userdate($session->sessiondates[$i]->timestart, get_string('strftimetime'));
-            $datetimefinish[$i] = userdate($session->sessiondates[$i]->timefinish, get_string('strftimetime'));
-        }
-    }
-    else {
-        for ($i=0; $i < count($session->sessiondates); $i++) {
-            $sessiondate[$i] = $session->sessiondates[$i]->timestart;
-            $datetimestart[$i] = $session->sessiondates[$i]->timestart;
-            $datetimefinish[$i] = $session->sessiondates[$i]->timefinish;
-        }
-    }
-}
-
-if (empty($form->facetoface)) {
-    $form->facetoface = $facetoface->id;
-}
-if (empty($form->location)) {
-    $form->location = '';
-}
-if (empty($form->venue)) {
-    $form->venue = '';
-}
-if (empty($form->room)) {
-    $form->room = '';
-}
-if (empty($form->datetimeknown)) {
-    if ($session && $session->datetimeknown) {
-        $form->datetimeknown = 1;
-    } else {
-        $form->datetimeknown = 0;
-    }
-}
-if (empty($form->capacity)) {
-    $form->capacity = "10";
-}
-if (!empty($form->sessyr)) {
-    for ($i = 0; $i < count($form->sessyr); $i++) {
-        if (!empty($form->sessday[$i]) && !empty($form->sessmon[$i]) && !empty($form->sessyr[$i])) {
-            $sessiondate[$i] = make_timestamp($form->sessyr[$i], $form->sessmon[$i], $form->sessday[$i], 0, 0, 0);
-        }
-
-        if (!empty($form->starthr[$i]) && !empty($form->startmin[$i])) {
-            $datetimestart[$i] = make_timestamp(2000, 1, 1, $form->starthr[$i], $form->startmin[$i], 0);
-        }
-
-        if (!empty($form->endhr[$i]) && !empty($form->endmin[$i])) {
-            $datetimefinish[$i] = make_timestamp(2000, 1, 1, $form->endhr[$i], $form->endmin[$i], 0);
-        }
-    }
-}
-if (empty($form->duration)) {
-    $form->duration = '';
-}
-if (empty($form->normalcost)) {
-    $form->normalcost = '';
-}
-if (empty($form->discountcost)) {
-    $form->discountcost = '';
-}
-if (empty($form->details)) {
-    $form->details = '';
-}
-if (empty($form->closed)) {
-    $form->closed = "0";
-}
-
 require_course_login($course);
 $errorstr = '';
 $context = get_context_instance(CONTEXT_COURSE, $course->id);
 require_capability('mod/facetoface:editsessions', $context);
 
-if ($session = data_submitted()) {
+$returnurl = "view.php?f=$facetoface->id";
+
+// Handle deletions
+if ($d and $confirm) {
     if (!confirm_sesskey()) {
         print_error('confirmsesskeybad', 'error');
     }
 
-    if ($cancelform) {
-        redirect($CFG->wwwroot.'/mod/facetoface/view.php?f='.$facetoface->id);
+    if (facetoface_delete_session($session)) {
+        add_to_log($course->id, 'facetoface', 'delete session', 'sessions.php?s='.$session->id, $facetoface->id, $cm->id);
     }
-
-    if ($session->d) {
-        if (facetoface_delete_session($session)) {
-            add_to_log($course->id, 'facetoface', 'delete session', 'sessions.php?s='.$session->id, $facetoface->id, $cm->id);
-            $url = "view.php?f=$facetoface->id";
-            redirect($url);
-        }
-        else {
-            add_to_log($course->id, 'facetoface', 'delete session (FAILED)', 'sessions.php?s='.$session->id, $facetoface->id, $cm->id);
-            error(get_string('error:couldnotdeletesession', 'facetoface'), $CFG->wwwroot.'/course/view.php?id='.$course->id);
-        }
+    else {
+        add_to_log($course->id, 'facetoface', 'delete session (FAILED)', 'sessions.php?s='.$session->id, $facetoface->id, $cm->id);
+        print_error('error:couldnotdeletesession', 'facetoface', $returnurl);
     }
-
-    if (empty($session->facetoface)) {
-        // Only the "Copy" form allows users to specify a different facetoface ID
-        $session->facetoface = $facetoface->id;
-    }
-
-    if ($session->location == '') $errorstr .= get_string('error:emptylocation', 'facetoface');
-    if ($session->venue == '') $errorstr .= get_string('error:emptyvenue', 'facetoface');
-
-    if (empty($errorstr)) {
-        $sessiondates = array();
-        $j = 0;
-        $nbdays = count($session->sessyr) - 1; // skip the last one (template)
-        for ($i = 0; $i < $nbdays; $i++) {
-            $sessiondates[$j]->timestart = make_timestamp($session->sessyr[$i], $session->sessmon[$i],
-                                                          $session->sessday[$i], $session->starthr[$i],
-                                                          $session->startmin[$i]);
-            $sessiondates[$j]->timefinish = make_timestamp($session->sessyr[$i], $session->sessmon[$i],
-                                                           $session->sessday[$i], $session->endhr[$i],
-                                                           $session->endmin[$i]);
-            $j++;
-        }
-
-        if ($s && !($session->c) && !($session->d)) {
-            $session->id = $s;
-            if (empty($session->duration)) $session->duration = '0';
-            if (empty($session->normalcost)) $session->normalcost = '0';
-            if (empty($session->discountcost)) $session->discountcost = '0';
-            if ($edit = facetoface_update_session($session, $sessiondates)) {
-                add_to_log($course->id, 'facetoface', 'update session', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
-                redirect("view.php?f=$session->facetoface", '', '5');
-            }
-            else {
-                add_to_log($course->id, 'facetoface', 'update session (FAILED)', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
-                $errordestination = $CFG->wwwroot . "/mod/facetoface/view.php?f=$session->facetoface";
-                error(get_string('error:couldnotupdatesession', 'facetoface'), $errordestination);
-            }
-
-        }
-        elseif ($session->c) { // Adding a new copied session
-
-            if ($session->id = facetoface_add_session($session, $sessiondates)) {
-                add_to_log($course->id, 'facetoface', 'copy session', 'sessions.php?s='.$session->id, $facetoface->id, $cm->id);
-                $url = "view.php?f=$session->facetoface";
-                redirect($url);
-            }
-            else {
-                add_to_log($course->id, 'facetoface', 'copy session (FAILED)', 'sessions.php?s='.$session->id, $facetoface->id, $cm->id);
-                $errordestination = $CFG->wwwroot . "/mod/facetoface/view.php?f=$session->facetoface";
-                error(get_string('error:couldnotcopysession', 'facetoface'), $errordestination);
-            }
-
-        }
-        else { // Adding a new session
-
-            if ($session->id = facetoface_add_session($session, $sessiondates)) {
-                add_to_log($course->id, 'facetoface', 'add session', 'facetoface', 'sessions.php?s='.$session->id, $facetoface->id, $cm->id);
-                $url = "view.php?f=$session->facetoface";
-                redirect($url);
-            }
-            else {
-                add_to_log($course->id, 'facetoface', 'add session (FAILED)', 'sessions.php?s='.$session->id, $facetoface->id, $cm->id);
-                error(get_string('error:couldnotaddsession', 'facetoface'), $CFG->wwwroot.'/course/view.php?id='.$course->id);
-            }
-        }
-    }
+    redirect($returnurl);
 }
 
-$strfacetofaces = get_string('modulenameplural', 'facetoface');
-$strfacetoface = get_string('modulename', 'facetoface');
+$mform =& new mod_facetoface_session_form(null, compact('id', 'f', 's', 'c', 'nbdays'));
+if ($mform->is_cancelled()){
+    redirect($returnurl);
+}
+
+if ($fromform = $mform->get_data()) { // Form submitted
+
+    if (empty($fromform->submitbutton)) {
+        print_error('error:unknownbuttonclicked', 'facetoface', $returnurl);
+    }
+
+    // Pre-process fields
+    if (empty($fromform->duration)) {
+        $fromform->duration = 0;
+    }
+    if (empty($fromform->normalcost)) {
+        $fromform->normalcost = 0;
+    }
+    if (empty($fromform->discountcost)) {
+        $fromform->discountcost = 0;
+    }
+
+    $sessiondates = array();
+    for ($i = 0; $i < $fromform->date_repeats; $i++) {
+        if (!empty($fromform->datedelete[$i])) {
+            continue; // skip this date
+        }
+
+        $timestartfield = "timestart[$i]";
+        $timefinishfield = "timefinish[$i]";
+        if (!empty($fromform->$timestartfield) and !empty($fromform->$timefinishfield)) {
+            $date = new object();
+            $date->timestart = $fromform->$timestartfield;
+            $date->timefinish = $fromform->$timefinishfield;
+            $sessiondates[] = $date;
+        }
+    }
+
+    $todb = new object();
+    $todb->facetoface = $facetoface->id;
+    $todb->location = trim($fromform->location);
+    $todb->venue = trim($fromform->venue);
+    $todb->room = trim($fromform->room);
+    $todb->datetimeknown = $fromform->datetimeknown;
+    $todb->capacity = $fromform->capacity;
+    $todb->duration = $fromform->duration;
+    $todb->normalcost = $fromform->normalcost;
+    $todb->discountcost = $fromform->discountcost;
+    $todb->details = trim($fromform->details);
+
+    if (!$c and $session != null) {
+        $todb->id = $session->id;
+        if (facetoface_update_session($todb, $sessiondates)) {
+            add_to_log($course->id, 'facetoface', 'update session', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
+        }
+        else {
+            add_to_log($course->id, 'facetoface', 'update session (FAILED)', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
+            print_error('error:couldnotupdatesession', 'facetoface', $returnurl);
+        }
+    }
+    else {
+        if (facetoface_add_session($todb, $sessiondates)) {
+            add_to_log($course->id, 'facetoface', 'add session', 'facetoface', 'sessions.php?f='.$facetoface->id, $facetoface->id, $cm->id);
+        }
+        else {
+            add_to_log($course->id, 'facetoface', 'add session (FAILED)', 'sessions.php?f='.$facetoface->id, $facetoface->id, $cm->id);
+            print_error('error:couldnotaddsession', 'facetoface', $returnurl);
+        }
+    }
+
+    redirect($returnurl);
+}
+elseif ($session != null) { // Edit mode
+    // Set values for the form
+    $toform = new object();
+    $toform->location = $session->location;
+    $toform->venue = $session->venue;
+    $toform->room = $session->room;
+    $toform->datetimeknown = (1 == $session->datetimeknown);
+    $toform->capacity = $session->capacity;
+    $toform->duration = $session->duration;
+    $toform->normalcost = $session->normalcost;
+    $toform->discountcost = $session->discountcost;
+    $toform->details = $session->details;
+
+    if ($session->sessiondates) {
+        $i = 0;
+        foreach ($session->sessiondates as $date) {
+            $idfield = "sessiondateid[$i]";
+            $timestartfield = "timestart[$i]";
+            $timefinishfield = "timefinish[$i]";
+            $toform->$idfield = $date->id;
+            $toform->$timestartfield = $date->timestart;
+            $toform->$timefinishfield = $date->timefinish;
+            $i++;
+        }
+    }
+    $mform->set_data($toform);
+}
 
 if ($c) {
     $heading = get_string('copyingsession', 'facetoface', $facetoface->name);
@@ -235,7 +182,7 @@ if ($c) {
 else if ($d) {
     $heading = get_string('deletingsession', 'facetoface', $facetoface->name);
 }
-else if ($id) {
+else if ($id or $f) {
     $heading = get_string('addingsession', 'facetoface', $facetoface->name);
 }
 else {
@@ -243,15 +190,14 @@ else {
 }
 
 $pagetitle = format_string($facetoface->name);
-$navlinks[] = array('name' => $strfacetofaces, 'link' => "index.php?id=$course->id", 'type' => 'title');
+$navlinks[] = array('name' => get_string('modulenameplural', 'facetoface'), 'link' => "index.php?id=$course->id", 'type' => 'title');
 $navlinks[] = array('name' => $pagetitle, 'link' => "view.php?f=$facetoface->id", 'type' => 'activityinstance');
 $navlinks[] = array('name' => $heading, 'link' => '', 'type' => 'title');
 $navigation = build_navigation($navlinks);
 print_header_simple($pagetitle, '', $navigation, '', '', true,
-                    update_module_button($cm->id, $course->id, $strfacetoface), navmenu($course, $cm));
+                    update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')), navmenu($course, $cm));
 
-echo '<table align="center" border="0" cellpadding="5" cellspacing="0"><tr><td class="generalboxcontent">';
-
+print_box_start();
 print_heading($heading, 'center');
 
 if (!empty($errorstr)) {
@@ -259,12 +205,13 @@ if (!empty($errorstr)) {
 }
 
 if ($d) {
-    echo '<span style="font-size: 12px; line-height: 18px;">'.get_string('deletesessionconfirm', 'facetoface').'<BR /><BR /></span>';
-    require('sessions_delete.html');
+    facetoface_print_session($session);
+    notice_yesno(get_string('deletesessionconfirm', 'facetoface', format_string($facetoface->name)),
+                 "sessions.php?s=$session->id&amp;d=1&amp;confirm=1&amp;sesskey=$USER->sesskey", $returnurl);
 }
 else {
-    require('sessions.html');
+    $mform->display();
 }
 
-echo '</td></tr></table>';
+print_box_end();
 print_footer($course);

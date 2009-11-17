@@ -52,7 +52,7 @@ if (!$addmanager and !$confirmmanager and !$changemanager) {
 ?>
 <tr valign="top">
     <td align="right" width="300"><b><?php print_string('duration', 'facetoface') ?>:</b></td>
-    <td width="300"><?php echo facetoface_duration($session->duration); ?></td>
+    <td width="300"><?php echo format_duration($session->duration); ?></td>
 </tr>
 <?php
   }

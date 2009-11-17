@@ -406,6 +406,7 @@ $string['usercancelledon'] = 'User cancelled on $a';
 $string['usernotsignedup'] = 'Status: not signed up';
 $string['usersignedup'] = 'Status: signed up';
 $string['usersignedupon'] = 'User signed up on $a';
+$string['validation:needatleastonedate'] = 'You need to provide at least one date or mark the session as wait-listed.';
 $string['venue'] = 'Venue';
 $string['viewallsessions'] = 'View all sessions';
 $string['viewsubmissions'] = 'View submissions';
