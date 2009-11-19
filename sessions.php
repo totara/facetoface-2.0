@@ -76,7 +76,9 @@ if ($d and $confirm) {
     redirect($returnurl);
 }
 
-$mform =& new mod_facetoface_session_form(null, compact('id', 'f', 's', 'c', 'nbdays'));
+$customfields = get_records('facetoface_session_field');
+
+$mform =& new mod_facetoface_session_form(null, compact('id', 'f', 's', 'c', 'nbdays', 'customfields'));
 if ($mform->is_cancelled()){
     redirect($returnurl);
 }
@@ -126,26 +128,49 @@ if ($fromform = $mform->get_data()) { // Form submitted
     $todb->discountcost = $fromform->discountcost;
     $todb->details = trim($fromform->details);
 
+    $sessionid = null;
+    begin_sql();
+
+    $update = false;
     if (!$c and $session != null) {
+        $update = true;
+        $sessionid = $session->id;
+
         $todb->id = $session->id;
-        if (facetoface_update_session($todb, $sessiondates)) {
-            add_to_log($course->id, 'facetoface', 'update session', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
-        }
-        else {
+        if (!facetoface_update_session($todb, $sessiondates)) {
+            rollback_sql();
             add_to_log($course->id, 'facetoface', 'update session (FAILED)', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
             print_error('error:couldnotupdatesession', 'facetoface', $returnurl);
         }
     }
     else {
-        if (facetoface_add_session($todb, $sessiondates)) {
-            add_to_log($course->id, 'facetoface', 'add session', 'facetoface', 'sessions.php?f='.$facetoface->id, $facetoface->id, $cm->id);
-        }
-        else {
+        if (!$sessionid = facetoface_add_session($todb, $sessiondates)) {
+            rollback_sql();
             add_to_log($course->id, 'facetoface', 'add session (FAILED)', 'sessions.php?f='.$facetoface->id, $facetoface->id, $cm->id);
             print_error('error:couldnotaddsession', 'facetoface', $returnurl);
         }
     }
 
+    foreach ($customfields as $field) {
+        $fieldname = "custom_$field->shortname";
+        if (empty($fromform->$fieldname)) {
+            continue; // skip missing fields
+        }
+
+        if (!facetoface_save_customfield($field->id, $fromform->$fieldname, $sessionid)) {
+            rollback_sql();
+            print_error('error:couldnotsavecustomfield', 'facetoface', $returnurl);
+        }
+    }
+
+    if ($update) {
+        add_to_log($course->id, 'facetoface', 'update session', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
+    }
+    else {
+        add_to_log($course->id, 'facetoface', 'add session', 'facetoface', 'sessions.php?f='.$facetoface->id, $facetoface->id, $cm->id);
+    }
+
+    commit_sql();
     redirect($returnurl);
 }
 elseif ($session != null) { // Edit mode
@@ -173,6 +198,12 @@ elseif ($session != null) { // Edit mode
             $i++;
         }
     }
+
+    foreach ($customfields as $field) {
+        $fieldname = "custom_$field->shortname";
+        $toform->$fieldname = facetoface_get_customfield($field, $session->id);
+    }
+
     $mform->set_data($toform);
 }
 

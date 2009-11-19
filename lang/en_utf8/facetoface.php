@@ -91,6 +91,7 @@ $string['error:couldnotaddfield'] = 'Could not add custom session field.';
 $string['error:couldnotaddsession'] = 'Could not add session';
 $string['error:couldnotcopysession'] = 'Could not copy session';
 $string['error:couldnotdeletesession'] = 'Could not delete session';
+$string['error:couldnotsavecustomfield'] = 'Could not save custom field';
 $string['error:couldnotupdatefield'] = 'Could not update custom session field.';
 $string['error:couldnotupdatemanageremail'] = 'Could not update manager email address.';
 $string['error:couldnotupdatesession'] = 'Could not update session';

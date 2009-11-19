@@ -28,6 +28,12 @@ define('MDL_F2F_CANCEL_ICAL',		9);	    // Send just a combined text/ical message
 // Name of the custom field where the manager's email address is stored
 define('MDL_MANAGERSEMAIL_FIELD', 'managersemail');
 
+// Custom field related constants
+define('CUSTOMFIELD_DELIMITTER', ';');
+define('CUSTOMFIELD_TYPE_TEXT',        0);
+define('CUSTOMFIELD_TYPE_SELECT',      1);
+define('CUSTOMFIELD_TYPE_MULTISELECT', 2);
+
 /**
  * Prints the cost amount along with the appropriate currency symbol.
  *
@@ -311,7 +317,6 @@ function facetoface_add_session($session, $sessiondates)
 
     $eventname = get_field('facetoface', 'name', 'id', $session->facetoface);
 
-    begin_sql();
     if ($session->id = insert_record('facetoface_sessions', $session)) {
         if (empty($sessiondates)) {
             // Insert a dummy date record
@@ -339,7 +344,6 @@ function facetoface_add_session($session, $sessiondates)
         $session->sessiondates = $sessiondates;
         facetoface_add_session_to_user_calendar($session, $eventname, $USER->id, 'session');
 
-        commit_sql();
         return $session->id;
     } else {
         rollback_sql();
@@ -355,7 +359,6 @@ function facetoface_update_session($session, $sessiondates) {
     $session->timemodified = time();
     $session = cleanup_session_data($session);
 
-    begin_sql();
     if (!update_record('facetoface_sessions', $session)) {
         rollback_sql();
         return false;
@@ -398,7 +401,6 @@ function facetoface_update_session($session, $sessiondates) {
         return false;
     }
 
-    commit_sql();
     return $session->id;
 }
 
@@ -2691,8 +2693,23 @@ function facetoface_print_session($session, $showcapacity)
     $table->width = '50%';
     $table->align = array('right', 'left');
 
-    $data = array($session->location, $session->venue, $session->room);
+    $customfields = get_records('facetoface_session_field');
+    $customdata = get_records('facetoface_session_data', 'sessionid', $session->id, '', 'fieldid, data');
+    foreach ($customfields as $field) {
+        $data = '';
+        if (!empty($customdata[$field->id])) {
+            if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
+                $values = explode(CUSTOMFIELD_DELIMITTER, $customdata[$field->id]->data);
+                $data = implode(', ', $values);
+            }
+            else {
+                $data = $customdata[$field->id]->data;
+            }
+        }
+        $table->data[] = array(format_string($field->name), format_string($data));
+    }
 
+    $data = array($session->location, $session->venue, $session->room);
     $table->data[] = array(get_string('location', 'facetoface'), $session->location);
     $table->data[] = array(get_string('venue', 'facetoface'), $session->venue);
     $table->data[] = array(get_string('room', 'facetoface'), $session->room);
@@ -2737,4 +2754,60 @@ function facetoface_print_session($session, $showcapacity)
     }
 
     print_table($table);
+}
+
+/**
+ * Update the value of a customfield for the given session.
+ *
+ * @param integer $fieldid    ID of a record from the facetoface_session_field table
+ * @param string  $data       Value for that custom field
+ * @param integer $sessionid  ID of a record from the facetoface_sessions table
+ * @returns true if it succeeded, false otherwise
+ */
+function facetoface_save_customfield($fieldid, $data, $sessionid)
+{
+    $dbdata = null;
+    if (is_array($data)) {
+        $dbdata = implode(CUSTOMFIELD_DELIMITTER, $data);
+    }
+    else {
+        $dbdata = trim($data);
+    }
+
+    if (empty($dbdata)) {
+        return true; // no need to store empty values
+    }
+
+    $newrecord = new object();
+    $newrecord->data = $dbdata;
+
+    if ($record = get_record('facetoface_session_data', 'fieldid', $fieldid, 'sessionid', $sessionid)) {
+        $newrecord->id = $record->id;
+        return update_record('facetoface_session_data', $newrecord);
+    }
+    else {
+        $newrecord->fieldid = $fieldid;
+        $newrecord->sessionid = $sessionid;
+        return insert_record('facetoface_session_data', $newrecord);
+    }
+}
+
+/**
+ * Return the value of a customfield for the given session.
+ *
+ * @param object  $field      A record from the facetoface_session_field table
+ * @param integer $sessionid  ID of a record from the facetoface_sessions table
+ * @returns string The data contained in this custom field (empty string if it doesn't exist)
+ */
+function facetoface_get_customfield($field, $sessionid)
+{
+    if ($record = get_record('facetoface_session_data', 'fieldid', $field->id, 'sessionid', $sessionid)) {
+        if (!empty($record->data)) {
+            if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
+                return explode(CUSTOMFIELD_DELIMITTER, $record->data);
+            }
+            return $record->data;
+        }
+    }
+    return '';
 }

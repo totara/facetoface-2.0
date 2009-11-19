@@ -1,13 +1,13 @@
 <?php
 
 require_once "$CFG->dirroot/lib/formslib.php";
+require_once 'lib.php';
 
 class mod_facetoface_session_form extends moodleform {
 
     function definition()
     {
         $mform =& $this->_form;
-        $nbdays = $this->_customdata['nbdays'];
 
         $mform->addElement('hidden', 'id', $this->_customdata['id']);
         $mform->addElement('hidden', 'f', $this->_customdata['f']);
@@ -15,6 +15,42 @@ class mod_facetoface_session_form extends moodleform {
         $mform->addElement('hidden', 'c', $this->_customdata['c']);
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
+
+        // Show all custom fields
+        $customfields = $this->_customdata['customfields'];
+        foreach ($customfields as $field) {
+            $fieldname = "custom_$field->shortname";
+
+            $options = array();
+            foreach (explode(CUSTOMFIELD_DELIMITTER, $field->possiblevalues) as $value) {
+                $v = trim($value);
+                if (!empty($v)) {
+                    $options[$v] = $v;
+                }
+            }
+
+            switch ($field->type) {
+            case CUSTOMFIELD_TYPE_TEXT:
+                $mform->addElement('text', $fieldname, $field->name);
+                break;
+            case CUSTOMFIELD_TYPE_SELECT:
+                $mform->addElement('select', $fieldname, $field->name, $options);
+                break;
+            case CUSTOMFIELD_TYPE_MULTISELECT:
+                $select = &$mform->addElement('select', $fieldname, $field->name, $options);
+                $select->setMultiple(true);
+                break;
+            default:
+                error_log("facetoface: invalid field type for custom field ID $field->id");
+                continue;
+            }
+
+            $mform->setType($fieldname, PARAM_TEXT);
+            $mform->setDefault($fieldname, $field->defaultvalue);
+            if ($field->required) {
+                $mform->addRule($fieldname, null, 'required', null, 'client');
+            }
+        }
 
         $mform->addElement('text', 'location', get_string('location', 'facetoface'), 'size="30"');
         $mform->addRule('location', null, 'required', null, 'client');
@@ -45,7 +81,7 @@ class mod_facetoface_session_form extends moodleform {
         $repeatarray[] = $checkboxelement;
         $repeatarray[] = &$mform->createElement('html', '<br/>'); // spacer
 
-        $repeatcount = $nbdays;
+        $repeatcount = $this->_customdata['nbdays'];
 
         $repeatoptions = array();
         $repeatoptions['timestart']['disabledif'] = array('datetimeknown', 'eq', 0);
