@@ -22,7 +22,6 @@ $string['attendedsession'] = 'Bijgewoonde sessie';
 $string['attendees'] = 'Aanwezigen';
 $string['booked'] = 'Geboekt';
 $string['bookingcancelled'] = 'Uw inschrijving is verwijderd';
-$string['bookingclosed'] = 'Inschrijvingsperiode gesloten';
 $string['bookingcompleted'] = 'Uw inschrijving is compleet';
 $string['bookingfull'] = 'Inschrijving vol';
 $string['bookingopen'] = 'Inschrijving geopend';

@@ -160,7 +160,6 @@ function restore_facetoface_sessions($newfacetofaceid, $info, $restore) {
         $session->duration      = backup_todb($sessioninfo['#']['DURATION']['0']['#']);
         $session->normalcost    = backup_todb($sessioninfo['#']['NORMALCOST']['0']['#']);
         $session->discountcost  = backup_todb($sessioninfo['#']['DISCOUNTCOST']['0']['#']);
-        $session->closed        = backup_todb($sessioninfo['#']['CLOSED']['0']['#']);
         $session->timecreated   = backup_todb($sessioninfo['#']['TIMECREATED']['0']['#']);
         $session->timemodified  = backup_todb($sessioninfo['#']['TIMEMODIFIED']['0']['#']);
 

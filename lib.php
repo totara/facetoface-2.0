@@ -748,13 +748,7 @@ function facetoface_print_sessions($courseid, $facetofaceid, $location) {
             $signupcount = facetoface_get_num_attendees($session->id);
 
             if ($signupcount >= $session->capacity) {
-
                 $status = get_string('bookingfull', 'facetoface');
-
-            } elseif ($session->closed) {
-
-                $status = get_string('bookingclosed', 'facetoface');
-
             }
 
             $allsessiondates = '';

@@ -135,5 +135,12 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $result = $result && create_table($table2);
     }
 
+    if ($result && $oldversion < 2009111900) {
+        // Remove unused field
+        $table = new XMLDBTable('facetoface_sessions');
+        $field = new XMLDBField('closed');
+        $result = $result && drop_field($table, $field);
+    }
+
     return $result;
 }

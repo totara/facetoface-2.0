@@ -22,7 +22,6 @@ $string['attendedsession'] = 'A assisté à la session';
 $string['attendees'] = 'Inscrits';
 $string['booked'] = 'Réservé';
 $string['bookingcancelled'] = 'Votre inscription a été annulée';
-$string['bookingclosed'] = 'Inscriptions terminées';
 $string['bookingcompleted'] = 'Votre inscription a été enregistrée';
 $string['bookingfull'] = 'Session complète';
 $string['bookingopen'] = 'Session ouverte';

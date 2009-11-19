@@ -113,7 +113,6 @@ function backup_facetoface_sessions($bf, $facetofaceid) {
             $status &= fwrite($bf, full_tag('DURATION', 6, false, $session->duration)) > 0;
             $status &= fwrite($bf, full_tag('NORMALCOST', 6, false, $session->normalcost)) > 0;
             $status &= fwrite($bf, full_tag('DISCOUNTCOST', 6, false, $session->discountcost)) > 0;
-            $status &= fwrite($bf, full_tag('CLOSED', 6, false, $session->closed)) > 0;
             $status &= fwrite($bf, full_tag('TIMECREATED', 6, false, $session->timecreated)) > 0;
             $status &= fwrite($bf, full_tag('TIMEMODIFIED', 6, false, $session->timemodified)) > 0;
 

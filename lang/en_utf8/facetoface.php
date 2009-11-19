@@ -19,7 +19,6 @@ $string['attendedsession'] = 'Attended session';
 $string['attendees'] = 'Attendees';
 $string['booked'] = 'Booked';
 $string['bookingcancelled'] = 'Your booking has been cancelled.';
-$string['bookingclosed'] = 'booking closed';
 $string['bookingcompleted'] = 'Your booking has been completed.';
 $string['bookingfull'] = 'booking full';
 $string['bookingopen'] = 'booking open';
