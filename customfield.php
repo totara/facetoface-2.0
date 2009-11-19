@@ -49,9 +49,16 @@ if (!empty($d)) {
         exit;
     }
     else {
+        begin_sql();
         if (!delete_records('facetoface_session_field', 'id', $id)) {
+            rollback_sql();
             print_error('error:couldnotdeletefield', 'facetoface', $returnurl);
         }
+        if (!delete_records('facetoface_session_data', 'fieldid', $id)) {
+            rollback_sql();
+            print_error('error:couldnotdeletefield', 'facetoface', $returnurl);
+        }
+        commit_sql();
         redirect($returnurl);
     }
 }
