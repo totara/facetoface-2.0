@@ -829,9 +829,6 @@ function facetoface_print_sessions($courseid, $facetofaceid, $location) {
 
                     if ($bookedsession || ($status == get_string('bookingfull', 'facetoface'))) {
                         $spanclass = ' class="dimmed_text"';
-                        if (facetoface_session_has_capacity($session, $context)) {
-                            $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'">'.get_string('signup', 'facetoface').'</a>';
-                        }
                     } else {
                         $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'">'.get_string('signup', 'facetoface').'</a>';
                     }
@@ -1760,13 +1757,14 @@ function facetoface_send_cancellation_notice($facetoface, $session, $userid) {
  * facetoface activity
  *
  * @global class $USER used to get the current userid
+ * @returns integer The session id that we signed up for, false otherwise
  */
 function facetoface_check_signup($facetofaceid) {
 
     global $USER;
 
     if ($submissions = facetoface_get_user_submissions($facetofaceid, $USER->id)) {
-        return true;
+        return reset($submissions)->sessionid;
     } else {
         return false;
     }

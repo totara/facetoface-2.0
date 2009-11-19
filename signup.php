@@ -147,11 +147,15 @@ else {
     $heading = get_string('signupfor', 'facetoface', $facetoface->name);
 }
 
-print_box_start();
-print_heading($heading, 'center');
-
 $viewattendees = has_capability('mod/facetoface:viewattendees', $context);
 $signedup = facetoface_check_signup($facetoface->id);
+
+if ($signedup and $signedup != $session->id) {
+    print_error('error:signedupinothersession', 'facetoface', $returnurl);
+}
+
+print_box_start();
+print_heading($heading, 'center');
 
 if ($cancelbooking) {
     if ($signedup) {
@@ -185,6 +189,8 @@ if ($signedup) {
     if ($viewattendees) {
         echo ' &ndash; <a href="'.$CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('seeattendees', 'facetoface').'</a>';
     }
+
+    echo '<br/><a href="'.$returnurl.'" title="'.get_string('goback', 'facetoface').'">'.get_string('goback', 'facetoface').'</a>';
 }
 else {
     // Signup form

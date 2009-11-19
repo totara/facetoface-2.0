@@ -112,6 +112,7 @@ $string['error:mustspecifycoursemodulefacetoface'] = 'Must specify a course modu
 $string['error:nomanageremail'] = 'You didn\'t provide an email address for your manager';
 $string['error:problemsigningup'] = 'There was a problem signing you up.';
 $string['error:removeattendee'] = 'Could not remove $a from the session.';
+$string['error:signedupinothersession'] = 'You are already signed up in another session for this activity. You can only sign up for one session per Face-to-face activity.';
 $string['error:unknownbuttonclicked'] = 'No action associated with the button that was clicked';
 $string['excelformat'] = 'Excel';
 $string['export'] = 'Export';
