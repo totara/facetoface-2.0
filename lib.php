@@ -526,7 +526,12 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
     $msg = str_replace(get_string('placeholder:location', 'facetoface'), $session->location,$msg);
     $msg = str_replace(get_string('placeholder:venue', 'facetoface'), $session->venue,$msg);
     $msg = str_replace(get_string('placeholder:room', 'facetoface'), $session->room,$msg);
-    $msg = str_replace(get_string('placeholder:details', 'facetoface'), $session->details,$msg);
+    if (empty($session->details)) {
+        $msg = str_replace(get_string('placeholder:details', 'facetoface'), '',$msg);
+    }
+    else {
+        $msg = str_replace(get_string('placeholder:details', 'facetoface'), html_to_text($session->details),$msg);
+    }
     $msg = str_replace(get_string('placeholder:reminderperiod', 'facetoface'), $reminderperiod,$msg);
 
     return $msg;
@@ -2194,7 +2199,7 @@ function facetoface_get_ical_attachment($method, $facetoface, $session, $user) {
         // TODO: escape these: must wrap at 75 octets and some characters must 
         // be backslash escaped
         $SUMMARY     = facetoface_ical_escape($facetoface->name);
-        $DESCRIPTION = facetoface_ical_escape($session->details);
+        $DESCRIPTION = facetoface_ical_escape($session->details, true);
 
         // NOTE: Newlines are meant to be encoded with the literal sequence 
         // '\n'. But evolution presents a single line text field for location, 
@@ -2285,7 +2290,15 @@ function facetoface_ical_generate_timestamp($timestamp) {
  *
  * See RFC2445 or http://www.kanzaki.com/docs/ical/text.html or a more readable definition
  */
-function facetoface_ical_escape($text) {
+function facetoface_ical_escape($text, $converthtml=false) {
+    if (empty($text)) {
+        return '';
+    }
+
+    if ($converthtml) {
+        $text = html_to_text($text);
+    }
+
     $text = str_replace(
         array('\\',   "\n", ';',  ','),
         array('\\\\', '\n', '\;', '\,'),
