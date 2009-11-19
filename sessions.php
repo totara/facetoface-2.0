@@ -205,7 +205,8 @@ if (!empty($errorstr)) {
 }
 
 if ($d) {
-    facetoface_print_session($session);
+    $viewattendees = has_capability('mod/facetoface:viewattendees', $context);
+    facetoface_print_session($session, $viewattendees);
     notice_yesno(get_string('deletesessionconfirm', 'facetoface', format_string($facetoface->name)),
                  "sessions.php?s=$session->id&amp;d=1&amp;confirm=1&amp;sesskey=$USER->sesskey", $returnurl);
 }

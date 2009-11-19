@@ -180,6 +180,7 @@ $string['notificationtype'] = 'Notification Type';
 $string['notificationboth'] = 'Email Notification and iCalendar Appointment';
 $string['notificationemail'] = 'Email Notification only';
 $string['notificationical'] = 'iCalendar Appointment only';
+$string['notsignedup'] = 'You are not signed up for this session.';
 $string['notsubmittedyet'] = 'Not yet evaluated';
 $string['noupcoming'] = 'No upcoming sessions';
 $string['odsformat'] = 'OpenDocument';

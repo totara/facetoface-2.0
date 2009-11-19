@@ -4,3 +4,6 @@ body.mod-facetoface table.f2fsession td.c0 {
 body.mod-facetoface table.f2fsession td.c1 {
     width: 100%;
 }
+body#mod-facetoface-signup div#content div.generalbox {
+    text-align: center;
+}

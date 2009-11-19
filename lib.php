@@ -2677,7 +2677,7 @@ function facetoface_session_has_capacity($session, $context) {
  *
  * @param object $session Record from facetoface_sessions
  */
-function facetoface_print_session($session)
+function facetoface_print_session($session, $showcapacity)
 {
     $table = new object();
     $table->class = 'f2fsession';
@@ -2706,7 +2706,14 @@ function facetoface_print_session($session)
         $table->data[] = array(get_string('sessiondatetime', 'facetoface'), '<i>'.get_string('wait-listed', 'facetoface').'</i>');
     }
 
-    $table->data[] = array(get_string('capacity', 'facetoface'), $session->capacity);
+    if ($showcapacity) {
+        $table->data[] = array(get_string('capacity', 'facetoface'), $session->capacity);
+    }
+    else {
+        $signupcount = facetoface_get_num_attendees($session->id);
+        $placesleft = $session->capacity - $signupcount;
+        $table->data[] = array(get_string('capacity', 'facetoface'), $placesleft);
+    }
 
     if (!empty($session->duration)) {
         $table->data[] = array(get_string('duration', 'facetoface'), format_duration($session->duration));
