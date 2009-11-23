@@ -686,215 +686,6 @@ function facetoface_has_session_started($session, $timenow) {
 }
 
 /**
- * Print the list of all sessions for the given facetoface activity and location
- */
-function facetoface_print_sessions($courseid, $facetofaceid, $location) {
-
-    global $CFG, $USER;
-
-    $context = get_context_instance(CONTEXT_COURSE, $courseid, $USER->id);
-
-    $bookedsession = '0';
-    $spanclass = '';
-
-    $submissions = facetoface_get_user_submissions($facetofaceid, $USER->id);
-
-    $bookedsession = null;
-    if ($submissions) {
-        $submission = array_shift($submissions);
-        $bookedsession = $submission->sessionid;
-    }
-
-    $timenow = time();
-
-    $tableheader = '';
-
-    if (has_capability('mod/facetoface:viewattendees', $context)) {
-        $tableheader = '<thead>'
-                    . '<tr>'
-                    . '<th class="header" align="left">'.get_string('location', 'facetoface').'</th>'
-                    . '<th class="header" align="left">'.get_string('venue', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('date', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('time', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('capacity', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('status', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('options', 'facetoface').'</th>'
-                    . '</tr>'
-                    . '</thead>';
-    } else {
-        $tableheader = '<thead>'
-                    . '<tr>'
-                    . '<th class="header" align="left">'.get_string('location', 'facetoface').'</th>'
-                    . '<th class="header" align="left">'.get_string('venue', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('date', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('time', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('seatsavailable', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('status', 'facetoface').'</th>'
-                    . '<th class="header">'.get_string('options', 'facetoface').'</th>'
-                    . '</tr>'
-                    . '</thead>';
-    }
-
-    $tableupcoming = '';
-    $tableupcomingtbd = '';
-    $tableprevious = '';
-
-    if ($sessions = facetoface_get_sessions($facetofaceid, $location) ) {
-
-        foreach($sessions as $session) {
-
-            $status  = get_string('bookingopen', 'facetoface');
-            $options = '';
-            $spanclass = '';
-
-            $signupcount = facetoface_get_num_attendees($session->id);
-
-            if ($signupcount >= $session->capacity) {
-                $status = get_string('bookingfull', 'facetoface');
-            }
-
-            $allsessiondates = '';
-            $allsessiontimes = '';
-            foreach ($session->sessiondates as $date) {
-                if (!empty($allsessiondates)) {
-                        $allsessiondates .= '<br />';
-                }
-                $allsessiondates .= userdate($date->timestart, get_string('strftimedate'));
-                if (!empty($allsessiontimes)) {
-                    $allsessiontimes .= '<br />';
-                }
-                $allsessiontimes .= userdate($date->timestart, get_string('strftimetime')).
-                    ' - '.userdate($date->timefinish, get_string('strftimetime'));
-            }
-
-            // Defaults for normal users
-            $stats = $session->capacity - $signupcount;
-            if (has_capability('mod/facetoface:viewattendees', $context)){
-                $stats = $signupcount.' / '.$session->capacity;
-            }
-            else {
-                $stats = max(0, $stats);
-            }
-            $options = '';
-
-            if ($session->datetimeknown && facetoface_has_session_started($session, $timenow)) {
-
-                $status = get_string('sessionover', 'facetoface');
-                $spanclass = ' class="dimmed_text"';
-
-                if (has_capability('mod/facetoface:editsessions', $context)) {
-                    $options .= ' <a href="sessions.php?s='.$session->id.'" title="'.get_string('editsession', 'facetoface').'">'.get_string('edit').'</a> '
-                        . '<a href="sessions.php?s='.$session->id.'&amp;c=1" title="'.get_string('copysession', 'facetoface').'">'.get_string('copy', 'facetoface').'</a> '
-                        . '<a href="sessions.php?s='.$session->id.'&amp;d=1" title="'.get_string('deletesession', 'facetoface').'">'.get_string('delete').'</a> ';
-                }
-                if (has_capability('mod/facetoface:viewattendees', $context)){
-                    $options .= '<a href="attendees.php?s='.$session->id.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a> ';
-                }
-
-                if (empty($options)) {
-                    $options = get_string('none', 'facetoface');
-                }
-
-                $tableprevious .= '<tr>'
-                            . '<td class="content" style="width: 10%"><span '.$spanclass.'>'.$session->location.'</span></td>'
-                            . '<td class="content" style="width: 20%"><span '.$spanclass.'>'.$session->venue.'</span></td>'
-                            . '<td class="content" style="width: 10%" align="center"><span '.$spanclass.'>'.$allsessiondates.'</span></td>'
-                            . '<td class="content" style="width: 15%" align="center"><span '.$spanclass.'>'.$allsessiontimes.'</span></td>'
-                            . '<td class="content" style="width: 15%" align="center"><span '.$spanclass.'>'.$stats.'</span></td>'
-                            . '<td class="content" style="width: 10%" align="center"><span '.$spanclass.'>'.$status.'</span></td>'
-                            . '<td class="content" style="width: 20%" align="center"><span '.$spanclass.'>'.$options.'</span></td>'
-                            . '</tr>';
-
-            } else {
-
-                $trclass = '';
-                $spanclass = '';
-
-                if (has_capability('mod/facetoface:editsessions', $context)) {
-                    $options .= '<a href="sessions.php?s='.$session->id.'" title="'.get_string('editsession', 'facetoface').'">'.get_string('edit').'</a> '
-                        . '<a href="sessions.php?s='.$session->id.'&amp;c=1" title="'.get_string('copysession', 'facetoface').'">'.get_string('copy', 'facetoface').'</a> '
-                        . '<a href="sessions.php?s='.$session->id.'&amp;d=1" title="'.get_string('deletesession', 'facetoface').'">'.get_string('delete').'</a> ';
-                }
-                if ($session->id == $bookedsession) {
-                    $trclass = ' class="highlight"';
-                    $tableupcoming .= '<tr'.$trclass.'><td class="content" colspan="7"><span style="font-size: 12px; line-height: 12px;"><b>'.get_string('youarebooked', 'facetoface').':</b></span></td></tr>';
-
-                    $options .= '<a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" alt="'.get_string('moreinfo', 'facetoface').'" title="'.get_string('moreinfo', 'facetoface').'">'.get_string('moreinfo', 'facetoface').'</a><br />'
-                        . '<a href="'.$CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" alt="'.get_string('seeattendees', 'facetoface').'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('seeattendees', 'facetoface').'</a><br />'
-                        . '<a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;cancelbooking=1&amp;backtoallsessions='.$facetofaceid.'" alt="'.get_string('cancelbooking', 'facetoface').'" title="'.get_string('cancelbooking', 'facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
-                } else {
-                    if (has_capability('mod/facetoface:viewattendees', $context)) {
-                        $options .= ' <a href="attendees.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a> ';
-                    }
-
-                    if ($bookedsession || ($status == get_string('bookingfull', 'facetoface'))) {
-                        $spanclass = ' class="dimmed_text"';
-                    } else {
-                        $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'">'.get_string('signup', 'facetoface').'</a>';
-                    }
-                }
-
-                if (empty($options)) {
-                    $options = get_string('none', 'facetoface');
-                }
-
-                if ($session->datetimeknown) {
-
-                    $tableupcoming .= '<tr'.$trclass.'>'
-                                . '<td class="content" style="width: 10%"><span '.$spanclass.'>'.$session->location.'</span></td>'
-                                . '<td class="content" style="width: 20%"><span '.$spanclass.'>'.$session->venue.'</span></td>'
-                                . '<td class="content" style="width: 10%" align="center"><span '.$spanclass.'>'.$allsessiondates.'</span></td>'
-                                . '<td class="content" style="width: 15%" align="center"><span '.$spanclass.'>'.$allsessiontimes.'</span></td>'
-                                . '<td class="content" style="width: 15%" align="center"><span '.$spanclass.'>'.$stats.'</span></td>'
-                                . '<td class="content" style="width: 10%" align="center"><span '.$spanclass.'>'.$status.'</span></td>'
-                                . '<td class="content" style="width: 20%" align="center"><span '.$spanclass.'>'.$options.'</span></td>'
-                                . '</tr>';
-
-                } else {
-
-                    $tableupcomingtbd .= '<tr'.$trclass.'>'
-                                . '<td class="content" style="width: 10%"><span '.$spanclass.'>'.$session->location.'</span></td>'
-                                . '<td class="content" style="width: 20%"><span '.$spanclass.'>'.$session->venue.'</span></td>'
-                                . '<td class="content" style="width: 10%" align="center"><span '.$spanclass.'>'.get_string('wait-listed', 'facetoface').'</span></td>'
-                                . '<td class="content" style="width: 15%" align="center"><span '.$spanclass.'>'.get_string('wait-listed', 'facetoface').'</span></td>'
-                                . '<td class="content" style="width: 15%" align="center"><span '.$spanclass.'>'.$stats.'</span></td>'
-                                . '<td class="content" style="width: 10%" align="center"><span '.$spanclass.'>'.get_string('wait-listed', 'facetoface').'</span></td>'
-                                . '<td class="content" style="width: 20%" align="center"><span '.$spanclass.'>'.$options.'</span></td>'
-                                . '</tr>';
-
-                }
-
-            }
-
-        }
-
-    }
-
-    print_heading(get_string('upcomingsessions', 'facetoface'), 'center');
-        echo '<table align="center" cellpadding="3" cellspacing="0" width="90%" style="border-color:#DDDDDD; border-width:1px 1px 1px 1px; border-style:solid;">';
-        echo $tableheader;
-        if (empty($tableupcoming) and empty($tableupcomingtbd) ) {
-            echo '<tr><td colspan="7" align="center">'.get_string('noupcoming', 'facetoface').'</td></tr>';
-        } else {
-            echo $tableupcoming;
-            echo $tableupcomingtbd;
-        }
-        if (has_capability('mod/facetoface:editsessions', $context)) {
-            echo '<tr><td colspan="7" align="center"><a href="'.$CFG->wwwroot.'/mod/facetoface/sessions.php?f='.$facetofaceid.'" title="'.get_string('addsession', 'facetoface').'">'.get_string('addsession', 'facetoface').'</a></td></tr>';
-        }
-        echo '</table>';
-
-    if (! empty($tableprevious)) {
-        print_heading(get_string('previoussessions', 'facetoface'), 'center');
-        echo '<table align="center" cellpadding="3" cellspacing="0" width="90%" style="border-color:#DDDDDD; border-width:1px 1px 1px 1px; border-style:solid;">';
-        echo $tableheader;
-        echo $tableprevious;
-        echo '</table>';
-    } 
-
-}
-
-/**
  * Get all of the dates for a given session
  */
 function facetoface_get_session_dates($sessionid) {
@@ -934,53 +725,25 @@ function facetoface_get_session($sessionid) {
  * @param integer $facetofaceid ID of the activity
  * @param string $location location filter (optional)
  */
-function facetoface_get_sessions($facetofaceid, $location='') {
-
+function facetoface_get_sessions($facetofaceid, $location='')
+{
     global $CFG;
 
-    $sessions = null;
-    $brokensessions = null;
-    if (empty($location)) {
-        $sessions = get_records_sql("SELECT s.* FROM {$CFG->prefix}facetoface_sessions s,
-                                        (SELECT sessionid, min(timestart) AS mintimestart
-                                            FROM {$CFG->prefix}facetoface_sessions_dates GROUP BY sessionid) d
-                                        WHERE s.facetoface=$facetofaceid AND d.sessionid = s.id
-                                        ORDER BY s.datetimeknown, d.mintimestart");
-
-        $brokensessions = get_records_sql("SELECT s.* FROM {$CFG->prefix}facetoface_sessions s
-                                               WHERE s.facetoface=$facetofaceid
-                                                   AND NOT EXISTS
-                                          (SELECT 1 FROM {$CFG->prefix}facetoface_sessions_dates
-                                              WHERE sessionid = s.id)");
-    } else {
-        $sessions = get_records_sql("SELECT s.* FROM {$CFG->prefix}facetoface_sessions s,
-                                        (SELECT sessionid, min(timestart) AS mintimestart
-                                            FROM {$CFG->prefix}facetoface_sessions_dates GROUP BY sessionid) d
-                                        WHERE s.facetoface=$facetofaceid AND d.sessionid = s.id
-                                            AND s.location='$location'
-                                        ORDER BY s.datetimeknown, d.mintimestart");
-
-        $brokensessions = get_records_sql("SELECT s.* FROM {$CFG->prefix}facetoface_sessions s
-                                               WHERE s.facetoface=$facetofaceid
-                                                   AND s.location='$location'
-                                                   AND NOT EXISTS
-                                          (SELECT 1 FROM {$CFG->prefix}facetoface_sessions_dates
-                                              WHERE sessionid = s.id)");
+    $fromclause = "FROM {$CFG->prefix}facetoface_sessions s";
+    $locationwhere = '';
+    if (!empty($location)) {
+        $fromclause = "FROM {$CFG->prefix}facetoface_session_data d
+                       JOIN {$CFG->prefix}facetoface_sessions s ON s.id = d.sessionid";
+        $locationwhere = " AND d.data = '$location'";
     }
 
-    if (empty($sessions)) {
-        $sessions = array();
-    }
-
-    // Broken sessions are sessions which have no dates associated
-    // with them, they are only returned so that they are visible and
-    // can be fixed by users.  The cause of these broken sessions
-    // should be investigated and a bug should be filed.
-    if (!empty($brokensessions)) {
-        $courseid = get_field('facetoface', 'course', 'id', $facetofaceid);
-        add_to_log($courseid, 'facetoface', 'broken sessions found', '', "facetofaceid=$facetofaceid");
-        $sessions = array_merge($sessions, $brokensessions);
-    }
+    $sessions = get_records_sql("SELECT s.*
+                                   $fromclause
+                        LEFT OUTER JOIN (SELECT sessionid, min(timestart) AS mintimestart
+                                           FROM {$CFG->prefix}facetoface_sessions_dates GROUP BY sessionid) m ON m.sessionid = s.id
+                                  WHERE s.facetoface = $facetofaceid
+                                        $locationwhere
+                               ORDER BY s.datetimeknown, m.mintimestart");
 
     if ($sessions) {
         foreach ($sessions as $key => $value) {
@@ -988,7 +751,6 @@ function facetoface_get_sessions($facetofaceid, $location='') {
             $sessions[$key]->sessiondates = facetoface_get_session_dates($value->id);
         }
     }
-
     return $sessions;
 }
 
@@ -1377,34 +1139,6 @@ function facetoface_get_user_customfields($userid, $fieldstoinclude=false)
 
     $customfields[$userid] = $ret;
     return $ret;
-}
-
-/**
- * Return an array of all of the locations where the given facetoface
- * activity has sessions
- */
-function facetoface_get_locations($facetofaceid) { 
-    global $CFG; 
-    if ($sessions = get_records_sql("SELECT DISTINCT location, id, venue
-                                         FROM {$CFG->prefix}facetoface_sessions
-                                         WHERE facetoface = $facetofaceid
-                                         ORDER BY location")) {
-
-        $i=1;
-        $locationmenu[''] = get_string('alllocations', 'facetoface');
-        foreach ($sessions as $session) {
-            $f = $session->id;
-            $locationmenu[$session->location] = $session->location;
-            $i++;
-        }
-
-        return $locationmenu;
-
-    } else {
-        
-        return '';
-
-    }
 }
 
 /**
