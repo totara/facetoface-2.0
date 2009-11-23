@@ -2707,11 +2707,6 @@ function facetoface_print_session($session, $showcapacity)
         $table->data[] = array(format_string($field->name), format_string($data));
     }
 
-    $data = array($session->location, $session->venue, $session->room);
-    $table->data[] = array(get_string('location', 'facetoface'), $session->location);
-    $table->data[] = array(get_string('venue', 'facetoface'), $session->venue);
-    $table->data[] = array(get_string('room', 'facetoface'), $session->room);
-
     if ($session->datetimeknown) {
         $html = '';
         foreach($session->sessiondates as $date) {

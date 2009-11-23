@@ -47,10 +47,6 @@ else {
     }
  }
 
-$sessiondate = NULL;
-$datetimestart = make_timestamp(2000, 1, 1, 9, 0, 0);
-$datetimefinish = make_timestamp(2000, 1, 1, 12, 0, 0);
-
 require_course_login($course);
 $context = get_context_instance(CONTEXT_COURSE, $course->id);
 require_capability('mod/facetoface:viewattendees', $context);
@@ -92,29 +88,13 @@ else {
     add_to_log($course->id, 'facetoface', 'view attendees', "view.php?id=$cm->id", $facetoface->id, $cm->id);
     $heading = get_string('attendees', 'facetoface');
 }
-
-if ($session->datetimeknown) {
-    $allsessiondates = '';
-    foreach ($session->sessiondates as $date) {
-        $allsessiondates .= '<tr>';
-        $allsessiondates .= '<td align="right">'.userdate($date->timestart, get_string('strftimedaydate')).
-            ',</td><td align="left">'.userdate($date->timestart, get_string('strftimetime')).
-            ' - '.userdate($date->timefinish, get_string('strftimetime')).'</td>';
-        $allsessiondates .= '</tr>';
-    }
-
-    $subheading = $facetoface->name.' - '.$session->venue.'<br /><table border="0">'.$allsessiondates.'</table>';
-}
-else {
-    $subheading = $facetoface->name.' - '.$session->location.'<br />'.get_string('wait-list', 'facetoface');
-}
+$heading .= ' - ' . format_string($facetoface->name);
 
 print_box_start();
 print_heading($heading, 'center');
-echo '<center>';
-echo '<strong>'.$subheading.'</strong>';
-echo '</center>';
-echo '<br />';
+
+facetoface_print_session($session, true);
+echo '<br/>';
 
 if ($takeattendance) {
     echo '<center><span style="font-size: 12px; line-height: 18px;">';

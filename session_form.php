@@ -52,21 +52,6 @@ class mod_facetoface_session_form extends moodleform {
             }
         }
 
-        $mform->addElement('text', 'location', get_string('location', 'facetoface'), 'size="30"');
-        $mform->addRule('location', null, 'required', null, 'client');
-        $mform->setType('location', PARAM_TEXT);
-        $mform->setHelpButton('location', array('location', get_string('location', 'facetoface'), 'facetoface'));
-
-        $mform->addElement('text', 'venue', get_string('venue', 'facetoface'), 'size="30"');
-        $mform->addRule('venue', null, 'required', null, 'client');
-        $mform->setType('venue', PARAM_TEXT);
-        $mform->setHelpButton('venue', array('venue', get_string('venue', 'facetoface'), 'facetoface'));
-
-        $mform->addElement('text', 'room', get_string('room', 'facetoface'), 'size="30"');
-        $mform->addRule('room', null, 'required', null, 'client');
-        $mform->setType('room', PARAM_TEXT);
-        $mform->setHelpButton('room', array('room', get_string('room', 'facetoface'), 'facetoface'));
-
         $mform->addElement('selectyesno', 'datetimeknown', get_string('sessiondatetimeknown', 'facetoface'));
         $mform->addRule('datetimeknown', null, 'required', null, 'client');
         $mform->setDefault('datetimeknown', false);

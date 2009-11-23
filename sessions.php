@@ -118,9 +118,6 @@ if ($fromform = $mform->get_data()) { // Form submitted
 
     $todb = new object();
     $todb->facetoface = $facetoface->id;
-    $todb->location = trim($fromform->location);
-    $todb->venue = trim($fromform->venue);
-    $todb->room = trim($fromform->room);
     $todb->datetimeknown = $fromform->datetimeknown;
     $todb->capacity = $fromform->capacity;
     $todb->duration = $fromform->duration;
@@ -176,9 +173,6 @@ if ($fromform = $mform->get_data()) { // Form submitted
 elseif ($session != null) { // Edit mode
     // Set values for the form
     $toform = new object();
-    $toform->location = $session->location;
-    $toform->venue = $session->venue;
-    $toform->room = $session->room;
     $toform->datetimeknown = (1 == $session->datetimeknown);
     $toform->capacity = $session->capacity;
     $toform->duration = $session->duration;
