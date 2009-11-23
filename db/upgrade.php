@@ -142,5 +142,82 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $result = $result && drop_field($table, $field);
     }
 
+    // Migration of old Location, Venue and Room fields
+    if ($result && $oldversion < 2009112300) {
+        // Create three new custom fields
+        $newfield1 = new object();
+        $newfield1->name = 'Location';
+        $newfield1->shortname = 'location';
+        $newfield1->type = 0; // free text
+        $newfield1->required = 1;
+        if (!$locationfieldid = insert_record('facetoface_session_field', $newfield1)) {
+            $result = false;
+        }
+
+        $newfield2 = new object();
+        $newfield2->name = 'Venue';
+        $newfield2->shortname = 'venue';
+        $newfield2->type = 0; // free text
+        $newfield2->required = 1;
+        if (!$venuefieldid = insert_record('facetoface_session_field', $newfield2)) {
+            $result = false;
+        }
+
+        $newfield3 = new object();
+        $newfield3->name = 'Room';
+        $newfield3->shortname = 'room';
+        $newfield3->type = 0; // free text
+        $newfield3->required = 1;
+        $newfield3->showinsummary = 0;
+        if (!$roomfieldid = insert_record('facetoface_session_field', $newfield3)) {
+            $result = false;
+        }
+
+        // Migrate data into the new fields
+        $olddebug = $db->debug;
+        $db->debug = false; // too much debug output
+
+        if ($rs = get_recordset('facetoface_sessions', '', '', '', 'id, location, venue, room')) {
+            while ($result and $session = rs_fetch_next_record($rs)) {
+                $locationdata = new object();
+                $locationdata->sessionid = $session->id;
+                $locationdata->fieldid = $locationfieldid;
+                $locationdata->data = addslashes($session->location);
+                $result = $result && insert_record('facetoface_session_data', $locationdata);
+
+                $venuedata = new object();
+                $venuedata->sessionid = $session->id;
+                $venuedata->fieldid = $venuefieldid;
+                $venuedata->data = addslashes($session->venue);
+                $result = $result && insert_record('facetoface_session_data', $venuedata);
+
+                $roomdata = new object();
+                $roomdata->sessionid = $session->id;
+                $roomdata->fieldid = $roomfieldid;
+                $roomdata->data = addslashes($session->room);
+                $result = $result && insert_record('facetoface_session_data', $roomdata);
+            }
+            rs_close($rs);
+        }
+
+        $db->debug = $olddebug;
+
+        // Drop the old fields
+        $table = new XMLDBTable('facetoface_sessions');
+        $oldfield1 = new XMLDBField('location');
+        $result = $result && drop_field($table, $oldfield1);
+        $oldfield2 = new XMLDBField('venue');
+        $result = $result && drop_field($table, $oldfield2);
+        $oldfield3 = new XMLDBField('room');
+        $result = $result && drop_field($table, $oldfield3);
+
+        if ($result) {
+            commit_sql();
+        }
+        else {
+            rollback_sql();
+        }
+    }
+
     return $result;
 }
