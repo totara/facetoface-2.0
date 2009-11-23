@@ -219,5 +219,45 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         }
     }
 
+    // Migration of old Location, Venue and Room placeholders in email templates
+    if ($result && $oldversion < 2009112400) {
+        begin_sql();
+
+        $olddebug = $db->debug;
+        $db->debug = false; // too much debug output
+
+        $templatedfields = array('confirmationsubject', 'confirmationinstrmngr', 'confirmationmessage',
+                                 'cancellationsubject', 'cancellationinstrmngr', 'cancellationmessage',
+                                 'remindersubject', 'reminderinstrmngr', 'remindermessage',
+                                 'waitlistedsubject', 'waitlistedmessage');
+
+        if ($rs = get_recordset('facetoface', '', '', '', 'id, ' . implode(', ', $templatedfields))) {
+            while ($result and $activity = rs_fetch_next_record($rs)) {
+                $todb = new object();
+                $todb->id = $activity->id;
+
+                foreach ($templatedfields as $fieldname) {
+                    $s = $activity->$fieldname;
+                    $s = str_replace('[location]', '[session:location]', $s);
+                    $s = str_replace('[venue]', '[session:venue]', $s);
+                    $s = str_replace('[room]', '[session:room]', $s);
+                    $todb->$fieldname = addslashes($s);
+                }
+
+                $result = $result && update_record('facetoface', $todb);
+            }
+            rs_close($rs);
+        }
+
+        $db->debug = $olddebug;
+
+        if ($result) {
+            commit_sql();
+        }
+        else {
+            rollback_sql();
+        }
+    }
+
     return $result;
 }

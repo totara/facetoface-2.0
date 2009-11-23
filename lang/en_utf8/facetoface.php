@@ -201,9 +201,6 @@ $string['placeholder:sessiondate'] = '[sessiondate]';
 $string['placeholder:starttime'] = '[starttime]';
 $string['placeholder:finishtime'] = '[finishtime]';
 $string['placeholder:duration'] = '[duration]';
-$string['placeholder:location'] = '[location]';
-$string['placeholder:venue'] = '[venue]';
-$string['placeholder:room'] = '[room]';
 $string['placeholder:details'] = '[details]';
 $string['placeholder:reminderperiod'] = '[reminderperiod]';
 $string['points'] = 'Points';
@@ -261,9 +258,9 @@ Duration:   [duration]
 Date(s):
 [alldates]
 
-Location:   [location]
-Venue:   [venue]
-Room:   [room]
+Location:   [session:location]
+Venue:   [session:venue]
+Room:   [session:room]
 ';
 $string['setting:defaultcancellationsubject'] = 'Default subject line for cancellation emails.';
 $string['setting:defaultcancellationsubject_caption'] = 'Cancellation subject';
@@ -290,9 +287,9 @@ Duration:    [duration]
 Date(s):
 [alldates]
 
-Location:   [location]
-Venue:   [venue]
-Room:   [room]
+Location:   [session:location]
+Venue:   [session:venue]
+Room:   [session:room]
 
 ***Please arrive ten minutes before the course starts***
 
@@ -328,9 +325,9 @@ Duration:   [duration]
 Date(s):
 [alldates]
 
-Location:   [location]
-Venue:   [venue]
-Room:   [room]
+Location:   [session:location]
+Venue:   [session:venue]
+Room:   [session:room]
 
 ***Please arrive ten minutes before the course starts***
 
@@ -348,7 +345,7 @@ $string['setting:defaultwaitlistedmessage_caption'] = 'Wait-listed message';
 $string['setting:defaultwaitlistedmessagedefault'] = 'This is to advise that you been added to the waitlist for:
 
 Course:   [facetofacename]
-Location:  [location]
+Location:  [session:location]
 Participant:   [firstname] [lastname]
 
 ***Please note this is not a course booking confirmation***

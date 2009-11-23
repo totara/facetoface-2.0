@@ -1,5 +1,4 @@
-<?PHP // $Id: facetoface.php,v 1.16 2009/01/27 03:30:25 fmarier Exp $ 
-      // facetoface.php - created with Moodle 1.9 Beta 3 (2007101504)
+<?php // facetoface.php - created with Moodle 1.9 Beta 3 (2007101504)
       //
       // Created by Peter-Anne Wissema <wis AT veursvoorburg DOT nl>
       // Released under the same terms as the Facetoface module
@@ -180,9 +179,6 @@ $string['placeholder:sessiondate'] = '[sessiondate]';
 $string['placeholder:starttime'] = '[starttime]';
 $string['placeholder:finishtime'] = '[finishtime]';
 $string['placeholder:duration'] = '[duration]';
-$string['placeholder:location'] = '[location]';
-$string['placeholder:venue'] = '[venue]';
-$string['placeholder:room'] = '[room]';
 $string['placeholder:details'] = '[details]';
 $string['placeholder:reminderperiod'] = '[reminderperiod]';
 $string['points'] = 'Punten';
@@ -235,9 +231,9 @@ Afspraak: [facetofacename]
 Tijdsduur: [duration]
 Data: [alldates]
 
-Locatie: [location]
-Ruimte/lokaal: [venue]
-Kamer: [room]';
+Locatie: [session:location]
+Ruimte/lokaal: [session:venue]
+Kamer: [session:room]';
 $string['setting:defaultcancellationsubject'] = 'Standaard onderwerp voor afzeggingsemails.';
 $string['setting:defaultcancellationsubject_caption'] = 'Onderwerp afzegging';
 $string['setting:defaultcancellationsubjectdefault'] = 'Opzegging';
@@ -261,9 +257,9 @@ kosten: [cost]
 Tijdsduur: [duration]
 Data: [alldates]
 
-Locatie: [location]
-Ruimte/lokaal: [venue]
-Kamer: [room]
+Locatie: [session:location]
+Ruimte/lokaal: [session:venue]
+Kamer: [session:room]
 
 *** probeer ervoor te zorgen op tijd aanwezig te zijn***
 
@@ -294,9 +290,9 @@ Duur: [duration]
 Data:
 [alldates]
 
-Locatie: [location]
-Ruimte/lokaal: [venue]
-Locatie: [room]
+Locatie: [session:location]
+Ruimte/lokaal: [session:venue]
+Locatie: [session:room]
 
 *** Zorg er altublieft voor op tijd aanwezig te zijn***
 
@@ -309,7 +305,7 @@ $string['setting:defaultwaitlistedmessage_caption'] = 'Wachtlijst boodschap';
 $string['setting:defaultwaitlistedmessagedefault'] = 'U bent op de wachtlijst geplaatst voor:
 
 Afspraak: [facetofacename]
-Plaats: [location]
+Plaats: [session:location]
 Deelnemer: [firstname][lastname]
 
 ***Dit is geen bevestiging van inschrijving!***
@@ -366,5 +362,3 @@ $string['xhours'] = '$a uren';
 $string['xminutes'] = '$a minuten';
 $string['youarebooked'] = 'U bent geboekt voor de volgende sessie';
 $string['youremailaddress'] = 'Uw emailadres';
-
-?>

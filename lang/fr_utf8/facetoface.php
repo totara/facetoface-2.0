@@ -1,5 +1,4 @@
-<?php // $Id: facetoface.php,v 1.17 2009/01/16 01:19:45 fmarier Exp $ 
-      // facetoface.php - created with Moodle 1.8.3 + (2007021532)
+<?php // facetoface.php - created with Moodle 1.8.3 + (2007021532)
       //
       // Created by Jerome Decuq <jerome451 AT free DOT fr>
       // Released under the same terms as the Facetoface module
@@ -184,12 +183,9 @@ $string['placeholder:facetofacename'] = '[facetofacename]';
 $string['placeholder:finishtime'] = '[finishtime]';
 $string['placeholder:firstname'] = '[firstname]';
 $string['placeholder:lastname'] = '[lastname]';
-$string['placeholder:location'] = '[ville]';
 $string['placeholder:reminderperiod'] = '[reminderperiod]';
-$string['placeholder:room'] = '[salle]';
 $string['placeholder:sessiondate'] = '[sessiondate]';
 $string['placeholder:starttime'] = '[starttime]';
-$string['placeholder:venue'] = '[lieu]';
 $string['points'] = 'Points';
 $string['pointsplural'] = 'Points';
 $string['previoussessions'] = 'Sessions passées';
@@ -241,9 +237,9 @@ Session: [facetofacename]
 Durée: [duration]
 Date(s):[alldates]
 
-Ville: [ville]
-Lieu: [lieu]
-Salle: [salle]';
+Ville: [session:location]
+Lieu: [session:venue]
+Salle: [session:room]';
 $string['setting:defaultcancellationsubject'] = 'Sujet par défaut des messages d\'annulation.';
 $string['setting:defaultcancellationsubject_caption'] = 'Sujet d\'annulation';
 $string['setting:defaultcancellationsubjectdefault'] = 'Annulation de l\'inscription à la formation';
@@ -266,9 +262,9 @@ Formation: [facetofacename]
 Durée: [duration]
 Date(s):[alldates]
 
-Ville: [ville]
-Lieu: [lieu]
-Salle: [salle]
+Ville: [session:location]
+Lieu: [session:venue]
+Salle: [session:room]
 
 ***Merci d\'arriver à l\'heure!***
 
@@ -303,9 +299,9 @@ Formation: [facetofacename]
 Durée: [duration]
 Date(s):[alldates]
 
-Ville: [ville]
-Lieu: [lieu]
-Salle: [salle]
+Ville: [session:location]
+Lieu: [session:venue]
+Salle: [session:room]
 
 ***Merci d\'arriver à l\'heure!***
 
@@ -323,9 +319,9 @@ $string['setting:defaultwaitlistedmessage'] = 'Messages de liste d\'attente par 
 $string['setting:defaultwaitlistedmessage_caption'] = 'Message de liste d\'attente';
 $string['setting:defaultwaitlistedmessagedefault'] = 'Ce message vous informe que vous avez été ajouté(e) à la liste d\'attente pour:
 
-Ville: [ville]
-Lieu: [lieu]
-Salle: [salle]
+Ville: [session:location]
+Lieu: [session:venue]
+Salle: [session:room]
 Participant: [firstname] [lastname]
 
 ***Notez que ceci n\'est pas une confirmation d\'inscription***
@@ -388,5 +384,3 @@ $string['xhours'] = '$a heures';
 $string['xminutes'] = '$a minutes';
 $string['youarebooked'] = 'Vous êtes inscrit(e) à la session suivante';
 $string['youremailaddress'] = 'Votre adresse de courriel';
-
-?>

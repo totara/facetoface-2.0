@@ -490,8 +490,8 @@ function facetoface_delete_session($session)
 /**
  * Subsitute the placeholders in email templates for the actual data
  */
-function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, $user, $session, $sessionid) {
-
+function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, $user, $session, $sessionid)
+{
     if ($session->datetimeknown) {
         // Scheduled session
         $sessiondate = userdate($session->sessiondates[0]->timestart, get_string('strftimedate'));
@@ -525,9 +525,6 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
     $msg = str_replace(get_string('placeholder:starttime', 'facetoface'), $starttime,$msg);
     $msg = str_replace(get_string('placeholder:finishtime', 'facetoface'), $finishtime,$msg);
     $msg = str_replace(get_string('placeholder:duration', 'facetoface'), format_duration($session->duration),$msg);
-    $msg = str_replace(get_string('placeholder:location', 'facetoface'), $session->location,$msg);
-    $msg = str_replace(get_string('placeholder:venue', 'facetoface'), $session->venue,$msg);
-    $msg = str_replace(get_string('placeholder:room', 'facetoface'), $session->room,$msg);
     if (empty($session->details)) {
         $msg = str_replace(get_string('placeholder:details', 'facetoface'), '',$msg);
     }
@@ -535,6 +532,19 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
         $msg = str_replace(get_string('placeholder:details', 'facetoface'), html_to_text($session->details),$msg);
     }
     $msg = str_replace(get_string('placeholder:reminderperiod', 'facetoface'), $reminderperiod,$msg);
+
+    // Custom session fields (they look like "session:shortname" in the templates)
+    $customfields = get_records('facetoface_session_field', '', '', '', 'id, shortname');
+    $customdata = get_records('facetoface_session_data', 'sessionid', $session->id, '', 'fieldid, data');
+    foreach ($customfields as $field) {
+        $placeholder = "[session:{$field->shortname}]";
+        $data = '';
+        if (!empty($customdata[$field->id])) {
+            $data = $customdata[$field->id]->data;
+        }
+
+        $msg = str_replace($placeholder, $data, $msg);
+    }
 
     return $msg;
 }
@@ -1150,7 +1160,7 @@ function facetoface_get_unmailed_reminders() {
 
     $submissions = get_records_sql("SELECT su.*, f.course, f.id as facetofaceid, f.name as facetofacename,
                                            f.reminderperiod, se.duration, se.normalcost, se.discountcost,
-                                           se.location, se.venue, se.room, se.details, se.datetimeknown
+                                           se.details, se.datetimeknown
                                        FROM {$CFG->prefix}facetoface_submissions su,
                                             {$CFG->prefix}facetoface_sessions se,
                                             {$CFG->prefix}facetoface f,
@@ -1646,7 +1656,7 @@ function facetoface_take_attendance($data) {
             $submissionid = substr($key, 13);
             $selectedsubmissionids[$submissionid]=$submissionid;
 
-            // TODO: This is not very efficient, we should do this
+            // FIXME: This is not very efficient, we should do this
             // query outside of the loop to get all submissions for a
             // given Face-to-face ID, then call
             // facetoface_grade_item_update with an array of grade
@@ -1899,7 +1909,8 @@ function facetoface_print_coursemodule_info($coursemodule) {
  * @param integer $method The method, @see {{MDL_F2F_INVITE}}
  * @return string Filename of the attachment in the temp directory
  */
-function facetoface_get_ical_attachment($method, $facetoface, $session, $user) {
+function facetoface_get_ical_attachment($method, $facetoface, $session, $user)
+{
     global $CFG;
 
     // First, generate all the VEVENT blocks
@@ -1920,20 +1931,37 @@ function facetoface_get_ical_attachment($method, $facetoface, $session, $user) {
         $DTSTART = facetoface_ical_generate_timestamp($date->timestart);
         $DTEND   = facetoface_ical_generate_timestamp($date->timefinish);
 
-        // TODO: currently we are not sending updates if the times of the 
+        // FIXME: currently we are not sending updates if the times of the
         // sesion are changed. This is not ideal!
         $SEQUENCE = ($method & MDL_F2F_CANCEL) ? 1 : 0;
 
-        // TODO: escape these: must wrap at 75 octets and some characters must 
-        // be backslash escaped
         $SUMMARY     = facetoface_ical_escape($facetoface->name);
         $DESCRIPTION = facetoface_ical_escape($session->details, true);
+
+        // Get the location data from custom fields if they exist
+        $customfielddata = facetoface_get_customfielddata($session->id);
+        $locationstring = '';
+        if (!empty($customfielddata['room'])) {
+            $locationstring .= $customfielddata['room']->data;
+        }
+        if (!empty($customfielddata['venue'])) {
+            if (!empty($locationstring)) {
+                $locationstring .= "\n";
+            }
+            $locationstring .= $customfielddata['venue']->data;
+        }
+        if (!empty($customfielddata['location'])) {
+            if (!empty($locationstring)) {
+                $locationstring .= "\n";
+            }
+            $locationstring .= $customfielddata['location']->data;
+        }
 
         // NOTE: Newlines are meant to be encoded with the literal sequence 
         // '\n'. But evolution presents a single line text field for location, 
         // and shows the newlines as [0x0A] junk. So we switch it for commas 
         // here. Remember commas need to be escaped too.
-        $LOCATION    = str_replace('\n', '\, ', facetoface_ical_escape("{$session->room}\n{$session->venue}\n{$session->location}"));
+        $LOCATION    = str_replace('\n', '\, ', facetoface_ical_escape($locationstring));
 
         $ORGANISEREMAIL = get_config(NULL, 'facetoface_fromaddress');
 
@@ -1946,7 +1974,7 @@ function facetoface_get_ical_attachment($method, $facetoface, $session, $user) {
 
         $icalmethod = ($method & MDL_F2F_INVITE) ? 'REQUEST' : 'CANCEL';
 
-        // TODO: if the user has input their name in another language, we need 
+        // FIXME: if the user has input their name in another language, we need
         // to set the LANGUAGE property parameter here
         $USERNAME = fullname($user);
         $MAILTO   = $user->email;
@@ -1975,6 +2003,7 @@ EOF;
 
     $VEVENTS = trim($VEVENTS);
 
+    // TODO: remove the hard-coded timezone!
     $template = <<<EOF
 BEGIN:VCALENDAR
 CALSCALE:GREGORIAN
@@ -2537,4 +2566,24 @@ function facetoface_get_customfield($field, $sessionid)
         }
     }
     return '';
+}
+
+/**
+ * Return the values stored for all custom fields in the given session.
+ *
+ * @param integer $sessionid  ID of facetoface_sessions record
+ * @returns array Indexed by field shortnames
+ */
+function facetoface_get_customfielddata($sessionid)
+{
+    global $CFG;
+
+    $sql = "SELECT f.shortname, d.data
+              FROM {$CFG->prefix}facetoface_session_field f
+              JOIN {$CFG->prefix}facetoface_session_data d ON f.id = d.fieldid
+             WHERE d.sessionid = $sessionid";
+    if ($records = get_records_sql($sql)) {
+        return $records;
+    }
+    return array();
 }
