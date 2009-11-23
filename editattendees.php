@@ -1,9 +1,9 @@
 <?php
 
-require_once('../../config.php');
-require_once('lib.php');
+require_once '../../config.php';
+require_once 'lib.php';
 
-define("MAX_USERS_PER_PAGE", 5000);
+define('MAX_USERS_PER_PAGE', 5000);
 
 $s              = required_param('s', PARAM_INT); // facetoface session ID
 $add            = optional_param('add', 0, PARAM_BOOL);
@@ -14,16 +14,16 @@ $suppressemail  = optional_param('suppressemail', false, PARAM_BOOL); // send em
 $previoussearch = optional_param('previoussearch', 0, PARAM_BOOL);
 
 if (!$session = facetoface_get_session($s)) {
-    error(get_string('error:incorrectcoursemodulesession', 'facetoface'));
+    print_error('error:incorrectcoursemodulesession', 'facetoface');
 }
 if (!$facetoface = get_record('facetoface', 'id', $session->facetoface)) {
-    error(get_string('error:incorrectfacetofaceid', 'facetoface'));
+    print_error('error:incorrectfacetofaceid', 'facetoface');
 }
 if (!$course = get_record('course', 'id', $facetoface->course)) {
-    error(get_string('error:coursemisconfigured', 'facetoface'));
+    print_error('error:coursemisconfigured', 'facetoface');
 }
 if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
-    error(get_string('error:incorrectcoursemodule', 'facetoface'));
+    print_error('error:incorrectcoursemodule', 'facetoface');
 }
 
 /// Check essential permissions

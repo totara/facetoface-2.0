@@ -1,90 +1,87 @@
 <?php
 
-    require_once('../../config.php');
-    require_once('lib.php');
+require_once '../../config.php';
+require_once 'lib.php';
 
-    $id = optional_param('id', 0, PARAM_INT); // Course Module ID
-    $f = optional_param('f', 0, PARAM_INT); // facetoface ID
-    $location = optional_param('location'); // location 
-    $download = optional_param('download', '', PARAM_ALPHA); // download attendance
+$id = optional_param('id', 0, PARAM_INT); // Course Module ID
+$f = optional_param('f', 0, PARAM_INT); // facetoface ID
+$location = optional_param('location', '', PARAM_TEXT); // location
+$download = optional_param('download', '', PARAM_ALPHA); // download attendance
 
-    if ($id) {
-        if (! $cm = get_record('course_modules', 'id', $id)) {
-            error(get_string('error:incorrectcoursemoduleid', 'facetoface'));
-        }
-        if (! $course = get_record('course', 'id', $cm->course)) {
-            error(get_string('error:coursemisconfigured', 'facetoface'));
-        }
-        if (! $facetoface = get_record('facetoface', 'id', $cm->instance)) {
-            error(get_string('error:incorrectcoursemodule', 'facetoface'));
-        }
-    } else if ($f) {
-        if (! $facetoface = get_record('facetoface', 'id', $f)) {
-            error(get_string('error:incorrectfacetofaceid', 'facetoface'));
-        }
-        if (! $course = get_record('course', 'id', $facetoface->course)) {
-            error(get_string('error:coursemisconfigured', 'facetoface'));
-        }
-        if (! $cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
-            error(get_string('error:incorrectcoursemoduleid', 'facetoface'));
-        }
+if ($id) {
+    if (!$cm = get_record('course_modules', 'id', $id)) {
+        print_error('error:incorrectcoursemoduleid', 'facetoface');
+    }
+    if (!$course = get_record('course', 'id', $cm->course)) {
+        print_error('error:coursemisconfigured', 'facetoface');
+    }
+    if (!$facetoface = get_record('facetoface', 'id', $cm->instance)) {
+        print_error('error:incorrectcoursemodule', 'facetoface');
+    }
+}
+elseif ($f) {
+    if (!$facetoface = get_record('facetoface', 'id', $f)) {
+        print_error('error:incorrectfacetofaceid', 'facetoface');
+    }
+    if (!$course = get_record('course', 'id', $facetoface->course)) {
+        print_error('error:coursemisconfigured', 'facetoface');
+    }
+    if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
+        print_error('error:incorrectcoursemoduleid', 'facetoface');
+    }
+}
+else {
+    print_error('error:mustspecifycoursemodulefacetoface', 'facetoface');
+}
 
-    } else {
-        error(get_string('error:mustspecifycoursemodulefacetoface', 'facetoface'));
+if (empty($form->location)) {
+    $form->location = '';
+}
+
+$location = '';
+
+$context = get_context_instance(CONTEXT_MODULE, $cm->id);
+
+if ($form = data_submitted()) {
+    if (!confirm_sesskey()) {
+        print_error('confirmsesskeybad', 'error');
     }
 
-    if (empty($form->location)) {
-        $form->location = '';
+    $location = $form->location;
+    if (!empty($form->download)) {
+        require_capability('mod/facetoface:viewattendees', $context);
+        facetoface_download_attendance($facetoface->name, $facetoface->id, $location, $download);
+        exit();
     }
+}
 
-    $location = '';
+require_course_login($course);
+require_capability('mod/facetoface:view', $context);
 
-    $context = get_context_instance(CONTEXT_MODULE, $cm->id);
+add_to_log($course->id, 'facetoface', 'view', "view.php?id=$cm->id", $facetoface->id, $cm->id);
 
-    if ($form = data_submitted()) {
-        if (!confirm_sesskey()) {
-            print_error('confirmsesskeybad', 'error');
-        }
+$pagetitle = format_string($facetoface->name);
+$navlinks[] = array('name' => get_string('modulenameplural', 'facetoface'), 'link' => "index.php?id=$course->id", 'type' => 'title');
+$navlinks[] = array('name' => $pagetitle, 'link' => '', 'type' => 'activityinstance');
+$navigation = build_navigation($navlinks);
+print_header_simple($pagetitle, '', $navigation, '', '', true,
+                    update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')), navmenu($course, $cm));
 
-        $location = $form->location;
-        if (!empty($form->download)) {
-            require_capability('mod/facetoface:viewattendees', $context);
-            facetoface_download_attendance($facetoface->name, $facetoface->id, $location, $download);
-            exit();
-        }
-    }
+if (empty($cm->visible) and !has_capability('mod/facetoface:viewemptyactivities', $context)) {
+    notice(get_string('activityiscurrentlyhidden'));
+}
 
-    $strfacetofaces = get_string('modulenameplural', 'facetoface');
-    $strfacetoface = get_string('modulename', 'facetoface');
+print_box_start();
+print_heading(get_string('allsessionsin', 'facetoface', $facetoface->name), "center");
 
-    require_course_login($course);
-    require_capability('mod/facetoface:view', $context);
+require('view.html');
 
-    add_to_log($course->id, 'facetoface', 'view', "view.php?id=$cm->id", $facetoface->id, $cm->id);
+facetoface_print_sessions($course->id, $facetoface->id, $location);
 
-    $pagetitle = format_string($facetoface->name);
-    $navlinks[] = array('name' => $strfacetofaces, 'link' => "index.php?id=$course->id", 'type' => 'title');
-    $navlinks[] = array('name' => $pagetitle, 'link' => '', 'type' => 'activityinstance');
-    $navigation = build_navigation($navlinks);
-    print_header_simple($pagetitle, '', $navigation, '', '', true,
-                        update_module_button($cm->id, $course->id, $strfacetoface), navmenu($course, $cm));
+if (has_capability('mod/facetoface:viewattendees', $context)) {
+    print_heading(get_string('exportattendance', 'facetoface'), "center");
+    require('view_download.html');
+}
 
-
-    if (empty($cm->visible) and !has_capability('mod/facetoface:viewemptyactivities', $context)) {
-        notice(get_string('activityiscurrentlyhidden'));
-    }
-
-    print_box_start();
-    print_heading(get_string('allsessionsin', 'facetoface', $facetoface->name), "center");
-
-    require('view.html');
-
-    facetoface_print_sessions($course->id, $facetoface->id, $location);
-
-    if (has_capability('mod/facetoface:viewattendees', $context)) {
-        print_heading(get_string('exportattendance', 'facetoface'), "center");
-        require('view_download.html');
-    }
-
-    print_box_end();
-    print_footer($course);
+print_box_end();
+print_footer($course);
