@@ -534,7 +534,7 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
     $msg = str_replace(get_string('placeholder:reminderperiod', 'facetoface'), $reminderperiod,$msg);
 
     // Custom session fields (they look like "session:shortname" in the templates)
-    $customfields = get_records('facetoface_session_field', '', '', '', 'id, shortname');
+    $customfields = facetoface_get_session_customfields();
     $customdata = get_records('facetoface_session_data', 'sessionid', $session->id, '', 'fieldid, data');
     foreach ($customfields as $field) {
         $placeholder = "[session:{$field->shortname}]";
@@ -2461,7 +2461,7 @@ function facetoface_print_session($session, $showcapacity)
     $table->width = '50%';
     $table->align = array('right', 'left');
 
-    $customfields = get_records('facetoface_session_field');
+    $customfields = facetoface_get_session_customfields();
     $customdata = get_records('facetoface_session_data', 'sessionid', $session->id, '', 'fieldid, data');
     foreach ($customfields as $field) {
         $data = '';
@@ -2593,4 +2593,18 @@ function facetoface_get_customfielddata($sessionid)
         return $records;
     }
     return array();
+}
+
+/**
+ * Return a cached copy of all records in facetoface_session_field
+ */
+function facetoface_get_session_customfields()
+{
+    static $customfields = null;
+    if (null == $customfields) {
+        if (!$customfields = get_records('facetoface_session_field')) {
+            $customfields = array();
+        }
+    }
+    return $customfields;
 }

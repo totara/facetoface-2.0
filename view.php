@@ -105,7 +105,7 @@ function print_session_list($courseid, $facetofaceid, $location)
         $bookedsession = $submission->sessionid;
     }
 
-    $customfields = get_records('facetoface_session_field');
+    $customfields = facetoface_get_session_customfields();
 
     // Table headers
     $tableheader = array();
