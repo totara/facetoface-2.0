@@ -2,6 +2,7 @@
 
 require_once "$CFG->libdir/gradelib.php";
 require_once "$CFG->dirroot/grade/lib.php";
+require_once $CFG->dirroot.'/lib/adminlib.php';
 
 /**
  * Definitions for setting notification types
@@ -492,6 +493,10 @@ function facetoface_delete_session($session)
  */
 function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, $user, $session, $sessionid)
 {
+    if (empty($msg)) {
+        return '';
+    }
+
     if ($session->datetimeknown) {
         // Scheduled session
         $sessiondate = userdate($session->sessiondates[0]->timestart, get_string('strftimedate'));
@@ -553,124 +558,146 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
  * Function to be run periodically according to the moodle cron
  * Finds all facetoface notifications that have yet to be mailed out, and mails them.
  */
-function facetoface_cron () {
-
+function facetoface_cron()
+{
     global $CFG, $USER;
 
-    if ($submissionsdata = facetoface_get_unmailed_reminders()) {
+    $signupsdata = facetoface_get_unmailed_reminders();
+    if (!$signupsdata) {
+        echo "\n".get_string('noremindersneedtobesent', 'facetoface')."\n";
+        return true;
+    }
 
-        $timenow   = time();
+    $timenow = time();
 
-        foreach ($submissionsdata as $submissiondata) {
-
-            if (facetoface_has_session_started($submissiondata, $timenow)) {
-                // Too late, the session already started
-                continue;
+    foreach ($signupsdata as $signupdata) {
+        if (facetoface_has_session_started($signupdata, $timenow)) {
+            // Too late, the session already started
+            // Mark the reminder as being sent already
+            $newsubmission = new object;
+            $newsubmission->id = $signupdata->id;
+            $newsubmission->mailedreminder = 1; // magic number to show that it was not actually sent
+            if (!update_record('facetoface_submissions', $newsubmission)) {
+                echo "ERROR: could not update mailedreminder for submission ID $signupdata->id";
             }
+            continue;
+        }
 
-            $reminderperiod = $submissiondata->reminderperiod;
-
-            // Convert the period from business days (no weekends) to calendar days
-            for ($reminderday = 0; $reminderday < $reminderperiod + 1; $reminderday++ ) {
-                $reminderdaytime = $submissiondata->sessiondates[0]->timestart - ($reminderday * 24 * 3600);
-                $reminderdaycheck = userdate($reminderdaytime, '%u');
-                if ($reminderdaycheck > 5) {
-                    // Saturdays and Sundays are not included in the
-                    // reminder period as entered by the user, extend
-                    // that period by 1
-                    $reminderperiod++;
-                }
-            }
-
-            $remindertime = $submissiondata->sessiondates[0]->timestart - ($reminderperiod * 24 * 3600);
-
-            if ($timenow < $remindertime) {
-                // Too early to send reminder
-                continue;
-            }
-
-            if (! $user = get_record('user', 'id', "$submissiondata->userid")) {
-                continue;
-            }
-
-            $USER->lang = $user->lang;
-
-            if (! $course = get_record('course', 'id', "$submissiondata->course")) {
-                continue;
-            }
-
-            if (! $facetoface = get_record('facetoface', 'id', "$submissiondata->facetofaceid")) {
-                continue;
-            }
-
-            $postsubject = '';
-            $posttext = '';
-            $posttextmgrheading = '';
-
-            if (empty ($submissiondata->mailedreminder)) {
-                $postsubject = $facetoface->remindersubject;
-                $posttext = $facetoface->remindermessage;
-                $posttextmgrheading = $facetoface->reminderinstrmngr;
-            }
-
-            if (! empty($postsubject) && ! empty ($posttext) ) {
-
-                $postsubject = facetoface_email_substitutions($postsubject, $submissiondata->facetofacename, $submissiondata->reminderperiod, $user, $submissiondata, $submissiondata->sessionid);
-                $posttext = facetoface_email_substitutions($posttext, $submissiondata->facetofacename, $submissiondata->reminderperiod, $user, $submissiondata, $submissiondata->sessionid);
-
-                if (! empty($posttextmgrheading) ) {
-                    $posttextmgrheading = facetoface_email_substitutions($posttextmgrheading, $submissiondata->facetofacename, $submissiondata->reminderperiod, $user, $submissiondata, $submissiondata->sessionid);
-                }
-
-                $posthtml = '';
-                $fromaddress = get_config(NULL, 'facetoface_fromaddress');
-                if (!$fromaddress) {
-                    $fromaddress = '';
-                }
-
-                require_once($CFG->dirroot.'/lib/adminlib.php');
-
-                if (email_to_user($user, $fromaddress, $postsubject, $posttext, $posthtml)) {
-
-                    echo get_string('sentreminderuser', 'facetoface').": $user->firstname $user->lastname $user->email<BR />\n";
-
-                    $submission = new object;
-                    $submission->id = $submissiondata->id;
-                    $submission->mailedreminder = $timenow;
-                    update_record('facetoface_submissions', $submission);
-
-                    if (!empty($posttextmgrheading)) {
-                        $managertext = $posttextmgrheading.$posttext;
-
-                        $usercheck = get_record('user', 'id', $user->id);
-                        $manager = $user;
-                        $manager->email = facetoface_get_manageremail($user->id);
-
-                        if (!empty($manager->email) && email_to_user($manager, $fromaddress, $postsubject, $managertext, $posthtml)) {
-
-                            echo get_string('sentremindermanager', 'facetoface').": $user->firstname $user->lastname $manager->email<BR />\n";
-
-                        } else {
-                            $errormsg = array();
-                            $errormsg['submissionid'] = $submissiondata->id;
-                            $errormsg['userid'] = $user->id;
-                            $errormsg['manageremail'] = $manager->email;
-                            echo get_string('error:cronprefix', 'facetoface').' '.get_string('error:cannotemailmanager', 'facetoface', $errormsg)."\n";
-                        }
-                    }
-
-                } else {
-                    $errormsg = array();
-                    $errormsg['submissionid'] = $submissiondata->id;
-                    $errormsg['userid'] = $user->id;
-                    $errormsg['useremail'] = $user->email;
-                    echo get_string('error:cronprefix', 'facetoface').' '.get_string('error:cannotemailuser', 'facetoface', $errormsg)."\n";
-                }
+        $earlieststarttime = $signupdata->sessiondates[0]->timestart;
+        foreach ($signupdata->sessiondates as $date) {
+            if ($date->timestart < $earlieststarttime) {
+                $earlieststarttime = $date->timestart;
             }
         }
-    } else {
-        echo get_string('noremindersneedtobesent', 'facetoface');
+
+        $reminderperiod = $signupdata->reminderperiod;
+
+        // Convert the period from business days (no weekends) to calendar days
+        for ($reminderday = 0; $reminderday < $reminderperiod + 1; $reminderday++ ) {
+            $reminderdaytime = $earlieststarttime - ($reminderday * 24 * 3600);
+            $reminderdaycheck = userdate($reminderdaytime, '%u');
+            if ($reminderdaycheck > 5) {
+                // Saturdays and Sundays are not included in the
+                // reminder period as entered by the user, extend
+                // that period by 1
+                $reminderperiod++;
+            }
+        }
+
+        $remindertime = $earlieststarttime - ($reminderperiod * 24 * 3600);
+        if ($timenow < $remindertime) {
+            // Too early to send reminder
+            continue;
+        }
+
+        if (!$user = get_record('user', 'id', $signupdata->userid)) {
+            continue;
+        }
+
+        // Hack to make sure that the timezone and languages are set properly in emails
+        // (i.e. it uses the language and timezone of the recipient of the email)
+        $USER->lang = $user->lang;
+        $USER->timezone = $user->timezone;
+
+        if (!$course = get_record('course', 'id', $signupdata->course)) {
+            continue;
+        }
+        if (!$facetoface = get_record('facetoface', 'id', $signupdata->facetofaceid)) {
+            continue;
+        }
+
+        $postsubject = '';
+        $posttext = '';
+        $posttextmgrheading = '';
+
+        if (empty($signupdata->mailedreminder)) {
+            $postsubject = $facetoface->remindersubject;
+            $posttext = $facetoface->remindermessage;
+            $posttextmgrheading = $facetoface->reminderinstrmngr;
+        }
+
+        if (empty($posttext)) {
+            // The reminder message is not set, don't send anything
+            continue;
+        }
+
+        $postsubject = facetoface_email_substitutions($postsubject, $signupdata->facetofacename, $signupdata->reminderperiod,
+                                                      $user, $signupdata, $signupdata->sessionid);
+        $posttext = facetoface_email_substitutions($posttext, $signupdata->facetofacename, $signupdata->reminderperiod,
+                                                   $user, $signupdata, $signupdata->sessionid);
+        $posttextmgrheading = facetoface_email_substitutions($posttextmgrheading, $signupdata->facetofacename, $signupdata->reminderperiod,
+                                                             $user, $signupdata, $signupdata->sessionid);
+
+        $posthtml = ''; // FIXME
+        $fromaddress = get_config(NULL, 'facetoface_fromaddress');
+        if (!$fromaddress) {
+            $fromaddress = '';
+        }
+
+        if (email_to_user($user, $fromaddress, $postsubject, $posttext, $posthtml)) {
+            echo "\n".get_string('sentreminderuser', 'facetoface').": $user->firstname $user->lastname $user->email";
+
+            $newsubmission = new object;
+            $newsubmission->id = $signupdata->id;
+            $newsubmission->mailedreminder = $timenow;
+            if (!update_record('facetoface_submissions', $newsubmission)) {
+                echo "ERROR: could not update mailedreminder for submission ID $signupdata->id";
+            }
+
+            if (empty($posttextmgrheading)) {
+                continue; // no manager message set
+            }
+
+            $managertext = $posttextmgrheading.$posttext;
+            $manager = $user;
+            $manager->email = facetoface_get_manageremail($user->id);
+
+            if (empty($manager->email)) {
+                continue; // don't know who the manager is
+            }
+
+            // Send email to mamager
+            if (email_to_user($manager, $fromaddress, $postsubject, $managertext, $posthtml)) {
+                echo "\n".get_string('sentremindermanager', 'facetoface').": $user->firstname $user->lastname $manager->email";
+            }
+            else {
+                $errormsg = array();
+                $errormsg['submissionid'] = $signupdata->id;
+                $errormsg['userid'] = $user->id;
+                $errormsg['manageremail'] = $manager->email;
+                echo get_string('error:cronprefix', 'facetoface').' '.get_string('error:cannotemailmanager', 'facetoface', $errormsg)."\n";
+            }
+        }
+        else {
+            $errormsg = array();
+            $errormsg['submissionid'] = $signupdata->id;
+            $errormsg['userid'] = $user->id;
+            $errormsg['useremail'] = $user->email;
+            echo get_string('error:cronprefix', 'facetoface').' '.get_string('error:cannotemailuser', 'facetoface', $errormsg)."\n";
+        }
     }
+
+    print "\n";
     return true;
 }
 
@@ -1197,21 +1224,18 @@ function facetoface_get_user_customfields($userid, $fieldstoinclude=false)
 /**
  * Return list of marked submissions that have not been mailed out for currently enrolled students
  */
-function facetoface_get_unmailed_reminders() {
-
+function facetoface_get_unmailed_reminders()
+{
     global $CFG;
 
     $submissions = get_records_sql("SELECT su.*, f.course, f.id as facetofaceid, f.name as facetofacename,
                                            f.reminderperiod, se.duration, se.normalcost, se.discountcost,
                                            se.details, se.datetimeknown
-                                       FROM {$CFG->prefix}facetoface_submissions su,
-                                            {$CFG->prefix}facetoface_sessions se,
-                                            {$CFG->prefix}facetoface f,
-                                            {$CFG->prefix}course c
-                                       WHERE su.mailedreminder = 0 AND se.datetimeknown=1 AND
-                                             f.course=c.id AND su.sessionid=se.id AND
-                                             se.facetoface=f.id AND f.id=su.facetoface AND
-                                             su.timecancelled = 0");
+                                      FROM {$CFG->prefix}facetoface_submissions su
+                                      JOIN {$CFG->prefix}facetoface_sessions se ON su.sessionid = se.id
+                                      JOIN {$CFG->prefix}facetoface f ON se.facetoface = f.id
+                                     WHERE su.mailedreminder = 0 AND se.datetimeknown=1 AND
+                                           su.timecancelled = 0");
 
     if ($submissions) {
         foreach ($submissions as $key => $value) {
@@ -1407,7 +1431,7 @@ function facetoface_send_notice($postsubject, $posttext, $posttextmgrheading,
                                                       $user, $session, $session->id);
             $body = facetoface_email_substitutions($posttext, $facetoface->name, $facetoface->reminderperiod,
                                                    $user, $session, $session->id);
-            $htmlbody = ''; // TODO
+            $htmlbody = ''; // FIXME
             $icalattachments[] = array('filename' => $filename, 'subject' => $subject,
                                        'body' => $body, 'htmlbody' => $htmlbody);
         }
@@ -1419,13 +1443,10 @@ function facetoface_send_notice($postsubject, $posttext, $posttextmgrheading,
     $posttext = facetoface_email_substitutions($posttext, $facetoface->name, $facetoface->reminderperiod,
                                                $user, $session, $session->id);
 
-    if (!empty($posttextmgrheading)) {
-        $posttextmgrheading = facetoface_email_substitutions($posttextmgrheading, $facetoface->name,
-                                                             $facetoface->reminderperiod, $user, $session,
-                                                             $session->id);
-    }
+    $posttextmgrheading = facetoface_email_substitutions($posttextmgrheading, $facetoface->name, $facetoface->reminderperiod,
+                                                         $user, $session, $session->id);
 
-    $posthtml = ''; // TODO: provide an HTML version of these notices
+    $posthtml = ''; // FIXME
     $fromaddress = get_config(NULL, 'facetoface_fromaddress');
     if (!$fromaddress) {
         $fromaddress = '';
