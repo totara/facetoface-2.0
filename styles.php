@@ -13,3 +13,8 @@ body#mod-facetoface-view div#content div.generalbox {
 tr.highlight td.cell {
     background-color: #AAFFAA;
 }
+a.f2fsessionlinks, td.f2fsessionnotice, span.f2fsessionnotice {
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 14px;
+}

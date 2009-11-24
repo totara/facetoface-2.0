@@ -1726,179 +1726,172 @@ function facetoface_take_individual_attendance($submissionid,$didattend) {
  * facetoface activity on the course page
  *
  * @global class $USER used to get the current userid
+ * @global class $CFG used to get the path to the module
  */
-function facetoface_print_coursemodule_info($coursemodule) {
-
+function facetoface_print_coursemodule_info($coursemodule)
+{
     global $CFG, $USER;
 
-    $info = NULL;
+    $contextmodule = get_context_instance(CONTEXT_MODULE, $coursemodule->id);
+    if (!has_capability('mod/facetoface:view', $contextmodule)) {
+        return ''; // not allowed to view this activity
+    }
+
     $table = '';
-
     $timenow = time();
+    $facetofacepath = "$CFG->wwwroot/mod/facetoface";
+
     $facetofaceid = $coursemodule->instance;
+    $facetoface = get_record('facetoface', 'id', $facetofaceid);
+    if (!$facetoface) {
+        error_log("facetoface: ask to print coursemodule info for a non-existent activity ($facetofaceid)");
+        return '';
+    }
 
-    if ($facetoface = get_record('facetoface', 'id', $facetofaceid)) {
+    // Link to display for when there are no sessions to show
+    $strdimmed = '';
+    if (!$coursemodule->visible) {
+        $strdimmed = ' class="dimmed"';
+    }
+    $strfacetoface = get_string('facetoface', 'facetoface');
+    $activitynameonly = "<img src=\"$CFG->pixpath/mod/facetoface/icon.gif\" class=\"activityicon\" alt=\"$strfacetoface\" />".
+                        "<a title=\"$strfacetoface\" $strdimmed href=\"$facetofacepath/view.php?f=$facetofaceid\">$strfacetoface</a>";
 
-        $context = get_context_instance(CONTEXT_MODULE, $coursemodule->id);
-        if (has_capability('mod/facetoface:view', $context)) {
+    if ($submissions = facetoface_get_user_submissions($facetofaceid, $USER->id)) {
+        // User has signedup for the instance
+        $submission = array_shift($submissions);
 
-            if ($submissions = facetoface_get_user_submissions($facetofaceid, $USER->id)) {
-                // User has signedup for the instance
+        if ($session = facetoface_get_session($submission->sessionid)) {
+            $sessiondate = '';
+            $sessiontime = '';
 
-                $submission = array_shift($submissions);
-
-                if ($session = facetoface_get_session($submission->sessionid)) {
-
-                    if ($session->datetimeknown) {
-
-                        $sessiondate = '';
-                        $sessiontime = '';
-                        foreach ($session->sessiondates as $date) {
-                            if (!empty($sessiondate)) {
-                                $sessiondate .= '<br />';
-                            }
-                            $sessiondate .= userdate($date->timestart, get_string('strftimedate'));
-                            if (!empty($sessiontime)) {
-                                $sessiontime .= '<br />';
-                            }
-                            $sessiontime .= userdate($date->timestart, get_string('strftimetime')).
-                                ' - '.userdate($date->timefinish, get_string('strftimetime'));
-                        }
-
-                    } else {
-
-                        $sessiondate = get_string('wait-listed', 'facetoface');
-                        $sessiontime = get_string('wait-listed', 'facetoface');
-
+            if ($session->datetimeknown) {
+                foreach ($session->sessiondates as $date) {
+                    if (!empty($sessiondate)) {
+                        $sessiondate .= '<br />';
                     }
-
-                    // don't include the link to cancel a session if it has already occurred
-                    if (!facetoface_has_session_started($session, $timenow)) {
-                        $cancellink = '<tr><td><span style="font-size: 11px; font-weight: bold; line-height: 14px;"><a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;cancelbooking=1" alt="'.get_string('cancelbooking', 'facetoface').'" title="'.get_string('cancelbooking', 'facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a></span></td></tr>';
-                    } else {
-                        $cancellink = '';
+                    $sessiondate .= userdate($date->timestart, get_string('strftimedate'));
+                    if (!empty($sessiontime)) {
+                        $sessiontime .= '<br />';
                     }
-
-                    $table = '<table border="0" cellpadding="1" cellspacing="0" width="90%">'
-                            .'<tr>'
-                            .'<td colspan="4"><span style="font-size: 11px; font-weight: bold; line-height: 14px;">'.get_string('bookingstatus', 'facetoface').':</span></td>'
-                            .'<td><span style="font-size: 11px; font-weight: bold; line-height: 14px;">'.get_string('options', 'facetoface').':</span></td>'
-                            .'</tr>'
-                            .'<tr>'
-                            .'<td>'.$session->location.'</td>' 
-                            .'<td>'.$session->venue.'</td>' 
-                            .'<td>'.$sessiondate.'</td>' 
-                            .'<td>'.$sessiontime.'</td>'
-                            .'<td><table border="0"><tr><td><span style="font-size: 11px; font-weight: bold; line-height: 14px;"><a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'" alt="'.get_string('moreinfo', 'facetoface').'" title="'.get_string('moreinfo', 'facetoface').'">'.get_string('moreinfo', 'facetoface').'</a></span></td>'
-                            .'</tr>'
-                            .'<tr>'
-                            .'<td><span style="font-size: 11px; font-weight: bold; line-height: 14px;"><a href="'.$CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'" alt="'.get_string('seeattendees', 'facetoface').'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('seeattendees', 'facetoface').'</a></span></td>'
-                            .'</tr>'
-                            .$cancellink
-                            .'<tr>'
-                            .'<td><span style="font-size: 11px; font-weight: bold; line-height: 14px"><a href="'.$CFG->wwwroot.'/mod/facetoface/view.php?f='.$facetofaceid.'" alt="'.get_string('viewallsessions', 'facetoface').'" title="'.get_string('viewallsessions', 'facetoface').'">'.get_string('viewallsessions', 'facetoface').'</a></span></td>'
-                            .'</tr>'
-                            .'</table></td></tr>'
-                            .'</table>';
-
-
+                    $sessiontime .= userdate($date->timestart, get_string('strftimetime')).
+                        ' - '.userdate($date->timefinish, get_string('strftimetime'));
                 }
-
-            } elseif ($sessions = facetoface_get_sessions($facetofaceid)) {
-
-                if ($facetoface->display == 0) {
-
-                    $table .= '<table border="0" cellpadding="1" cellspacing="0" width="100%">'
-                            .'   <tr>'
-                            .'       <td colspan="2"><span style="font-size: 11px; font-weight: bold; line-height: 14px;">'.get_string('signupforsession', 'facetoface').':</span></td>'
-                            .'   </tr>';
-                    $table .= '   <tr>'
-                            .'     <td colspan="2"><span style="font-size: 11px; font-weight: bold; line-height: 14px"><a href="'.$CFG->wwwroot.'/mod/facetoface/view.php?f='.$facetofaceid.'" alt="'.get_string('viewallsessions', 'facetoface').'" title="'.get_string('viewallsessions', 'facetoface').'">'.get_string('viewallsessions', 'facetoface').'</a></span></td>'
-                            .'   </tr>'
-                            .'</table>';
-
-                } else {
-
-                    $table = '<table border="0" cellpadding="1" cellspacing="0" width="100%">'
-                            .'   <tr>'
-                            .'       <td colspan="2"><span style="font-size: 11px; font-weight: bold; line-height: 14px;">'.get_string('signupforsession', 'facetoface').':</span></td>'
-                            .'   </tr>';
-
-                    $i=0;
-
-                    foreach($sessions as $session) {
-
-                        if ($session->datetimeknown && (facetoface_has_session_started($session, $timenow))) {
-                            continue;
-                         }
-
-                        if (!facetoface_session_has_capacity($session, $context)) {
-                            continue;
-                        }
-
-                        $multiday = '';
-                        if ($session->datetimeknown) {
-
-                            if (empty($session->sessiondates)) {
-                                $sessiondate = get_string('unknowndate', 'facetoface');
-                                $sessiontime = get_string('unknowntime', 'facetoface');
-                            } else {
-                                $sessiondate = userdate($session->sessiondates[0]->timestart, get_string('strftimedate'));
-                                $sessiontime = userdate($session->sessiondates[0]->timestart, get_string('strftimetime')).
-                                    ' - '.userdate($session->sessiondates[0]->timefinish, get_string('strftimetime'));
-                                if (count($session->sessiondates) > 1) {
-                                    $multiday = ' ('.get_string('multiday', 'facetoface').')';
-                                }
-                            }
-
-                        } else {
-
-                            $sessiondate = get_string('wait-listed', 'facetoface');
-                            $sessiontime = "";
-
-                        }
-
-                        if ($i == 0) {
-                            $table .= '   <tr>';
-                            $i++;
-                        } else if ($i++ % 2 == 0) {
-                            if ($i > $facetoface->display) {
-                                break;
-                            }
-                            $table .= '   </tr>';
-                            $table .= '   <tr>';
-                        }
-                        $table .= '      <td><span style="font-size: 11px; line-height: 14px;"><a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'">'.$session->location.', '.$sessiondate.'<br />'.$sessiontime.$multiday.'</a></span></td>';
-                    }
-                    if ($i++ % 2 == 0) {
-                        $table .= '<td><span style="font-size: 11px; line-height: 14px;">&nbsp;</span></td>';
-                    }
-                    $table .= '   </tr>'
-                        .'   <tr>'
-                        .'     <td colspan="2"><span style="font-size: 11px; font-weight: bold; line-height: 14px"><a href="'.$CFG->wwwroot.'/mod/facetoface/view.php?f='.$facetofaceid.'" alt="'.get_string('viewallsessions', 'facetoface').'" title="'.get_string('viewallsessions', 'facetoface').'">'.get_string('viewallsessions', 'facetoface').'</a></span></td>'
-                        .'   </tr>'
-                        .'</table>';
-                }
-
-            } else {
-
-                if (has_capability('mod/facetoface:viewemptyactivities', $context)) {
-
-                    $strdimmed = '';
-
-                    if (!$coursemodule->visible) {
-                        $strdimmed = ' class="dimmed"';
-                    }
-
-                    $table = '<img src="'.$CFG->wwwroot.'/mod/facetoface/icon.gif" class="activityicon" alt="'.get_string('facetoface', 'facetoface').'" /> <a title="'.get_string('facetoface', 'facetoface').'"'.$strdimmed.' href="'.$CFG->wwwroot.'/mod/facetoface/view.php?f='.$facetofaceid.'">'.get_string('facetoface','facetoface').'</a>';
-
-                }
-
+            }
+            else {
+                $sessiondate = get_string('wait-listed', 'facetoface');
+                $sessiontime = get_string('wait-listed', 'facetoface');
             }
 
+            // don't include the link to cancel a session if it has already occurred
+            $cancellink = '';
+            if (!facetoface_has_session_started($session, $timenow)) {
+                $strcancelbooking = get_string('cancelbooking', 'facetoface');
+                $cancellink = "<tr><td><a class=\"f2fsessionlinks\" href=\"$facetofacepath/signup.php?s={$session->id}&amp;cancelbooking=1\" title=\"$strcancelbooking\">$strcancelbooking</a></td></tr>";
+            }
+
+            $strmoreinfo = get_string('moreinfo', 'facetoface');
+            $strseeattendees = get_string('seeattendees', 'facetoface');
+            $strviewallsessions = get_string('viewallsessions', 'facetoface');
+
+            $location = $session->location;
+            $venue = $session->venue;
+
+            $table = '<table border="0" cellpadding="1" cellspacing="0" width="90%" summary="">'
+                .'<tr>'
+                .'<td class="f2fsessionnotice" colspan="4">'.get_string('bookingstatus', 'facetoface').':</td>'
+                .'<td><span class="f2fsessionnotice" >'.get_string('options', 'facetoface').':</span></td>'
+                .'</tr>'
+                .'<tr>'
+                .'<td>'.$location.'</td>'
+                .'<td>'.$venue.'</td>'
+                .'<td>'.$sessiondate.'</td>'
+                .'<td>'.$sessiontime.'</td>'
+                ."<td><table border=\"0\" summary=\"\"><tr><td><a class=\"f2fsessionlinks\" href=\"$facetofacepath/signup.php?s=$session->id\" title=\"$strmoreinfo\">$strmoreinfo</a></td>"
+                .'</tr>'
+                .'<tr>'
+                ."<td><a class=\"f2fsessionlinks\" href=\"$facetofacepath/attendees.php?s=$session->id\" title=\"$strseeattendees\">$strseeattendees</a></td>"
+                .'</tr>'
+                .$cancellink
+                .'<tr>'
+                ."<td><a class=\"f2fsessionlinks\" href=\"$facetofacepath/view.php?f=$facetofaceid\" title=\"$strviewallsessions\">$strviewallsessions</a></td>"
+                .'</tr>'
+                .'</table></td></tr>'
+                .'</table>';
+        }
+    }
+    elseif ($sessions = facetoface_get_sessions($facetofaceid)) {
+        if ($facetoface->display == 0) { // i.e. don't display session times on course page
+            return $activitynameonly;
         }
 
-    } 
+        $table = '<table border="0" cellpadding="1" cellspacing="0" width="100%" summary="">'
+            .'   <tr>'
+            .'       <td class="f2fsessionnotice" colspan="2">'.get_string('signupforsession', 'facetoface').':</td>'
+            .'   </tr>';
+
+        $i=0;
+        foreach($sessions as $session) {
+            if ($session->datetimeknown && (facetoface_has_session_started($session, $timenow))) {
+                continue;
+            }
+
+            if (!facetoface_session_has_capacity($session, $contextmodule)) {
+                continue;
+            }
+
+            $multiday = '';
+            $sessiondate = '';
+            $sessiontime = '';
+
+            if ($session->datetimeknown) {
+                if (empty($session->sessiondates)) {
+                    $sessiondate = get_string('unknowndate', 'facetoface');
+                    $sessiontime = get_string('unknowntime', 'facetoface');
+                }
+                else {
+                    $sessiondate = userdate($session->sessiondates[0]->timestart, get_string('strftimedate'));
+                    $sessiontime = userdate($session->sessiondates[0]->timestart, get_string('strftimetime')).
+                        ' - '.userdate($session->sessiondates[0]->timefinish, get_string('strftimetime'));
+                    if (count($session->sessiondates) > 1) {
+                        $multiday = ' ('.get_string('multiday', 'facetoface').')';
+                    }
+                }
+            }
+            else {
+                $sessiondate = get_string('wait-listed', 'facetoface');
+            }
+
+            if ($i == 0) {
+                $table .= '   <tr>';
+                $i++;
+            }
+            else if ($i++ % 2 == 0) {
+                if ($i > $facetoface->display) {
+                    break;
+                }
+                $table .= '   </tr>';
+                $table .= '   <tr>';
+            }
+            $table .= "      <td><a href=\"$facetofacepath/signup.php?s=$session->id\">{$session->location}, $sessiondate<br />{$sessiontime}$multiday</a></td>";
+        }
+        if ($i++ % 2 == 0) {
+            $table .= '<td>&nbsp;</td>';
+        }
+
+        $strviewallsessions = get_string('viewallsessions', 'facetoface');
+        $table .= '   </tr>'
+            .'   <tr>'
+            ."     <td colspan=\"2\"><a class=\"f2fsessionlinks\" href=\"$facetofacepath/view.php?f=$facetofaceid\" title=\"$strviewallsessions\">$strviewallsessions</a></td>"
+            .'   </tr>'
+            .'</table>';
+    }
+    elseif (has_capability('mod/facetoface:viewemptyactivities', $contextmodule)) {
+        return $activitynameonly;
+    }
+    else {
+        // Nothing to display to this user
+    }
 
     return $table;
 }
