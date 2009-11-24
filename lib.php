@@ -1794,8 +1794,15 @@ function facetoface_print_coursemodule_info($coursemodule)
             $strseeattendees = get_string('seeattendees', 'facetoface');
             $strviewallsessions = get_string('viewallsessions', 'facetoface');
 
-            $location = $session->location;
-            $venue = $session->venue;
+            $location = '&nbsp;';
+            $venue = '&nbsp;';
+            $customfielddata = facetoface_get_customfielddata($session->id);
+            if (!empty($customfielddata['location'])) {
+                $location = $customfielddata['location']->data;
+            }
+            if (!empty($customfielddata['venue'])) {
+                $venue = $customfielddata['venue']->data;
+            }
 
             $table = '<table border="0" cellpadding="1" cellspacing="0" width="90%" summary="">'
                 .'<tr>'
@@ -1873,7 +1880,14 @@ function facetoface_print_coursemodule_info($coursemodule)
                 $table .= '   </tr>';
                 $table .= '   <tr>';
             }
-            $table .= "      <td><a href=\"$facetofacepath/signup.php?s=$session->id\">{$session->location}, $sessiondate<br />{$sessiontime}$multiday</a></td>";
+
+            $locationstring = '';
+            $customfielddata = facetoface_get_customfielddata($session->id);
+            if (!empty($customfielddata['location'])) {
+                $locationstring = $customfielddata['location']->data . ', ';
+            }
+
+            $table .= "      <td><a href=\"$facetofacepath/signup.php?s=$session->id\">{$locationstring}$sessiondate<br />{$sessiontime}$multiday</a></td>";
         }
         if ($i++ % 2 == 0) {
             $table .= '<td>&nbsp;</td>';
