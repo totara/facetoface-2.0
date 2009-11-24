@@ -885,26 +885,41 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
     $workbook->send($downloadfilename);
     $worksheet =& $workbook->add_worksheet('attendance');
 
+    facetoface_write_worksheet_header($worksheet);
+    facetoface_write_activity_attendance($worksheet, 1, $facetofaceid, $location, '', '', $dateformat);
+
+    $workbook->close();
+    exit;
+}
+
+/**
+ * Add the appropriate column headers to the given worksheet
+ *
+ * @param object $worksheet  The worksheet to modify (passed by reference)
+ * @returns integer The index of the next column
+ */
+function facetoface_write_worksheet_header(&$worksheet)
+{
     $pos=0;
-    $worksheet->write_string(0,$pos++,get_string('location', 'facetoface'));
-    $worksheet->write_string(0,$pos++,get_string('venue', 'facetoface'));
-    $worksheet->write_string(0,$pos++,get_string('date', 'facetoface'));
-    $worksheet->write_string(0,$pos++,get_string('timestart', 'facetoface'));
-    $worksheet->write_string(0,$pos++,get_string('timefinish', 'facetoface'));
-    $worksheet->write_string(0,$pos++,get_string('duration', 'facetoface'));
-    $worksheet->write_string(0,$pos++,get_string('status', 'facetoface'));
+    $customfields = facetoface_get_session_customfields();
+    foreach ($customfields as $field) {
+        if (!empty($field->showinsummary)) {
+            $worksheet->write_string(0, $pos++, $field->name);
+        }
+    }
+    $worksheet->write_string(0, $pos++, get_string('date', 'facetoface'));
+    $worksheet->write_string(0, $pos++, get_string('timestart', 'facetoface'));
+    $worksheet->write_string(0, $pos++, get_string('timefinish', 'facetoface'));
+    $worksheet->write_string(0, $pos++, get_string('duration', 'facetoface'));
+    $worksheet->write_string(0, $pos++, get_string('status', 'facetoface'));
 
     $userfields = facetoface_get_userfields();
     foreach ($userfields as $shortname => $fullname) {
         $worksheet->write_string(0, $pos++, $fullname);
     }
 
-    $worksheet->write_string(0,$pos++,get_string('attendance', 'facetoface'));
-
-    facetoface_write_activity_attendance($worksheet, 1, $facetofaceid, $location, '', '', $dateformat);
-
-    $workbook->close();
-    exit;
+    $worksheet->write_string(0, $pos++, get_string('attendance', 'facetoface'));
+    return $pos;
 }
 
 /**
@@ -923,14 +938,15 @@ function facetoface_download_attendance($facetofacename, $facetofaceid, $locatio
  * @param object  $dateformat   Use to write out dates in the spreadsheet
  * @returns integer Index of the last row written
  */
-function facetoface_write_activity_attendance($worksheet, $startingrow, $facetofaceid, $location,
+function facetoface_write_activity_attendance(&$worksheet, $startingrow, $facetofaceid, $location,
                                               $coursename, $activityname, $dateformat)
 {
     global $CFG;
 
     $userfields = facetoface_get_userfields();
+    $customsessionfields = facetoface_get_session_customfields();
     $timenow = time();
-    $i = $startingrow - 1;
+    $i = $startingrow;
 
     $locationcondition = '';
     if (!empty($location)) {
@@ -960,8 +976,8 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
         foreach ($signups as $signup) {
             $userid = $signup->id;
 
-            if ($customfields = facetoface_get_user_customfields($userid, $userfields)) {
-                foreach ($customfields as $fieldname => $value) {
+            if ($customuserfields = facetoface_get_user_customfields($userid, $userfields)) {
+                foreach ($customuserfields as $fieldname => $value) {
                     if (!isset($signup->$fieldname)) {
                         $signup->$fieldname = $value;
                     }
@@ -978,7 +994,7 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
     }
 
     // Fast version of "facetoface_get_sessions($facetofaceid, $location)"
-    $sql = "SELECT s.id, s.datetimeknown, s.capacity, s.location, s.venue,
+    $sql = "SELECT s.id, s.datetimeknown, s.capacity,
                    s.duration, d.timestart, d.timefinish
               FROM {$CFG->prefix}facetoface_sessions s
               JOIN {$CFG->prefix}facetoface_sessions_dates d ON s.id = d.sessionid
@@ -987,7 +1003,10 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
           ORDER BY s.datetimeknown, d.timestart";
 
     if ($sessions = get_records_sql($sql)) {
+        $i = $i - 1; // will be incremented BEFORE each row is written
+
         foreach ($sessions as $session) {
+            $customdata = get_records('facetoface_session_data', 'sessionid', $session->id, '', 'fieldid, data');
 
             $sessiondate = false;
             $starttime   = get_string('wait-listed', 'facetoface');
@@ -1026,8 +1045,20 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
             if (!empty($sessionsignups[$session->id])) {
                 foreach ($sessionsignups[$session->id] as $attendee) {
                     $i++; $j=0;
-                    $worksheet->write_string($i,$j++,$session->location);
-                    $worksheet->write_string($i,$j++,$session->venue);
+
+                    // Custom session fields
+                    foreach ($customsessionfields as $field) {
+                        if (empty($field->showinsummary)) {
+                            continue; // skip
+                        }
+
+                        $data = '-';
+                        if (!empty($customdata[$field->id])) {
+                            $data = $customdata[$field->id]->data;
+                        }
+                        $worksheet->write_string($i, $j++, $data);
+                    }
+
                     if (empty($sessiondate)) {
                         $worksheet->write_string($i, $j++, $status); // session date
                     }
@@ -1076,8 +1107,20 @@ function facetoface_write_activity_attendance($worksheet, $startingrow, $facetof
             else {
                 // no one is sign-up, so let's just print the basic info
                 $i++; $j=0;
-                $worksheet->write_string($i,$j++,$session->location);
-                $worksheet->write_string($i,$j++,$session->venue);
+
+                // Custom session fields
+                foreach ($customsessionfields as $field) {
+                    if (empty($field->showinsummary)) {
+                        continue; // skip
+                    }
+
+                    $data = '-';
+                    if (!empty($customdata[$field->id])) {
+                        $data = $customdata[$field->id]->data;
+                    }
+                    $worksheet->write_string($i, $j++, $data);
+                }
+
                 if (empty($sessiondate)) {
                     $worksheet->write_string($i, $j++, $status); // session date
                 }

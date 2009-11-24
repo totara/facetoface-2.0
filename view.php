@@ -36,12 +36,10 @@ else {
 
 $context = get_context_instance(CONTEXT_MODULE, $cm->id);
 
-if ($form = data_submitted()) {
-    if (!empty($form->download)) {
-        require_capability('mod/facetoface:viewattendees', $context);
-        facetoface_download_attendance($facetoface->name, $facetoface->id, $form->location, $download);
-        exit();
-    }
+if (!empty($download)) {
+    require_capability('mod/facetoface:viewattendees', $context);
+    facetoface_download_attendance($facetoface->name, $facetoface->id, $location, $download);
+    exit();
 }
 
 require_course_login($course);
@@ -110,7 +108,7 @@ function print_session_list($courseid, $facetofaceid, $location)
     // Table headers
     $tableheader = array();
     foreach ($customfields as $field) {
-        if ($field->showinsummary) {
+        if (!empty($field->showinsummary)) {
             $tableheader[] = format_string($field->name);
         }
     }
@@ -144,7 +142,7 @@ function print_session_list($courseid, $facetofaceid, $location)
             // Custom fields
             $customdata = get_records('facetoface_session_data', 'sessionid', $session->id, '', 'fieldid, data');
             foreach ($customfields as $field) {
-                if (!$field->showinsummary) {
+                if (empty($field->showinsummary)) {
                     continue;
                 }
 
