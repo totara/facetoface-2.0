@@ -4,20 +4,27 @@
   //
   //          facetoface                  facetoface_sessions
   //         (CL, pk->id)-------------(CL, pk->id, fk->facetoface)
-  //              |                          |        |
-  //              |                          |        |
-  //              |                          |        |
-  //              |            +-------------+        |
-  //              |            |                      |
-  //          facetoface_submissions                  |
-  //  (UL, pk->id, fk->facetoface, fk->sessionid)     |
-  //                                                  |
+  //              |                          |     |  |
+  //              |                          |     |  |
+  //              |                          |     |  |
+  //              |            +-------------+     |  |
+  //              |            |                   |  |
+  //          facetoface_submissions               |  |
+  //  (UL, pk->id, fk->facetoface, fk->sessionid)  |  |
+  //                                               |  |
+  //                                               |  |
+  //     facetoface_session_field                  |  |
+  //          (SL, pk->id)  |                      |  |
+  //                        |                      |  |
+  //             facetoface_session_data-----------+  |
+  //    (CL, pk->id, fk->sessionid, fk->fieldid)      |
   //                                                  |
   //                                    facetoface_sessions_dates
   //                                    (CL, pk->id, fk->session)
   //
   // Meaning: pk->primary key field of the table
   //          fk->foreign key to link with parent
+  //          SL->system level info
   //          CL->course level info
   //          UL->user level info
   //
@@ -39,6 +46,45 @@ function facetoface_backup_mods($bf, $preferences)
             }
         }
     }
+
+    //$status &= facetoface_backup_session_field($bf, $preferences); // DISABLED
+
+    return $status;
+}
+
+/**
+ * Backup the facetoface_session_field table (all custom session fields)
+ *
+ * NOTE: NOT CURRENTLY BACKED UP!
+ */
+function facetoface_backup_session_field($bf, $preferences)
+{
+    $status = true;
+
+    $sessionfields = get_records('facetoface_session_field');
+    if (!$sessionfields) {
+        return $status;
+    }
+
+    $status = fwrite($bf, start_tag('SESSIONFIELDS', 3, true)) > 0;
+    foreach ($sessionfields as $field) {
+        $status &= fwrite($bf, start_tag('SESSIONFIELD', 4, true)) > 0;
+
+        // facetoface_session_field table
+        $status &= fwrite($bf, full_tag('ID', 5, false, $field->id)) > 0;
+        $status &= fwrite($bf, full_tag('NAME', 5, false, $field->name)) > 0;
+        $status &= fwrite($bf, full_tag('SHORTNAME', 5, false, $field->shortname)) > 0;
+        $status &= fwrite($bf, full_tag('TYPE', 5, false, $field->type)) > 0;
+        $status &= fwrite($bf, full_tag('POSSIBLEVALUES', 5, false, $field->possiblevalues)) > 0;
+        $status &= fwrite($bf, full_tag('REQUIRED', 5, false, $field->required)) > 0;
+        $status &= fwrite($bf, full_tag('DEFAULTVALUE', 5, false, $field->defaultvalue)) > 0;
+        $status &= fwrite($bf, full_tag('ISFILTER', 5, false, $field->isfilter)) > 0;
+        $status &= fwrite($bf, full_tag('SHOWINSUMMARY', 5, false, $field->showinsummary)) > 0;
+
+        $status &= fwrite($bf, end_tag('SESSIONFIELD', 4, true)) > 0;
+    }
+    $status = fwrite($bf, end_tag('SESSIONFIELDS', 3, true)) > 0;
+
     return $status;
 }
 
@@ -105,9 +151,6 @@ function backup_facetoface_sessions($bf, $facetofaceid)
         // facetoface_sessions table
         $status &= fwrite($bf, full_tag('ID', 6, false, $session->id)) > 0;
         $status &= fwrite($bf, full_tag('CAPACITY', 6, false, $session->capacity)) > 0;
-        $status &= fwrite($bf, full_tag('LOCATION', 6, false, $session->location)) > 0;
-        $status &= fwrite($bf, full_tag('VENUE', 6, false, $session->venue)) > 0;
-        $status &= fwrite($bf, full_tag('ROOM', 6, false, $session->room)) > 0;
         $status &= fwrite($bf, full_tag('DETAILS', 6, false, $session->details)) > 0;
         $status &= fwrite($bf, full_tag('DATETIMEKNOWN', 6, false, $session->datetimeknown)) > 0;
         $status &= fwrite($bf, full_tag('DURATION', 6, false, $session->duration)) > 0;
@@ -117,6 +160,8 @@ function backup_facetoface_sessions($bf, $facetofaceid)
         $status &= fwrite($bf, full_tag('TIMEMODIFIED', 6, false, $session->timemodified)) > 0;
 
         $status &= backup_facetoface_sessions_dates($bf, $session->id);
+
+        $status &= backup_facetoface_session_data($bf, $session->id);
 
         $status &= fwrite($bf, end_tag('SESSION', 5, true)) > 0;
     }
@@ -150,6 +195,45 @@ function backup_facetoface_sessions_dates($bf, $sessionid)
         $status &= fwrite($bf, end_tag('DATE', 7, true)) > 0;
     }
     $status &= fwrite($bf, end_tag('DATES', 6, true)) > 0;
+
+    return $status;
+}
+
+/**
+ * Backup the facetoface_session_data table entries for a given
+ * facetoface session
+ *
+ * NOTE: we keep track of the field shortname so that we can lookup
+ * the fieldid when we restore. Custom fields need to be manually
+ * recreated on the destination site.
+ */
+function backup_facetoface_session_data($bf, $sessionid)
+{
+    global $CFG;
+    $status = true;
+
+    $data = get_records_sql("SELECT d.id, f.shortname, d.sessionid, d.data
+                               FROM {$CFG->prefix}facetoface_session_field f
+                               JOIN {$CFG->prefix}facetoface_session_data d ON f.id = d.fieldid
+                              WHERE d.sessionid = $sessionid
+                           ORDER BY d.id");
+    if (!$data) {
+        return $status;
+    }
+
+    $status &= fwrite($bf, start_tag('DATA', 6, true)) > 0;
+    foreach ($data as $datum) {
+        $status &= fwrite($bf, start_tag('DATUM', 7, true)) > 0;
+
+        // facetoface_sessions_dates table
+        $status &= fwrite($bf, full_tag('ID', 8, false, $datum->id)) > 0;
+        $status &= fwrite($bf, full_tag('FIELDSHORTNAME', 8, false, $datum->shortname)) > 0;
+        $status &= fwrite($bf, full_tag('SESSIONID', 8, false, $datum->sessionid)) > 0;
+        $status &= fwrite($bf, full_tag('DATA', 8, false, $datum->data)) > 0;
+
+        $status &= fwrite($bf, end_tag('DATUM', 7, true)) > 0;
+    }
+    $status &= fwrite($bf, end_tag('DATA', 6, true)) > 0;
 
     return $status;
 }

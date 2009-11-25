@@ -155,9 +155,6 @@ function restore_facetoface_sessions($newfacetofaceid, $info, $restore)
 
         $session->facetoface    = $newfacetofaceid;
         $session->capacity      = backup_todb($sessioninfo['#']['CAPACITY']['0']['#']);
-        $session->location      = backup_todb($sessioninfo['#']['LOCATION']['0']['#']);
-        $session->venue         = backup_todb($sessioninfo['#']['VENUE']['0']['#']);
-        $session->room          = backup_todb($sessioninfo['#']['ROOM']['0']['#']);
         $session->details       = backup_todb($sessioninfo['#']['DETAILS']['0']['#']);
         $session->datetimeknown = backup_todb($sessioninfo['#']['DATETIMEKNOWN']['0']['#']);
         $session->duration      = backup_todb($sessioninfo['#']['DURATION']['0']['#']);
@@ -184,6 +181,9 @@ function restore_facetoface_sessions($newfacetofaceid, $info, $restore)
 
             // Table: facetoface_sessions_dates
             $status &= restore_facetoface_sessions_dates($newid, $sessioninfo, $restore);
+
+            // Table: facetoface_session_data
+            $status &= restore_facetoface_session_data($newid, $sessioninfo, $restore);
         }
         else {
             $status = false;
@@ -230,6 +230,64 @@ function restore_facetoface_sessions_dates($newsessionid, $sessioninfo, $restore
 
         if ($newid) {
             backup_putid($restore->backup_unique_code, 'facetoface_sessions_dates', $oldid, $newid);
+        }
+        else {
+            $status = false;
+        }
+    }
+
+    return $status;
+}
+
+/**
+ * Restore the facetoface_session_data table entries for a given
+ * facetoface session
+ *
+ * @param integer $newsessionid ID of the session we are creating
+ */
+function restore_facetoface_session_data($newsessionid, $sessioninfo, $restore)
+{
+    $status = true;
+
+    if (empty($sessioninfo['#']['DATA'])) {
+        return $status; // Nothing to restore
+    }
+
+    $fieldids = get_records('facetoface_session_field', '', '', '', 'shortname, id');
+
+    $data = $sessioninfo['#']['DATA']['0']['#']['DATUM'];
+    foreach ($data as $datuminfo) {
+        $fieldshortname = backup_todb($datuminfo['#']['FIELDSHORTNAME']['0']['#']);
+
+        if (empty($fieldids[$fieldshortname])) {
+            // Custom field not defined on destination site
+            if (!defined('RESTORE_SILENTLY')) {
+                echo 'S';
+            }
+            continue;
+        }
+
+        $oldid = backup_todb($datuminfo['#']['ID']['0']['#']);
+
+        $datum->sessionid = $newsessionid;
+        $datum->fieldid   = $fieldids[$fieldshortname]->id;
+        $datum->data      = backup_todb($datuminfo['#']['DATA']['0']['#']);
+
+        $newid = insert_record('facetoface_session_data', $datum);
+
+        // Progress bar
+        if (!defined('RESTORE_SILENTLY')) {
+            if ($newid) {
+                echo '.';
+            }
+            else {
+                echo 'X';
+            }
+        }
+        backup_flush(300);
+
+        if ($newid) {
+            backup_putid($restore->backup_unique_code, 'facetoface_session_data', $oldid, $newid);
         }
         else {
             $status = false;
