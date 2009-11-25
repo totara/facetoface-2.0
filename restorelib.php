@@ -3,15 +3,14 @@
 /**
  * API function called by the Moodle restore system
  */
-function facetoface_restore_mods($mod, $restore) {
-
+function facetoface_restore_mods($mod, $restore)
+{
     global $CFG;
 
     $status = true;
 
     $data = backup_getid($restore->backup_unique_code, $mod->modtype, $mod->id);
     if ($data) {
-
         $info = $data->info;
 
         $facetoface->course                = $restore->course_id;
@@ -54,10 +53,12 @@ function facetoface_restore_mods($mod, $restore) {
                 // Table: facetoface_submissions
                 $status &= restore_facetoface_submissions($newid, $info, $restore);
             }
-        } else {
+        }
+        else {
             $status = false;
         }
-    } else {
+    }
+    else {
         $status = false;
     }
 
@@ -70,8 +71,8 @@ function facetoface_restore_mods($mod, $restore) {
  *
  * @param integer $newfacetofaceid ID of the facetoface activity we're creating
  */
-function restore_facetoface_submissions($newfacetofaceid, $info, $restore) {
-
+function restore_facetoface_submissions($newfacetofaceid, $info, $restore)
+{
     $status = true;
 
     if (empty($info['MOD']['#']['SUBMISSIONS'])) {
@@ -116,7 +117,8 @@ function restore_facetoface_submissions($newfacetofaceid, $info, $restore) {
         if (!defined('RESTORE_SILENTLY')) {
             if ($newid) {
                 echo '.';
-            } else {
+            }
+            else {
                 echo 'X';
             }
         }
@@ -124,7 +126,8 @@ function restore_facetoface_submissions($newfacetofaceid, $info, $restore) {
 
         if ($newid) {
             backup_putid($restore->backup_unique_code, 'facetoface_submissions', $oldid, $newid);
-        } else {
+        }
+        else {
             $status = false;
         }
     }
@@ -138,8 +141,8 @@ function restore_facetoface_submissions($newfacetofaceid, $info, $restore) {
  *
  * @param integer $newfacetofaceid ID of the facetoface activity we're creating
  */
-function restore_facetoface_sessions($newfacetofaceid, $info, $restore) {
-
+function restore_facetoface_sessions($newfacetofaceid, $info, $restore)
+{
     $status = true;
 
     if (empty($info['MOD']['#']['SESSIONS'])) {
@@ -169,7 +172,8 @@ function restore_facetoface_sessions($newfacetofaceid, $info, $restore) {
         if (!defined('RESTORE_SILENTLY')) {
             if ($newid) {
                 echo '.';
-            } else {
+            }
+            else {
                 echo 'X';
             }
         }
@@ -180,7 +184,8 @@ function restore_facetoface_sessions($newfacetofaceid, $info, $restore) {
 
             // Table: facetoface_sessions_dates
             $status &= restore_facetoface_sessions_dates($newid, $sessioninfo, $restore);
-        } else {
+        }
+        else {
             $status = false;
         }
     }
@@ -194,8 +199,8 @@ function restore_facetoface_sessions($newfacetofaceid, $info, $restore) {
  *
  * @param integer $newsessionid ID of the session we are creating
  */
-function restore_facetoface_sessions_dates($newsessionid, $sessioninfo, $restore) {
-
+function restore_facetoface_sessions_dates($newsessionid, $sessioninfo, $restore)
+{
     $status = true;
 
     if (empty($sessioninfo['#']['DATES'])) {
@@ -216,7 +221,8 @@ function restore_facetoface_sessions_dates($newsessionid, $sessioninfo, $restore
         if (!defined('RESTORE_SILENTLY')) {
             if ($newid) {
                 echo '.';
-            } else {
+            }
+            else {
                 echo 'X';
             }
         }
@@ -224,7 +230,8 @@ function restore_facetoface_sessions_dates($newsessionid, $sessioninfo, $restore
 
         if ($newid) {
             backup_putid($restore->backup_unique_code, 'facetoface_sessions_dates', $oldid, $newid);
-        } else {
+        }
+        else {
             $status = false;
         }
     }
