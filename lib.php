@@ -1851,7 +1851,7 @@ function facetoface_print_coursemodule_info($coursemodule)
             $cancellink = '';
             if (!facetoface_has_session_started($session, $timenow)) {
                 $strcancelbooking = get_string('cancelbooking', 'facetoface');
-                $cancellink = "<tr><td><a class=\"f2fsessionlinks\" href=\"$facetofacepath/signup.php?s={$session->id}&amp;cancelbooking=1\" title=\"$strcancelbooking\">$strcancelbooking</a></td></tr>";
+                $cancellink = "<tr><td><a class=\"f2fsessionlinks\" href=\"$facetofacepath/cancelsignup.php?s={$session->id}\" title=\"$strcancelbooking\">$strcancelbooking</a></td></tr>";
             }
 
             $strmoreinfo = get_string('moreinfo', 'facetoface');

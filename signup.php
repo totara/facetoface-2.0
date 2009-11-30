@@ -4,9 +4,7 @@ require_once '../../config.php';
 require_once 'lib.php';
 require_once 'signup_form.php';
 
-$s  = required_param('s', PARAM_INT); // facetoface session ID
-$cancelbooking     = optional_param('cancelbooking', false, PARAM_BOOL);
-$confirm           = optional_param('confirm', false, PARAM_BOOL);
+$s = required_param('s', PARAM_INT); // facetoface session ID
 $backtoallsessions = optional_param('backtoallsessions', 0, PARAM_INT);
 
 if (!$session = facetoface_get_session($s)) {
@@ -30,44 +28,6 @@ require_capability('mod/facetoface:signup', $context);
 $returnurl = "$CFG->wwwroot/course/view.php?id=$course->id";
 if ($backtoallsessions) {
     $returnurl = "$CFG->wwwroot/mod/facetoface/view.php?f=$backtoallsessions";
-}
-
-if ($cancelbooking and $confirm) {
-    if (!confirm_sesskey()) {
-        print_error('confirmsesskeybad', 'error');
-    }
-
-    $timemessage = 4;
-
-    $errorstr = '';
-    if (facetoface_user_cancel($session, false, false, $errorstr)) {
-        add_to_log($course->id, 'facetoface', 'cancel booking', "signup.php?s=$session->id", $facetoface->id, $cm->id);
-
-        $message = get_string('bookingcancelled', 'facetoface');
-
-        if ($session->datetimeknown) {
-            $error = facetoface_send_cancellation_notice($facetoface, $session, $USER->id);
-            if (empty($error)) {
-                if ($session->datetimeknown && $facetoface->cancellationinstrmngr) {
-                    $message .= '<br /><br />'.get_string('cancellationsentmgr', 'facetoface');
-                }
-                else {
-                    $message .= '<br /><br />'.get_string('cancellationsent', 'facetoface');
-                }
-            }
-            else {
-                error($error);
-            }
-        }
-
-        redirect($returnurl, $message, $timemessage);
-    }
-    else {
-        add_to_log($course->id, 'facetoface', "cancel booking (FAILED)", "signup.php?s=$session->id", $facetoface->id, $cm->id);
-        redirect($returnurl, $errorstr, $timemessage);
-    }
-
-    redirect($returnurl);
 }
 
 $manageremail = false;
@@ -139,13 +99,7 @@ $navigation = build_navigation($navlinks);
 print_header_simple($pagetitle, '', $navigation, '', '', true,
                     update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')));
 
-$heading = '';
-if ($cancelbooking) {
-    $heading = get_string('cancelbookingfor', 'facetoface', $facetoface->name);
-}
-else {
-    $heading = get_string('signupfor', 'facetoface', $facetoface->name);
-}
+$heading = get_string('signupfor', 'facetoface', $facetoface->name);
 
 $viewattendees = has_capability('mod/facetoface:viewattendees', $context);
 $signedup = facetoface_check_signup($facetoface->id);
@@ -156,21 +110,6 @@ if ($signedup and $signedup != $session->id) {
 
 print_box_start();
 print_heading($heading, 'center');
-
-if ($cancelbooking) {
-    if ($signedup) {
-        facetoface_print_session($session, $viewattendees);
-        notice_yesno(get_string('cancellationconfirm', 'facetoface'),
-                     "signup.php?s=$session->id&amp;cancelbooking=1&amp;confirm=1&amp;sesskey=$USER->sesskey", $returnurl);
-    }
-    else {
-        print_error('notsignedup', 'facetoface', $returnurl);
-    }
-
-    print_box_end();
-    print_footer($course);
-    exit;
-}
 
 if (!$signedup and !facetoface_session_has_capacity($session, $context)) {
     print_error('sessionisfull', 'facetoface', $returnurl);
@@ -183,7 +122,7 @@ facetoface_print_session($session, $viewattendees);
 
 if ($signedup) {
     // Cancellation link
-    echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/signup.php?s='.$session->id.'&amp;cancelbooking=1&amp;backtoallsessions='.$backtoallsessions.'" title="'.get_string('cancelbooking','facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
+    echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/cancelsignup.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions.'" title="'.get_string('cancelbooking','facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
 
     // See attendees link
     if ($viewattendees) {
