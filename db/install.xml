@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/facetoface/db" VERSION="20091123" COMMENT="XMLDB file for Moodle mod/facetoface"
+<XMLDB PATH="mod/facetoface/db" VERSION="20091130" COMMENT="XMLDB file for Moodle mod/facetoface"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -81,7 +81,8 @@
         <FIELD NAME="timecreated" TYPE="int" LENGTH="20" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" PREVIOUS="timegraded" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="20" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" PREVIOUS="timecreated" NEXT="timecancelled"/>
         <FIELD NAME="timecancelled" TYPE="int" LENGTH="20" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" PREVIOUS="timemodified" NEXT="notificationtype"/>
-        <FIELD NAME="notificationtype" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" COMMENT="Bit mask for the types of notifications (email, iCalendar, etc.) that the user requested." PREVIOUS="timecancelled"/>
+        <FIELD NAME="notificationtype" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" ENUM="false" COMMENT="Bit mask for the types of notifications (email, iCalendar, etc.) that the user requested." PREVIOUS="timecancelled" NEXT="cancelreason"/>
+        <FIELD NAME="cancelreason" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" ENUM="false" COMMENT="Justification for cancelling a booking" PREVIOUS="notificationtype"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="primary key of the table, please edit me" NEXT="facetoface"/>

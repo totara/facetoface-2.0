@@ -259,5 +259,13 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         }
     }
 
+    if ($result && $oldversion < 2009113000) {
+        // Add new cancellation reason field for signups
+        $table = new XMLDBTable('facetoface_submissions');
+        $field = new XMLDBField('cancelreason');
+        $field->setAttributes(XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null, 'notificationtype');
+        $result = $result && add_field($table, $field);
+    }
+
     return $result;
 }
