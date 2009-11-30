@@ -1321,13 +1321,14 @@ function facetoface_user_signup($session, $facetoface, $course, $discountcode,
 /**
  * Cancel a user who signed up earlier
  *
- * @param class $session record from the facetoface_sessions table
- * @param integer $userid ID of the user to remove from the session
- * @param bool $forcecancel Forces cancellation of sessions that have already occurred
- * @param string $errorstr Passed by reference. For setting error string in calling function
+ * @param class $session       Record from the facetoface_sessions table
+ * @param integer $userid      ID of the user to remove from the session
+ * @param bool $forcecancel    Forces cancellation of sessions that have already occurred
+ * @param string $errorstr     Passed by reference. For setting error string in calling function
+ * @param string $cancelreason Optional justification for cancelling the signup
  */
-function facetoface_user_cancel($session, $userid=false, $forcecancel=false, &$errorstr=null) {
-
+function facetoface_user_cancel($session, $userid=false, $forcecancel=false, &$errorstr=null, $cancelreason='')
+{
     if (!$userid) {
         global $USER;
         $userid = $USER->id;
@@ -1344,7 +1345,7 @@ function facetoface_user_cancel($session, $userid=false, $forcecancel=false, &$e
         }
     }
 
-    if (facetoface_user_cancel_submission($session->id, $userid)) {
+    if (facetoface_user_cancel_submission($session->id, $userid, $cancelreason)) {
         facetoface_remove_bookings_from_user_calendar($session, $userid);
         return true;
     }
@@ -2250,25 +2251,27 @@ function facetoface_get_user_submissions($facetofaceid, $userid, $includecancell
 /**
  * Cancel users' submission to a facetoface session
  *
- * @param integer $session_id
- * @param integer $user_id
+ * @param integer $sessionid   ID of the facetoface_sessions record
+ * @param integer $userid      ID of the user record
+ * @param string $cancelreason Short justification for cancelling the signup
  * @return boolean success
  */
-function facetoface_user_cancel_submission($session_id, $user_id) {
-    global $CFG;
+function facetoface_user_cancel_submission($sessionid, $userid, $cancelreason='')
+{
+    $signup = get_record('facetoface_submissions', 'sessionid', $sessionid, 'userid', $userid, 'timecancelled', 0, 'id');
+    if (!$signup) {
+        return true; // not signed up, nothing to do
+    }
+
     $timenow = time();
-    return execute_sql("
-            UPDATE
-                {$CFG->prefix}facetoface_submissions
-            SET
-                timecancelled = $timenow,
-                timemodified = $timenow
-            WHERE
-                sessionid = $session_id
-                AND userid = $user_id
-                AND timecancelled = 0
-            ",
-            false);
+
+    $newsignup = new object();
+    $newsignup->id = $signup->id;
+    $newsignup->timecancelled = $timenow;
+    $newsignup->timemodified = $timenow;
+    $newsignup->cancelreason = $cancelreason;
+
+    return update_record('facetoface_submissions', $newsignup);
 }
 
 /**
@@ -2283,50 +2286,6 @@ function facetoface_get_view_actions() {
  */
 function facetoface_get_post_actions() {
     return array('cancel booking', 'signup');
-}
-
-/**
- * Get list of users that signed up then cancelled a facetoface session
- *
- * @param integer $session_id
- * @return array users
- */
-function facetoface_get_cancellations($session_id) {
-    global $CFG;
-
-    $records = get_records_sql("
-        SELECT
-            s.id AS submissionid,
-            u.id,
-            u.firstname,
-            u.lastname,
-            u.email,
-            s.timecreated,
-            s.timecancelled
-        FROM
-            {$CFG->prefix}facetoface_submissions s
-        JOIN
-            {$CFG->prefix}user u ON u.id = s.userid
-        WHERE
-            s.sessionid = $session_id
-            AND s.timecancelled > 0
-        ORDER BY
-            u.lastname,
-            u.firstname,
-            s.timecancelled
-    ");
-
-    return $records;
-}
-
-/**
- * Get number of users that signed up then cancelled a facetoface session
- *
- * @param integer $session_id
- * @return interger
- */
-function facetoface_get_num_cancellations($session_id) {
-    return (int) count_records_select('facetoface_submissions', "sessionid = $session_id AND timecancelled >  0");
 }
 
 /**

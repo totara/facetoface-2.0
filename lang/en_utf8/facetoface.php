@@ -30,6 +30,7 @@ $string['cancelbooking'] = 'Cancel booking';
 $string['cancelbookingfor'] = 'Cancel booking for $a';
 $string['cancellationsent'] = 'You should immediately receive a cancellation email.';
 $string['cancellationsentmgr'] = 'You and your manager should immediately receive a cancellation email.';
+$string['cancelreason'] = 'Reason';
 $string['capacity'] = 'Capacity';
 $string['changemanageremailaddress'] = 'Change manager email address';
 $string['changemanageremailinstruction'] = 'Please enter the email address for your current manager below.';

@@ -2,6 +2,7 @@
 
 require_once '../../config.php';
 require_once 'lib.php';
+require_once 'cancelsignup_form.php';
 
 $s  = required_param('s', PARAM_INT); // facetoface session ID
 $confirm           = optional_param('confirm', false, PARAM_BOOL);
@@ -29,15 +30,21 @@ if ($backtoallsessions) {
     $returnurl = "$CFG->wwwroot/mod/facetoface/view.php?f=$backtoallsessions";
 }
 
-if ($confirm) {
-    if (!confirm_sesskey()) {
-        print_error('confirmsesskeybad', 'error');
+$mform =& new mod_facetoface_cancelsignup_form(null, compact('s', 'backtoallsessions'));
+if ($mform->is_cancelled()){
+    redirect($returnurl);
+}
+
+if ($fromform = $mform->get_data()) { // Form submitted
+
+    if (empty($fromform->submitbutton)) {
+        print_error('error:unknownbuttonclicked', 'facetoface', $returnurl);
     }
 
     $timemessage = 4;
 
     $errorstr = '';
-    if (facetoface_user_cancel($session, false, false, $errorstr)) {
+    if (facetoface_user_cancel($session, false, false, $errorstr, $fromform->cancelreason)) {
         add_to_log($course->id, 'facetoface', 'cancel booking', "cancelsignup.php?s=$session->id", $facetoface->id, $cm->id);
 
         $message = get_string('bookingcancelled', 'facetoface');
@@ -84,8 +91,7 @@ print_heading($heading, 'center');
 
 if ($signedup) {
     facetoface_print_session($session, $viewattendees);
-    notice_yesno(get_string('cancellationconfirm', 'facetoface'),
-                 "cancelsignup.php?s=$session->id&amp;confirm=1&amp;sesskey=$USER->sesskey&amp;backtoallsessions=$backtoallsessions", $returnurl);
+    $mform->display();
 }
 else {
     print_error('notsignedup', 'facetoface', $returnurl);

@@ -199,32 +199,43 @@ if ($backtoallsessions) {
 }
 print '<a href="'.$url.'">'.get_string('goback', 'facetoface').'</a></p>';
 
-if (has_capability('mod/facetoface:viewcancellations', $context) && facetoface_get_num_cancellations($session->id)) {
-    // View cancellations
+// View cancellations
+if (has_capability('mod/facetoface:viewcancellations', $context) and
+    ($attendees = facetoface_get_cancellations($session->id))) {
+
     echo '<br />';
     print_heading(get_string('cancellations', 'facetoface'), 'center');
 
-    $table  = '<table align="center" cellpadding="3" cellspacing="0" width="600" style="border-color:#DDDDDD; border-width:1px 1px 1px 1px; border-style:solid;">';
-    $table .= '<tr>';
-    $table .= '<th class="header" align="left">&nbsp;'.get_string('name').'</th>';
-    $table .= '<th class="header" align="cemter">'.get_string('timesignedup', 'facetoface').'</th>';
-    $table .= '<th class="header" align="cemter">'.get_string('timecancelled', 'facetoface').'</th>';
-    $table .= '</tr>';
-
-    $attendees = facetoface_get_cancellations($session->id);
+    $table = new object();
+    $table->head = array(get_string('name'), get_string('timesignedup', 'facetoface'),
+                         get_string('timecancelled', 'facetoface'), get_string('cancelreason', 'facetoface'));
+    $table->align = array('left', 'center', 'center');
 
     foreach($attendees as $attendee) {
-        $table .= '<tr>';
-        $table .= '<td>&nbsp;<a href="'.$CFG->wwwroot.'/user/view.php?id='.$attendee->id.
-            '&amp;course='.$course->id.'">'.$attendee->lastname.', '.$attendee->firstname.'</a></td>';
-        $table .= '<td align="center">'.userdate($attendee->timecreated, get_string('strftimedatetime')).'</td>';
-        $table .= '<td align="center">'.userdate($attendee->timecancelled, get_string('strftimedatetime')).'</td>';
-        $table .= '</tr>';
+        $data = array();
+        $data[] = "<a href=\"$CFG->wwwroot/user/view.php?id={$attendee->id}&amp;course={$course->id}\">". format_string(fullname($attendee)).'</a>';
+        $data[] = userdate($attendee->timecreated, get_string('strftimedatetime'));
+        $data[] = userdate($attendee->timecancelled, get_string('strftimedatetime'));
+        $data[] = format_string($attendee->cancelreason);
+        $table->data[] = $data;
     }
-
-    $table .= '</table>';
-    echo $table;
+    print_table($table);
 }
 
 print_box_end();
 print_footer($course);
+
+function facetoface_get_cancellations($sessionid)
+{
+    global $CFG;
+
+    $fullname = sql_fullname('u.firstname', 'u.lastname');
+
+    $sql = "SELECT s.id AS submissionid, u.id, u.firstname, u.lastname,
+                   s.timecreated, s.timecancelled, s.cancelreason
+              FROM {$CFG->prefix}facetoface_submissions s
+              JOIN {$CFG->prefix}user u ON u.id = s.userid
+             WHERE s.sessionid = $sessionid AND s.timecancelled > 0
+          ORDER BY $fullname, s.timecancelled";
+    return get_records_sql($sql);
+}
