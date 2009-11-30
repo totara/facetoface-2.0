@@ -818,7 +818,8 @@ function facetoface_get_grade($userid, $courseid, $facetofaceid) {
 /**
  * Get list of users attending a given session
  */
-function facetoface_get_attendees($sessionid) {
+function facetoface_get_attendees($sessionid)
+{
     global $CFG;
 
     $records = get_records_sql("SELECT u.id, s.id AS submissionid, u.firstname, u.lastname, u.email,
@@ -826,10 +827,8 @@ function facetoface_get_attendees($sessionid) {
                                   FROM {$CFG->prefix}facetoface f
                                   JOIN {$CFG->prefix}facetoface_submissions s ON s.facetoface = f.id
                                   JOIN {$CFG->prefix}user u ON u.id = s.userid
-                                 WHERE s.sessionid=$sessionid
-                                   AND s.timecancelled = 0
+                                 WHERE s.sessionid = $sessionid AND s.timecancelled = 0
                               ORDER BY u.firstname");
-
     if (!$records) {
         return $records;
     }
@@ -2480,6 +2479,7 @@ function facetoface_session_has_capacity($session, $context) {
 function facetoface_print_session($session, $showcapacity)
 {
     $table = new object();
+    $table->summary = get_string('sessionsdetailstablesummary', 'facetoface');
     $table->class = 'f2fsession';
     $table->width = '50%';
     $table->align = array('right', 'left');

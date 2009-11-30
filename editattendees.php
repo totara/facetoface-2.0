@@ -12,6 +12,7 @@ $showall        = optional_param('showall', 0, PARAM_BOOL);
 $searchtext     = optional_param('searchtext', '', PARAM_RAW); // search string
 $suppressemail  = optional_param('suppressemail', false, PARAM_BOOL); // send email notifications
 $previoussearch = optional_param('previoussearch', 0, PARAM_BOOL);
+$backtoallsessions = optional_param('backtoallsessions', 0, PARAM_INT); // facetoface activity to go back to
 
 if (!$session = facetoface_get_session($s)) {
     print_error('error:incorrectcoursemodulesession', 'facetoface');
@@ -174,7 +175,7 @@ if (!empty($errors)) {
 
 // Bottom of the page links
 print '<p style="text-align: center">';
-$url = $CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id;
+$url = $CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions;
 print '<a href="'.$url.'">'.get_string('goback', 'facetoface').'</a></p>';
 
 print_box_end();

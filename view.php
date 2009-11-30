@@ -213,7 +213,7 @@ function print_session_list($courseid, $facetofaceid, $location)
                     . '<a href="sessions.php?s='.$session->id.'&amp;d=1" title="'.get_string('deletesession', 'facetoface').'">'.get_string('delete').'</a> ';
             }
             if ($viewattendees){
-                $options .= '<a href="attendees.php?s='.$session->id.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a> ';
+                $options .= '<a href="attendees.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a> ';
             }
             if ($isbookedsession) {
                 $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('moreinfo', 'facetoface').'">'.get_string('moreinfo', 'facetoface').'</a><br />'

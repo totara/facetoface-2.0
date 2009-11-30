@@ -59,7 +59,7 @@ if ($form = data_submitted()) {
     require_capability('mod/facetoface:takeattendance', $context);
 
     if ($cancelform) {
-        redirect('attendees.php?s='.$s, '', '4');
+        redirect("attendees.php?s=$s&amp;backtoallsessions=$backtoallsessions");
     }
     elseif (facetoface_take_attendance($form)) {
         add_to_log($course->id, 'facetoface', 'take attendance', "view.php?id=$cm->id", $facetoface->id, $cm->id);
@@ -81,6 +81,7 @@ if ($takeattendance && !has_capability('mod/facetoface:takeattendance', $context
     $takeattendance = 0;
 }
 
+$heading = '';
 if ($takeattendance) {
     $heading = get_string('takeattendance', 'facetoface');
 }
@@ -93,120 +94,109 @@ $heading .= ' - ' . format_string($facetoface->name);
 print_box_start();
 print_heading($heading, 'center');
 
-facetoface_print_session($session, true);
-echo '<br/>';
-
 if ($takeattendance) {
-    echo '<center><span style="font-size: 12px; line-height: 18px;">';
-    echo get_string('attendanceinstructions', 'facetoface');
-    echo '</span></center><br />';
+    echo '<form action="attendees.php?s='.$s.'" method="post">';
+    echo '<p>'. get_string('attendanceinstructions', 'facetoface');
+    echo '<input type="hidden" name="sesskey" value="'.$USER->sesskey.'" />';
+    echo '<input type="hidden" name="s" value="'.$s.'" />';
+    echo '<input type="hidden" name="backtoallsessions" value="'.$backtoallsessions.'" /></p>';
+}
+else {
+    facetoface_print_session($session, true);
 }
 
-$table = '';
+$table = new object();
+$table->head = array(get_string('name'));
+$table->summary = get_string('attendeestablesummary', 'facetoface');
+$table->align = array('left');
+$table->size = array('100%');
+$table->width = '50%';
 
 if ($takeattendance) {
-    $table .= '<form action="attendees.php?s='.$s.'" method="post">';
-    $table .= '<input type="hidden" name="sesskey" value="'.$USER->sesskey.'" />';
-    $table .= '<input type="hidden" name="s" value="'.$s.'" />';
-    $table .= '<input type="hidden" name="action" value="1" />';
+    $table->head[] = get_string('attendedsession', 'facetoface');
+    $table->align[] = array('center');
 }
-$table .= '<table align="center" cellpadding="3" cellspacing="0" width="600" style="border-color:#DDDDDD; border-width:1px 1px 1px 1px; border-style:solid;">';
-$table .= '<tr>';
-$table .= '<th class="header" align="left">&nbsp;'.get_string('name').'</th>';
-if (has_capability('mod/facetoface:viewattendees', $context)) {
-    if ($takeattendance) {
-        $table .= '<th class="header" align="center" width="40%">'.get_string('attendedsession', 'facetoface').'</th>';
-    }
-    else {
-        if (!get_config(NULL, 'facetoface_hidecost')) {
-            $table .= '<th class="header" align="center">'.get_string('cost', 'facetoface').'</th>';
-            if (!get_config(NULL, 'facetoface_hidediscount')) {
-                $table .= '<th class="header" align="center">'.get_string('discountcode', 'facetoface').'</th>';
-            }
+else {
+    if (!get_config(NULL, 'facetoface_hidecost')) {
+        $table->head[] = get_string('cost', 'facetoface');
+        $table->align[] = array('center');
+        if (!get_config(NULL, 'facetoface_hidediscount')) {
+            $table->head[] = get_string('discountcode', 'facetoface');
+            $table->align[] = array('center');
         }
-        $table .= '<th class="header" align="center">'.get_string('attendance', 'facetoface').'</th>';
     }
+    $table->head[] = get_string('attendance', 'facetoface');
+    $table->align[] = array('center');
 }
-$table .= '</tr>';
 
 if ($attendees = facetoface_get_attendees($session->id)) {
-
     foreach($attendees as $attendee) {
-        $table .= '<tr>';
-        $table .= '<td>&nbsp;<a href="'.$CFG->wwwroot.'/user/view.php?id='.$attendee->id.
-            '&amp;course='.$course->id.'">'.$attendee->firstname.', '.$attendee->lastname.'</a></td>';
-        if (has_capability('mod/facetoface:viewattendees', $context)) {
-            if ($takeattendance) {
-                $checkbox_id = 'submissionid_'.$attendee->submissionid;
-                $did_attend = ((int)($attendee->grade)==100)? 1 : 0;
-                $checkbox = print_checkbox($checkbox_id, $did_attend, $did_attend, '', '', '', true);
-                $table .= '<td align="center">'.$checkbox.'</td>';
-            }
-            else {
-                if (!get_config(NULL, 'facetoface_hidecost')) {
-                    $table .= '<td align="center">'.facetoface_cost($attendee->id, $session->id, $session).'</td>';
-                    if (!get_config(NULL, 'facetoface_hidediscount')) {
-                        $table .= '<td align="center">'.$attendee->discountcode.'</td>';
-                    }
-                }
-                $did_attend = ((int)($attendee->grade)==100)? get_string("yes") : get_string("no");
-                $table .= '<td align="center">'.$did_attend.'</td>';
-            }
+        $data = array();
+        $data[] = "<a href=\"$CFG->wwwroot/user/view.php?id={$attendee->id}&amp;course={$course->id}\">". format_string(fullname($attendee)).'</a>';
+
+        if ($takeattendance) {
+            $checkboxid = 'submissionid_'.$attendee->submissionid;
+            $didattend = ((int)($attendee->grade) > 0) ? 1 : 0;
+            $checkbox = print_checkbox($checkboxid, $didattend, $didattend, '', '', '', true);
+            $data[] = $checkbox;
         }
-        $table .= '</tr>';
+        else {
+            if (!get_config(NULL, 'facetoface_hidecost')) {
+                $data[] = facetoface_cost($attendee->id, $session->id, $session);
+                if (!get_config(NULL, 'facetoface_hidediscount')) {
+                    $data[] = $attendee->discountcode;
+                }
+            }
+            $didattend = ((int)($attendee->grade) > 0)? get_string('yes') : get_string('no');
+            $data[] = $didattend;
+        }
+        $table->data[] = $data;
     }
 }
 else {
-    $table .= '<tr>';
-    if (has_capability('mod/facetoface:viewattendees', $context)) {
-        $table .= '<td colspan="2">&nbsp;'.get_string('nosignedupusers', 'facetoface').'</td>';
-    }
-    else  {
-        $table .= '<td>&nbsp;'.get_string('nosignedupusers', 'facetoface').'</td>';
-    }
-    $table .= '</tr>';
+    $table->data = array(array(get_string('nosignedupusers', 'facetoface')));
 }
-$table .= '</table>';
+
+print_table($table);
 
 if ($takeattendance) {
-    $table .= '<br /><center>';
-    $table .= '<input type="submit" value="'.get_string('saveattendance', 'facetoface').'" />';
-    $table .= '&nbsp;<input type="submit" name="cancelform" value="'.get_string('cancel').'" />';
-    $table .= '</center>';
-
-    $table .= '</form>';
- }
-
-echo $table;
-
-// Actions
-print '<p style="text-align: center">';
-if (has_capability('mod/facetoface:takeattendance', $context)) {
-    if (!$takeattendance and !empty($attendees)) {
-        // Take attendance
-        echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;takeattendance=1">'.get_string('takeattendance', 'facetoface').'</a> - ';
+    echo '<p>';
+    echo '<input type="submit" value="'.get_string('saveattendance', 'facetoface').'" />';
+    echo '&nbsp;<input type="submit" name="cancelform" value="'.get_string('cancel').'" />';
+    echo '</p></form>';
+}
+else {
+    // Actions
+    print '<p>';
+    if (has_capability('mod/facetoface:takeattendance', $context)) {
+        if (!$takeattendance and !empty($attendees)) {
+            // Take attendance
+            echo '<a href="attendees.php?s='.$session->id.'&amp;takeattendance=1&amp;backtoallsessions='.$backtoallsessions.'">'.get_string('takeattendance', 'facetoface').'</a> - ';
+        }
     }
-}
-if (has_capability('mod/facetoface:addattendees', $context) ||
-    has_capability('mod/facetoface:removeattendees', $context)) {
-    // Add/remove attendees
-    echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/editattendees.php?s='.$session->id.'">'.get_string('addremoveattendees', 'facetoface').'</a> - ';
-}
+    if (has_capability('mod/facetoface:addattendees', $context) ||
+        has_capability('mod/facetoface:removeattendees', $context)) {
+        // Add/remove attendees
+        echo '<a href="editattendees.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions.'">'.get_string('addremoveattendees', 'facetoface').'</a> - ';
+    }
 
-$url = $CFG->wwwroot.'/course/view.php?id='.$course->id;
-if ($backtoallsessions) {
-    $url = $CFG->wwwroot.'/mod/facetoface/view.php?f='.$facetoface->id.'&amp;backtoallsessions='.$backtoallsessions;
+    // Go back
+    $url = "$CFG->wwwroot/course/view.php?id=$course->id";
+    if ($backtoallsessions) {
+        $url = "view.php?f={$facetoface->id}&amp;backtoallsessions=$backtoallsessions";
+    }
+    print '<a href="'.$url.'">'.get_string('goback', 'facetoface').'</a></p>';
 }
-print '<a href="'.$url.'">'.get_string('goback', 'facetoface').'</a></p>';
 
 // View cancellations
-if (has_capability('mod/facetoface:viewcancellations', $context) and
+if (!$takeattendance and has_capability('mod/facetoface:viewcancellations', $context) and
     ($attendees = facetoface_get_cancellations($session->id))) {
 
     echo '<br />';
     print_heading(get_string('cancellations', 'facetoface'), 'center');
 
     $table = new object();
+    $table->summary = get_string('cancellationstablesummary', 'facetoface');
     $table->head = array(get_string('name'), get_string('timesignedup', 'facetoface'),
                          get_string('timecancelled', 'facetoface'), get_string('cancelreason', 'facetoface'));
     $table->align = array('left', 'center', 'center');
