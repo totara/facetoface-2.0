@@ -29,31 +29,7 @@ $settings->add(new admin_setting_configcheckbox('facetoface_disableicalcancel', 
 
 
 // List of existing custom fields
-$html = list_of_customfields();
+$html = facetoface_list_of_customfields();
 $html .= '<p><a href="'.$CFG->wwwroot.'/mod/facetoface/customfield.php?id=0">' . get_string('addnewfieldlink', 'facetoface') . '</a></p>';
 
 $settings->add(new admin_setting_heading('facetoface_customfields_header', get_string('customfieldsheading', 'facetoface'), $html));
-
-function list_of_customfields()
-{
-    global $CFG, $USER;
-
-    if ($fields = get_records('facetoface_session_field', '', '', 'name', 'id, name')) {
-        $table = new stdClass;
-        $table->width = '50%';
-        $table->tablealign = 'left';
-        $table->data = array();
-        $table->size = array('100%');
-        foreach ($fields as $field) {
-            $fieldname = format_string($field->name);
-            $editlink = '<a href="'.$CFG->wwwroot.'/mod/facetoface/customfield.php?id='.$field->id.'">'.
-                '<img class="iconsmall" src="'.$CFG->pixpath.'/t/edit.gif" alt="'.get_string('edit').'" /></a>';
-            $deletelink = '<a href="'.$CFG->wwwroot.'/mod/facetoface/customfield.php?id='.$field->id.'&amp;d=1&amp;sesskey='.$USER->sesskey.'">'.
-                '<img class="iconsmall" src="'.$CFG->pixpath.'/t/delete.gif" alt="'.get_string('delete').'" /></a>';
-            $table->data[] = array($fieldname, $editlink, $deletelink);
-        }
-        return print_table($table, true);
-    }
-
-    return get_string('nocustomfields', 'facetoface');
-}
