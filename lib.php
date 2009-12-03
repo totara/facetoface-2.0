@@ -2522,7 +2522,7 @@ function facetoface_print_session($session, $showcapacity)
     else {
         $signupcount = facetoface_get_num_attendees($session->id);
         $placesleft = $session->capacity - $signupcount;
-        $table->data[] = array(get_string('capacity', 'facetoface'), $placesleft);
+        $table->data[] = array(get_string('seatsavailable', 'facetoface'), $placesleft);
     }
 
     if (!empty($session->duration)) {
