@@ -211,6 +211,7 @@ function restore_facetoface_sessions_dates($newsessionid, $sessioninfo, $restore
     foreach ($dates as $dateinfo) {
         $oldid = backup_todb($dateinfo['#']['ID']['0']['#']);
 
+        $date = new object();
         $date->sessionid  = $newsessionid;
         $date->timestart  = backup_todb($dateinfo['#']['TIMESTART']['0']['#']);
         $date->timefinish = backup_todb($dateinfo['#']['TIMEFINISH']['0']['#']);
@@ -269,6 +270,7 @@ function restore_facetoface_session_data($newsessionid, $sessioninfo, $restore)
 
         $oldid = backup_todb($datuminfo['#']['ID']['0']['#']);
 
+        $datum = new object();
         $datum->sessionid = $newsessionid;
         $datum->fieldid   = $fieldids[$fieldshortname]->id;
         $datum->data      = backup_todb($datuminfo['#']['DATA']['0']['#']);
