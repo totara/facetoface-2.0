@@ -139,6 +139,12 @@ if ($fromform = $mform->get_data()) { // Form submitted
             add_to_log($course->id, 'facetoface', 'update session (FAILED)', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
             print_error('error:couldnotupdatesession', 'facetoface', $returnurl);
         }
+
+        // Remove old site-wide calendar entry
+        if (!facetoface_remove_session_from_site_calendar($session)) {
+            rollback_sql();
+            print_error('error:couldnotupdatecalendar', 'facetoface', $returnurl);
+        }
     }
     else {
         if (!$sessionid = facetoface_add_session($todb, $sessiondates)) {
@@ -158,6 +164,18 @@ if ($fromform = $mform->get_data()) { // Form submitted
             rollback_sql();
             print_error('error:couldnotsavecustomfield', 'facetoface', $returnurl);
         }
+    }
+
+    // Retrieve record that was just inserted/updated
+    if (!$session = facetoface_get_session($sessionid)) {
+        rollback_sql();
+        print_error('error:couldnotfindsession', 'facetoface', $returnurl);
+    }
+
+    // Put the session in the site-wide calendar (needs customfields to be up to date)
+    if (!facetoface_add_session_to_site_calendar($session, $facetoface)) {
+        rollback_sql();
+        print_error('error:couldnotupdatecalendar', 'facetoface', $returnurl);
     }
 
     if ($update) {

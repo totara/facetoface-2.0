@@ -35,6 +35,9 @@ define('CUSTOMFIELD_TYPE_TEXT',        0);
 define('CUSTOMFIELD_TYPE_SELECT',      1);
 define('CUSTOMFIELD_TYPE_MULTISELECT', 2);
 
+// Calendar-related constants
+define('CALENDAR_MAX_NAME_LENGTH', 10);
+
 /**
  * Prints the cost amount along with the appropriate currency symbol.
  *
@@ -469,6 +472,9 @@ function facetoface_delete_session($session)
         rollback_sql();
         return false;
     }
+
+    // Remove entry from site-wide calendar
+    facetoface_remove_session_from_site_calendar($session);
 
     // Delete session details
     if (!delete_records('facetoface_sessions', 'id', $session->id)) {
@@ -2395,6 +2401,57 @@ function facetoface_add_session_to_user_calendar($session, $eventname, $userid, 
 }
 
 /**
+ * Add a link to the session to the site Calendar
+ *
+ * @param class   $session     Record from the facetoface_sessions table
+ * @param class   $facetoface  Record from the facetoface table
+ */
+function facetoface_add_session_to_site_calendar($session, $facetoface)
+{
+    global $CFG;
+
+    if (empty($facetoface->showoncalendar) or empty($session->datetimeknown)) {
+        return true; // not meant for the calendar
+    }
+
+    $shortname = $facetoface->shortname;
+    if (empty($shortname)) {
+        $shortname = substr($facetoface->name, 0, CALENDAR_MAX_NAME_LENGTH);
+    }
+
+    $description = '';
+    if (!empty($facetoface->description)) {
+        $description .= '<p>'.clean_param($facetoface->description, FORMAT_HTML).'</p>';
+    }
+    $description .= facetoface_print_session($session, false, true, true);
+    $signupurl = "$CFG->wwwroot/mod/facetoface/signup.php?s=$session->id";
+    $description .= '<a href="' . $signupurl . '">' . get_string('signupforthissession', 'facetoface') . '</a>';
+
+    $result = true;
+    foreach ($session->sessiondates as $date) {
+        $newevent = new object();
+        $newevent->name = addslashes($shortname);
+        $newevent->description = addslashes($description);
+        $newevent->format = FORMAT_HTML;
+        $newevent->courseid = SITEID; // site-wide event
+        $newevent->groupid = 0;
+        $newevent->userid = 0; // not a user event
+        $newevent->uuid = "$session->id";
+        $newevent->instance = $session->facetoface;
+        $newevent->modulename = 'facetoface';
+        $newevent->eventtype = "facetofacesession";
+        $newevent->timestart = $date->timestart;
+        $newevent->timeduration = $date->timefinish - $date->timestart;
+        $newevent->visible = 1;
+        $newevent->timemodified = time();
+
+        $result = $result && insert_record('event', $newevent);
+    }
+
+    return $result;
+}
+
+/**
  * Remove all entries in the student's calendar which relate to this session.
  *
  * @param class $session    Record from the facetoface_sessions table
@@ -2405,7 +2462,23 @@ function facetoface_remove_bookings_from_user_calendar($session, $userid)
     return delete_records_select('event', "modulename = 'facetoface' AND
                                            eventtype = 'facetofacebooking' AND
                                            instance = $session->facetoface AND
-                                           userid = $userid");
+                                           userid = $userid AND
+                                           courseid = 0");
+}
+
+/**
+ * Remove all entries in the site calendar which relate to this session.
+ *
+ * @param class $session       Record from the facetoface_sessions table
+ */
+function facetoface_remove_session_from_site_calendar($session)
+{
+    return delete_records_select('event', "modulename = 'facetoface' AND
+                                           eventtype = 'facetofacesession' AND
+                                           instance = $session->facetoface AND
+                                           courseid = ". SITEID . " AND
+                                           uuid = '$session->id' AND
+                                           userid = 0");
 }
 
 /**
@@ -2474,15 +2547,21 @@ function facetoface_session_has_capacity($session, $context) {
 /**
  * Print the details of a session
  *
- * @param object $session Record from facetoface_sessions
+ * @param object $session         Record from facetoface_sessions
+ * @param boolean $showcapacity   Show the capacity (true) or only the seats available (false)
+ * @param boolean $calendaroutput Whether the output should be formatted for a calendar event
+ * @param boolean $return         Whether to return (true) the html or print it directly (true)
  */
-function facetoface_print_session($session, $showcapacity)
+function facetoface_print_session($session, $showcapacity, $calendaroutput=false, $return=false)
 {
     $table = new object();
     $table->summary = get_string('sessionsdetailstablesummary', 'facetoface');
     $table->class = 'f2fsession';
     $table->width = '50%';
     $table->align = array('right', 'left');
+    if ($calendaroutput) {
+        $table->tablealign = 'left';
+    }
 
     $customfields = facetoface_get_session_customfields();
     $customdata = get_records('facetoface_session_data', 'sessionid', $session->id, '', 'fieldid, data');
@@ -2519,7 +2598,7 @@ function facetoface_print_session($session, $showcapacity)
     if ($showcapacity) {
         $table->data[] = array(get_string('capacity', 'facetoface'), $session->capacity);
     }
-    else {
+    elseif (!$calendaroutput) {
         $signupcount = facetoface_get_num_attendees($session->id);
         $placesleft = $session->capacity - $signupcount;
         $table->data[] = array(get_string('seatsavailable', 'facetoface'), $placesleft);
@@ -2539,7 +2618,7 @@ function facetoface_print_session($session, $showcapacity)
         $table->data[] = array(get_string('details', 'facetoface'), $details);
     }
 
-    print_table($table);
+    return print_table($table, $return);
 }
 
 /**
