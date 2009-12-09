@@ -267,5 +267,35 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $result = $result && add_field($table, $field);
     }
 
+    if ($result && $oldversion < 2009120900) {
+        // Create Calendar events for all existing Face-to-face sessions
+        begin_sql();
+
+        if ($records = get_records('facetoface_sessions', '', '', '', 'id, facetoface')) {
+            // Remove all exising site-wide events (there shouldn't be any)
+            foreach ($records as $record) {
+                if (!facetoface_remove_session_from_site_calendar($record)) {
+                    $result = false;
+                    rollback_sql();
+                    break;
+                }
+            }
+
+            // Add new site-wide events
+            foreach ($records as $record) {
+                $session = facetoface_get_session($record->id);
+                $facetoface = get_record('facetoface', 'id', $record->facetoface);
+
+                if (!facetoface_add_session_to_site_calendar($session, $facetoface)) {
+                    $result = false;
+                    rollback_sql();
+                    break;
+                }
+            }
+        }
+
+        commit_sql();
+    }
+
     return $result;
 }
