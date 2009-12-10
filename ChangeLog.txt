@@ -1,8 +1,12 @@
 (UNRELEASED)
 New features:
 - Calendar entries for students and teachers
+- Calendar entries for all sessions (site-wide events)
+- Custom fields (defined site-wide) for session details
+- Session details can now contain HTML characters
 
 Improvements:
+- User timezone is used in reminder emails
 - Add a new capability for determining whether or not overbooking is allowed
 - Split add/remove attendees into two difference capabilities
 - Allow users to enter duration like "1:20" (1 hour and 20 minutes)
@@ -15,6 +19,8 @@ Improvements:
 - Optimised attendance exports
 - Add duration column to attendance exports
 - Use a date column for timestamp columns
+- Moved most forms to formslib
+- All pages are now valid XHTML
 
 Bug fixes:
 - Prevent users from cancelling after the session has ended
