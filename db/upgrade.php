@@ -297,5 +297,14 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         commit_sql();
     }
 
+    if ($result && $oldversion < 2009121000) {
+        // This should have been done a while ago, but for some reason, I'm still seeing these fields on some sites
+        $table = new XMLDBTable('facetoface_submissions');
+        $field1 = new XMLDBField('grade');
+        $field2 = new XMLDBField('timegraded');
+        $result = $result && drop_field($table, $field1);
+        $result = $result && drop_field($table, $field2);
+    }
+
     return $result;
 }
