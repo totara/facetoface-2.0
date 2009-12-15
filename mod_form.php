@@ -88,10 +88,10 @@ class mod_facetoface_mod_form extends moodleform_mod {
 
         $reminderperiod = array();
         for ($i=1; $i<=20; $i += 1) {
-            $reminderperiod[] = $i;
+            $reminderperiod[$i] = $i;
         }
         $mform->addElement('select', 'reminderperiod', get_string('reminderperiod', 'facetoface'), $reminderperiod);
-        $mform->setDefault('reminderperiod', 1); // element at position 1 is 2
+        $mform->setDefault('reminderperiod', 2);
         $mform->setHelpButton('reminderperiod', array('reminderperiod', get_string('reminderperiod', 'facetoface'), 'facetoface'));
 
         // WAITLISTED MESSAGE
