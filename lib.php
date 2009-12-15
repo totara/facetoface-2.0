@@ -36,7 +36,7 @@ define('CUSTOMFIELD_TYPE_SELECT',      1);
 define('CUSTOMFIELD_TYPE_MULTISELECT', 2);
 
 // Calendar-related constants
-define('CALENDAR_MAX_NAME_LENGTH', 10);
+define('CALENDAR_MAX_NAME_LENGTH', 12);
 
 /**
  * Prints the cost amount along with the appropriate currency symbol.
