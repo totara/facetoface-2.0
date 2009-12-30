@@ -157,10 +157,10 @@ if ($fromform = $mform->get_data()) { // Form submitted
     foreach ($customfields as $field) {
         $fieldname = "custom_$field->shortname";
         if (empty($fromform->$fieldname)) {
-            continue; // skip missing fields
+            $fromform->$fieldname = ''; // need to be able to clear fields
         }
 
-        if (!facetoface_save_customfield($field->id, $fromform->$fieldname, $sessionid)) {
+        if (!facetoface_save_customfield_value($field->id, $fromform->$fieldname, $sessionid, 'session')) {
             rollback_sql();
             print_error('error:couldnotsavecustomfield', 'facetoface', $returnurl);
         }
@@ -213,7 +213,7 @@ elseif ($session != null) { // Edit mode
 
     foreach ($customfields as $field) {
         $fieldname = "custom_$field->shortname";
-        $toform->$fieldname = facetoface_get_customfield($field, $session->id);
+        $toform->$fieldname = facetoface_get_customfield_value($field, $session->id, 'session');
     }
 
     $mform->set_data($toform);

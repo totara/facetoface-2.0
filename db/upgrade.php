@@ -306,5 +306,25 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $result = $result && drop_field($table, $field2);
     }
 
+    if ($result && $oldversion < 2009122900) {
+        // Add tables required for site notices
+
+        $table1 = new XMLDBTable('facetoface_notice');
+        $table1->addFieldInfo('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null, null);
+        $table1->addFieldInfo('name', XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null);
+        $table1->addFieldInfo('text', XMLDB_TYPE_TEXT, 'medium', null, null, null, null, null, null);
+        $table1->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $result = $result && create_table($table1);
+
+        $table2 = new XMLDBTable('facetoface_notice_data');
+        $table2->addFieldInfo('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null, null);
+        $table2->addFieldInfo('fieldid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '0');
+        $table2->addFieldInfo('noticeid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '0');
+        $table2->addFieldInfo('data', XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null);
+        $table2->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table2->addIndexInfo('facetoface_notice_date_fieldid', XMLDB_INDEX_NOTUNIQUE, array('fieldid'));
+        $result = $result && create_table($table2);
+    }
+
     return $result;
 }
