@@ -61,6 +61,8 @@ if (empty($cm->visible) and !has_capability('mod/facetoface:viewemptyactivities'
 print_box_start();
 print_heading(get_string('allsessionsin', 'facetoface', $facetoface->name), "center");
 
+echo format_text($facetoface->description, FORMAT_HTML);
+
 $locations = get_locations($facetoface->id);
 if (!empty($locations)) {
     echo '<form method="get" action="view.php">';
