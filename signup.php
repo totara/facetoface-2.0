@@ -99,6 +99,19 @@ $navigation = build_navigation($navlinks);
 print_header_simple($pagetitle, '', $navigation, '', '', true,
                     update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')));
 
+// Guests can't signup for a session, so offer them a choice of logging in or going back.
+if (isguestuser()) {
+    $loginurl = $CFG->wwwroot.'/login/index.php';
+    if (!empty($CFG->loginhttps)) {
+        $loginurl = str_replace('http:','https:', $loginurl);
+    }
+
+    notice_yesno('<p>' . get_string('guestsno', 'facetoface') . "</p>\n\n</p>" .
+        get_string('liketologin') . '</p>', $loginurl, get_referer(false));
+    print_footer();
+    exit();
+}
+
 $heading = get_string('signupfor', 'facetoface', $facetoface->name);
 
 $viewattendees = has_capability('mod/facetoface:viewattendees', $context);
