@@ -61,9 +61,11 @@ if (empty($cm->visible) and !has_capability('mod/facetoface:viewemptyactivities'
 print_box_start();
 print_heading(get_string('allsessionsin', 'facetoface', $facetoface->name), "center");
 
-print_box_start('generalbox','description');
-echo format_text($facetoface->description, FORMAT_HTML);
-print_box_end();
+if ($facetoface->description) {
+    print_box_start('generalbox','description');
+    echo format_text($facetoface->description, FORMAT_HTML);
+    print_box_end();
+}
 
 $locations = get_locations($facetoface->id);
 if (!empty($locations)) {
