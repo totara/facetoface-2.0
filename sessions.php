@@ -78,7 +78,7 @@ if ($d and $confirm) {
 
 $customfields = facetoface_get_session_customfields();
 
-$mform =& new mod_facetoface_session_form(null, compact('id', 'f', 's', 'c', 'nbdays', 'customfields'));
+$mform = new mod_facetoface_session_form(null, compact('id', 'f', 's', 'c', 'nbdays', 'customfields'));
 if ($mform->is_cancelled()){
     redirect($returnurl);
 }
