@@ -1,4 +1,19 @@
-(UNRELEASED)
+1.6.0 (2010-09-28):
+New features:
+- Stateful bookings, allow for multiple booking states e.g. unconfirmed
+- Multiple types of attendance - partial, full, no show
+- Option to require manager approval before booking's are confirmed
+- Save booking/attendance history for a session
+- Allow booking of a session over maximum capacity
+- The ability to assign users as trainers to sessions
+
+Improvements:
+- Prevent taking attendance for a session that has yet to finish
+- Improve session details view
+- Only display location pull down if more than one location exists
+
+
+1.5.0 (UNRELEASED):
 New features:
 - Calendar entries for students and teachers
 - Calendar entries for all sessions (site-wide events)

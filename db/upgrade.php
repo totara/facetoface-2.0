@@ -1,6 +1,6 @@
 <?php
 
-// This file keeps track of upgrades to 
+// This file keeps track of upgrades to
 // the facetoface module
 //
 // Sometimes, changes between versions involve
@@ -259,14 +259,6 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         }
     }
 
-    if ($result && $oldversion < 2009113000) {
-        // Add new cancellation reason field for signups
-        $table = new XMLDBTable('facetoface_submissions');
-        $field = new XMLDBField('cancelreason');
-        $field->setAttributes(XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null, 'notificationtype');
-        $result = $result && add_field($table, $field);
-    }
-
     if ($result && $oldversion < 2009120900) {
         // Create Calendar events for all existing Face-to-face sessions
         begin_sql();
@@ -297,18 +289,207 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         commit_sql();
     }
 
-    if ($result && $oldversion < 2009121000) {
-        // This should have been done a while ago, but for some reason, I'm still seeing these fields on some sites
-        $table = new XMLDBTable('facetoface_submissions');
-        $field1 = new XMLDBField('grade');
-        $field2 = new XMLDBField('timegraded');
-        $result = $result && drop_field($table, $field1);
-        $result = $result && drop_field($table, $field2);
+    if ($result && $oldversion < 2009121701) {
+
+    /// Create table facetoface_session_roles
+        $table = new XMLDBTable('facetoface_session_roles');
+        $table->addFieldInfo('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->addFieldInfo('sessionid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('roleid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('userid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->addKeyInfo('sessionid', XMLDB_KEY_FOREIGN, array('sessionid'), 'facetoface_sessions', array('id'));
+        $result = $result && create_table($table);
     }
 
-    if ($result && $oldversion < 2009122900) {
-        // Add tables required for site notices
+    if ($result && $oldversion < 2009121702) {
 
+    /// Create table facetoface_signups
+        $table = new XMLDBTable('facetoface_signups');
+        $table->addFieldInfo('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->addFieldInfo('sessionid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('userid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('mailedreminder', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('discountcode', XMLDB_TYPE_TEXT, 'small', null, null, null, null);
+        $table->addFieldInfo('notificationtype', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->addKeyInfo('sessionid', XMLDB_KEY_FOREIGN, array('sessionid'), 'facetoface_sessions', array('id'));
+        $result = $result && create_table($table);
+
+    /// Create table facetoface_signups_status
+        $table = new XMLDBTable('facetoface_signups_status');
+        $table->addFieldInfo('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->addFieldInfo('signupid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('statuscode', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('superceded', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('createdby', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('grade', XMLDB_TYPE_NUMBER, '10, 5', null, null, null, '0');
+        $table->addFieldInfo('note', XMLDB_TYPE_TEXT, 'small', null, null, null, null);
+        $table->addFieldInfo('timecreated', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addFieldInfo('mailed', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null);
+        $table->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->addKeyInfo('signupid', XMLDB_KEY_FOREIGN, array('signupid'), 'facetoface_signups', array('id'));
+        $result = $result && create_table($table);
+    }
+
+    if ($result && $oldversion < 2009121703) {
+        global $USER, $CFG;
+
+    /// Migrate submissions to signups
+        require_once $CFG->dirroot.'/mod/facetoface/lib.php';
+
+        begin_sql();
+
+        // Get all submissions and loop through
+        $rs = get_recordset('facetoface_submissions');
+
+        while ($submission = rs_fetch_next_record($rs)) {
+
+            // Insert signup
+            $signup = new stdClass();
+            $signup->sessionid = $submission->sessionid;
+            $signup->userid = $submission->userid;
+            $signup->mailedreminder = $submission->mailedreminder;
+            $signup->discountcode = $submission->discountcode;
+            $signup->notificationtype = $submission->notificationtype;
+
+            if (!$id = insert_record('facetoface_signups', $signup)) {
+                rollback_sql();
+                error('Could not insert facetoface signup');
+            }
+
+            $signup->id = $id;
+
+            // Check facetoface still exists (some of them are missing)
+            // Also, we need the course id so we can load the grade
+            $facetoface = get_record('facetoface', 'id', $submission->facetoface);
+            if (!$facetoface) {
+                // If facetoface delete, ignore as it's of no use to us now
+                mtrace('Could not find facetoface instance '.$submission->facetoface);
+                continue;
+            }
+
+            // Get grade
+            $grade = facetoface_get_grade($submission->userid, $facetoface->course, $facetoface->id);
+
+            // Create initial "booked" signup status
+            $status = new stdClass();
+            $status->signupid = $signup->id;
+            $status->statuscode = MDL_F2F_STATUS_BOOKED;
+            $status->superceded = ($grade->grade > 0 || $submission->timecancelled) ? 1 : 0;
+            $status->createdby = $USER->id;
+            $status->timecreated = $submission->timecreated;
+            $status->mailed = 0;
+
+            if (!insert_record('facetoface_signups_status', $status)) {
+                rollback_sql();
+                error('Could not insert facetoface booked status');
+            }
+
+            // Create attended signup status
+            if ($grade->grade > 0) {
+                $status->statuscode = MDL_F2F_STATUS_FULLY_ATTENDED;
+                $status->grade = $grade->grade;
+                $status->timecreated = $grade->dategraded;
+                $status->superceded = $submission->timecancelled ? 1 : 0;
+
+                if (!insert_record('facetoface_signups_status', $status)) {
+                    rollback_sql();
+                    error('Could not insert facetoface attended status');
+                }
+            }
+
+            // If cancelled, create status
+            if ($submission->timecancelled) {
+                $status->statuscode = MDL_F2F_STATUS_USER_CANCELLED;
+                $status->timecreated = $submission->timecancelled;
+                $status->superceded = 0;
+
+                if (!insert_record('facetoface_signups_status', $status)) {
+                    rollback_sql();
+                    error('Could not insert facetoface booked status');
+                }
+            }
+        }
+
+        rs_close($rs);
+        commit_sql();
+
+    /// Drop table facetoface_submissions
+        $table = new XMLDBTable('facetoface_submissions');
+        $result = $result && drop_table($table);
+    }
+
+    if ($result && $oldversion < 2009121704) {
+        // New field necessary for overbooking
+        $table = new XMLDBTable('facetoface_sessions');
+        $field1 = new XMLDBField('allowoverbook');
+        $field1->setAttributes(XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null, 0, 'capacity');
+        $result = $result && add_field($table, $field1);
+    }
+
+    if ($result && $oldversion < 2010012000) {
+        // New field for storing recommendations/advice
+        $table = new XMLDBTable('facetoface_signups_status');
+        $field1 = new XMLDBField('advice');
+        $field1->setAttributes(XMLDB_TYPE_TEXT, 'small', null, null, null, null);
+        $result = $result && add_field($table, $field1);
+    }
+
+    if ($result && $oldversion < 2010012001) {
+        // New field for storing manager approval requirement
+        $table = new XMLDBTable('facetoface');
+        $field = new XMLDBField('approvalreqd');
+        $field->setAttributes(XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, 0, 'showoncalendar');
+        $result = $result && add_field($table, $field);
+    }
+
+    if ($result && $oldversion < 2010012700) {
+        // New fields for storing request emails
+        $table = new XMLDBTable('facetoface');
+        $field = new XMLDBField('requestsubject');
+        $field->setAttributes(XMLDB_TYPE_TEXT, 'small', null, null, null, null, null, '', 'reminderperiod');
+        $result = $result && add_field($table, $field);
+
+        $field = new XMLDBField('requestinstrmngr');
+        $field->setAttributes(XMLDB_TYPE_TEXT, 'medium', null, null, null, null, null, '', 'requestsubject');
+        $result = $result && add_field($table, $field);
+
+        $field = new XMLDBField('requestmessage');
+        $field->setAttributes(XMLDB_TYPE_TEXT, 'medium', null, null, null, null, null, '', 'requestinstrmngr');
+        $result = $result && add_field($table, $field);
+    }
+
+    if ($result && $oldversion < 2010051000) {
+        // Create Calendar events for all existing Face-to-face sessions
+        begin_sql();
+
+        if ($records = get_records('facetoface_sessions', '', '', '', 'id, facetoface')) {
+            // Remove all exising site-wide events (there shouldn't be any)
+            foreach ($records as $record) {
+                if (!facetoface_remove_session_from_site_calendar($record)) {
+                    $result = false;
+                    rollback_sql();
+                    break;
+                }
+            }
+
+            // Add new site-wide events
+            foreach ($records as $record) {
+                $session = facetoface_get_session($record->id);
+                $facetoface = get_record('facetoface', 'id', $record->facetoface);
+
+                if (!facetoface_add_session_to_site_calendar($session, $facetoface)) {
+                    $result = false;
+                    rollback_sql();
+                    break;
+                }
+            }
+        }
+
+        commit_sql();
+
+        // Add tables required for site notices
         $table1 = new XMLDBTable('facetoface_notice');
         $table1->addFieldInfo('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null, null);
         $table1->addFieldInfo('name', XMLDB_TYPE_CHAR, '255', null, null, null, null, null, null);

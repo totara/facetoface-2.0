@@ -41,16 +41,45 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->setDefault('display', 3); // 3th element is 6
         $mform->setHelpButton('display', array('sessionsoncoursepage', get_string('sessionsoncoursepage', 'facetoface'), 'facetoface'));
 
+        $mform->addElement('checkbox', 'approvalreqd', get_string('approvalreqd', 'facetoface'));
+        $mform->setHelpButton('approvalreqd', array('approvalreqd', get_string('approvalreqd','facetoface'), 'facetoface'));
+
         $mform->addElement('header', 'calendaroptions', get_string('calendaroptions', 'facetoface'));
 
         $mform->addElement('checkbox', 'showoncalendar', get_string('showoncalendar', 'facetoface'));
         $mform->setDefault('showoncalendar', true);
         $mform->setHelpButton('showoncalendar', array('showoncalendar', get_string('showoncalendar', 'facetoface'), 'facetoface'));
 
-        $mform->addElement('text', 'shortname', get_string('shortname'), array('size' => 32));
+        $mform->addElement('text', 'shortname', get_string('shortname'), array('size' => 32, 'maxlength' => 32));
         $mform->setType('shortname', PARAM_TEXT);
         $mform->setHelpButton('shortname', array('shortname', get_string('shortname'), 'facetoface'));
         $mform->disabledIf('shortname', 'showoncalendar');
+        $mform->addRule('shortname', null, 'maxlength', 32);
+
+        $mform->addElement('htmleditor', 'description', get_string('description'), array('rows'  => 4, 'cols'  => 64));
+        $mform->setType('description', PARAM_RAW);
+        $mform->setHelpButton('description', array('description', get_string('description'), 'facetoface'));
+        $mform->disabledIf('description', 'showoncalendar');
+
+        // REQUEST MESSAGE
+        $mform->addElement('header', 'request', get_string('requestmessage', 'facetoface'));
+        $mform->setHelpButton('request', array('requestmessage', get_string('requestmessage', 'facetoface'), 'facetoface'));
+
+        $mform->addElement('text', 'requestsubject', get_string('email:subject', 'facetoface'), array('size'=>'55'));
+        $mform->setType('requestsubject', PARAM_TEXT);
+        $mform->setDefault('requestsubject', get_string('setting:defaultrequestsubjectdefault', 'facetoface'));
+        $mform->setHelpButton('requestsubject', array('requestmessage', get_string('email:subject', 'facetoface'), 'facetoface'));
+        $mform->disabledIf('requestsubject', 'approvalreqd');
+
+        $mform->addElement('textarea', 'requestmessage', get_string('email:message', 'facetoface'), 'wrap="virtual" rows="15" cols="70"');
+        $mform->setDefault('requestmessage', get_string('setting:defaultrequestmessagedefault', 'facetoface'));
+        $mform->setHelpButton('requestmessage', array('requestmessage', get_string('email:message', 'facetoface'), 'facetoface'));
+        $mform->disabledIf('requestmessage', 'approvalreqd');
+
+        $mform->addElement('textarea', 'requestinstrmngr', get_string('email:instrmngr', 'facetoface'), 'wrap="virtual" rows="10" cols="70"');
+        $mform->setDefault('requestinstrmngr', get_string('setting:defaultrequestinstrmngrdefault', 'facetoface'));
+        $mform->setHelpButton('requestinstrmngr', array('requestmessage', get_string('email:instrmngr', 'facetoface'), 'facetoface'));
+        $mform->disabledIf('requestinstrmngr', 'approvalreqd');
 
         // CONFIRMATION MESSAGE
         $mform->addElement('header', 'confirmation', get_string('confirmationmessage', 'facetoface'));
@@ -64,8 +93,10 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->setDefault('confirmationmessage', get_string('setting:defaultconfirmationmessagedefault', 'facetoface'));
 
         $mform->addElement('checkbox', 'emailmanagerconfirmation', get_string('emailmanager', 'facetoface'));
+        $mform->setHelpButton('emailmanagerconfirmation', array('emailmanagerconfirmation', get_string('emailmanager','facetoface'), 'facetoface'));
 
         $mform->addElement('textarea', 'confirmationinstrmngr', get_string('email:instrmngr', 'facetoface'), 'wrap="virtual" rows="4" cols="70"');
+        $mform->setHelpButton('confirmationinstrmngr',array('confirmationinstrmngr',get_string('email:instrmngr','facetoface'),'facetoface'));
         $mform->disabledIf('confirmationinstrmngr', 'emailmanagerconfirmation');
         $mform->setDefault('confirmationinstrmngr', get_string('setting:defaultconfirmationinstrmngrdefault', 'facetoface'));
 
@@ -81,8 +112,10 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->setDefault('remindermessage', get_string('setting:defaultremindermessagedefault', 'facetoface'));
 
         $mform->addElement('checkbox', 'emailmanagerreminder', get_string('emailmanager', 'facetoface'));
+        $mform->setHelpButton('emailmanagerreminder',array('emailmanagerreminder',get_string('emailmanager','facetoface'),'facetoface'));
 
         $mform->addElement('textarea', 'reminderinstrmngr', get_string('email:instrmngr', 'facetoface'), 'wrap="virtual" rows="4" cols="70"');
+        $mform->setHelpButton('reminderinstrmngr',array('reminderinstrmngr',get_string('email:instrmngr','facetoface'),'facetoface'));
         $mform->disabledIf('reminderinstrmngr', 'emailmanagerreminder');
         $mform->setDefault('reminderinstrmngr', get_string('setting:defaultreminderinstrmngrdefault', 'facetoface'));
 
@@ -117,8 +150,10 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->setDefault('cancellationmessage', get_string('setting:defaultcancellationmessagedefault', 'facetoface'));
 
         $mform->addElement('checkbox', 'emailmanagercancellation', get_string('emailmanager', 'facetoface'));
+        $mform->setHelpButton('emailmanagercancellation',array('emailmanagercancellation',get_string('emailmanager','facetoface'),'facetoface'));
 
         $mform->addElement('textarea', 'cancellationinstrmngr', get_string('email:instrmngr', 'facetoface'), 'wrap="virtual" rows="4" cols="70"');
+        $mform->setHelpButton('cancellationinstrmngr',array('cancellationinstrmngr',get_string('email:instrmngr','facetoface'),'facetoface'));
         $mform->disabledIf('cancellationinstrmngr', 'emailmanagercancellation');
         $mform->setDefault('cancellationinstrmngr', get_string('setting:defaultcancellationinstrmngrdefault', 'facetoface'));
 

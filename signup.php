@@ -69,14 +69,19 @@ if ($fromform = $mform->get_data()) { // Form submitted
         print_error('error:unknownbuttonclicked', 'facetoface', $returnurl);
     }
 
-    // Update Manager's email if necessary
+    // User can not update Manager's email (depreciated functionality)
     if (!empty($fromform->manageremail)) {
-        if (facetoface_set_manageremail($fromform->manageremail)) {
-            add_to_log($course->id, 'facetoface', 'update manageremail', "signup.php?s=$session->id", $facetoface->id, $cm->id);
-        }
-        else {
-            add_to_log($course->id, 'facetoface', 'update manageremail (FAILED)', "signup.php?s=$session->id", $facetoface->id, $cm->id);
-        }
+        add_to_log($course->id, 'facetoface', 'update manageremail (FAILED)', "signup.php?s=$session->id", $facetoface->id, $cm->id);
+    }
+
+    // Get signup type
+    if (!$session->datetimeknown) {
+        $statuscode = MDL_F2F_STATUS_WAITLISTED;
+    } elseif (facetoface_get_num_attendees($session->id) < $session->capacity) {
+        // Save available
+        $statuscode = MDL_F2F_STATUS_BOOKED;
+    } else {
+        $statuscode = MDL_F2F_STATUS_WAITLISTED;
     }
 
     if (!facetoface_session_has_capacity($session, $context)) {
@@ -85,7 +90,10 @@ if ($fromform = $mform->get_data()) { // Form submitted
     elseif (facetoface_get_user_submissions($facetoface->id, $USER->id)) {
         print_error('alreadysignedup', 'facetoface', $returnurl);
     }
-    elseif ($submissionid = facetoface_user_signup($session, $facetoface, $course, $fromform->discountcode, $fromform->notificationtype)) {
+    elseif (facetoface_manager_needed($facetoface) && !facetoface_get_manageremail($USER->id)){
+        print_error('error:manageremailaddressmissing', 'facetoface', $returnurl);
+    }
+    elseif ($submissionid = facetoface_user_signup($session, $facetoface, $course, $fromform->discountcode, $fromform->notificationtype, $statuscode)) {
         add_to_log($course->id, 'facetoface','signup',"signup.php?s=$session->id", $session->id, $cm->id);
 
         $message = get_string('bookingcompleted', 'facetoface');
@@ -146,6 +154,12 @@ if ($signedup) {
         echo ' &ndash; <a href="'.$CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('seeattendees', 'facetoface').'</a>';
     }
 
+    echo '<br/><a href="'.$returnurl.'" title="'.get_string('goback', 'facetoface').'">'.get_string('goback', 'facetoface').'</a>';
+}
+// Don't allow signup to proceed if a manager is required
+elseif (facetoface_manager_needed($facetoface) && !facetoface_get_manageremail($USER->id)){
+    // Check to see if the user has a managers email set
+    echo '<p><strong>'.get_string('error:manageremailaddressmissing', 'facetoface').'</strong></p>';
     echo '<br/><a href="'.$returnurl.'" title="'.get_string('goback', 'facetoface').'">'.get_string('goback', 'facetoface').'</a>';
 }
 else {

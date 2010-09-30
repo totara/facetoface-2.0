@@ -78,7 +78,7 @@ if ($d and $confirm) {
 
 $customfields = facetoface_get_session_customfields();
 
-$mform = new mod_facetoface_session_form(null, compact('id', 'f', 's', 'c', 'nbdays', 'customfields'));
+$mform = new mod_facetoface_session_form(null, compact('id', 'f', 's', 'c', 'nbdays', 'customfields', 'course'));
 if ($mform->is_cancelled()){
     redirect($returnurl);
 }
@@ -90,6 +90,9 @@ if ($fromform = $mform->get_data()) { // Form submitted
     }
 
     // Pre-process fields
+    if (empty($fromform->allowoverbook)) {
+        $fromform->allowoverbook = 0;
+    }
     if (empty($fromform->duration)) {
         $fromform->duration = 0;
     }
@@ -120,6 +123,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
     $todb->facetoface = $facetoface->id;
     $todb->datetimeknown = $fromform->datetimeknown;
     $todb->capacity = $fromform->capacity;
+    $todb->allowoverbook = $fromform->allowoverbook;
     $todb->duration = $fromform->duration;
     $todb->normalcost = $fromform->normalcost;
     $todb->discountcost = $fromform->discountcost;
@@ -156,7 +160,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
 
     foreach ($customfields as $field) {
         $fieldname = "custom_$field->shortname";
-        if (empty($fromform->$fieldname)) {
+        if (!isset($fromform->$fieldname)) {
             $fromform->$fieldname = ''; // need to be able to clear fields
         }
 
@@ -164,6 +168,11 @@ if ($fromform = $mform->get_data()) { // Form submitted
             rollback_sql();
             print_error('error:couldnotsavecustomfield', 'facetoface', $returnurl);
         }
+    }
+
+    // Save trainer roles
+    if (isset($fromform->trainerrole)) {
+        facetoface_update_trainers($sessionid, $fromform->trainerrole);
     }
 
     // Retrieve record that was just inserted/updated
@@ -193,6 +202,7 @@ elseif ($session != null) { // Edit mode
     $toform = new object();
     $toform->datetimeknown = (1 == $session->datetimeknown);
     $toform->capacity = $session->capacity;
+    $toform->allowoverbook = $session->allowoverbook;
     $toform->duration = $session->duration;
     $toform->normalcost = $session->normalcost;
     $toform->discountcost = $session->discountcost;

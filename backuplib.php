@@ -239,38 +239,88 @@ function backup_facetoface_session_data($bf, $sessionid)
 }
 
 /**
- * Backup the facetoface_submissions table entries for a given
+ * Backup the facetoface_signups table entries for a given
  * facetoface activity
  */
 function backup_facetoface_submissions($bf, $facetofaceid)
 {
+    global $CFG;
+
     $status = true;
 
-    $submissions = get_records('facetoface_submissions', 'facetoface', $facetofaceid, 'id');
-    if (!$submissions) {
+    $signups = get_records_sql(
+        "
+            SELECT
+                ss.id AS statusid,
+                s.id,
+                s.sessionid,
+                s.userid,
+                s.mailedreminder,
+                s.discountcode,
+                s.notificationtype,
+                ss.statuscode,
+                ss.superceded,
+                ss.grade,
+                ss.note,
+                ss.advice,
+                ss.createdby,
+                ss.timecreated
+            FROM
+                {$CFG->prefix}facetoface_signups_status ss
+            INNER JOIN
+                {$CFG->prefix}facetoface_signups s
+             ON ss.signupid = s.id
+            INNER JOIN
+                {$CFG->prefix}facetoface_sessions sess
+             ON s.sessionid = sess.id
+            WHERE
+                sess.facetoface = {$facetofaceid}
+        "
+    );
+
+    if (!$signups) {
         return $status;
     }
 
-    $status &= fwrite($bf, start_tag('SUBMISSIONS', 4, true)) > 0;
-    foreach ($submissions as $submission) {
-        $status &= fwrite($bf, start_tag('SUBMISSION', 5, true)) > 0;
+    $status &= fwrite($bf, start_tag('SIGNUPS', 4, true)) > 0;
 
-        // facetoface_submissions table
-        $status &= fwrite($bf, full_tag('ID', 6, false, $submission->id)) > 0;
-        $status &= fwrite($bf, full_tag('FACETOFACE', 6, false, $submission->facetoface)) > 0;
-        $status &= fwrite($bf, full_tag('SESSIONID', 6, false, $submission->sessionid)) > 0;
-        $status &= fwrite($bf, full_tag('USERID', 6, false, $submission->userid)) > 0;
-        $status &= fwrite($bf, full_tag('MAILEDCONFIRMATION', 6, false, $submission->mailedconfirmation)) > 0;
-        $status &= fwrite($bf, full_tag('MAILEDREMINDER', 6, false, $submission->mailedreminder)) > 0;
-        $status &= fwrite($bf, full_tag('DISCOUNTCODE', 6, false, $submission->discountcode)) > 0;
-        $status &= fwrite($bf, full_tag('TIMECREATED', 6, false, $submission->timecreated)) > 0;
-        $status &= fwrite($bf, full_tag('TIMEMODIFIED', 6, false, $submission->timemodified)) > 0;
-        $status &= fwrite($bf, full_tag('TIMECANCELLED', 6, false, $submission->timecancelled)) > 0;
-        $status &= fwrite($bf, full_tag('NOTIFICATIONTYPE', 6, false, $submission->notificationtype)) > 0;
+    $signupid = null;
+    foreach ($signups as $signup) {
 
-        $status &= fwrite($bf, end_tag('SUBMISSION', 5, true)) > 0;
+        if ($signup->id != $signupid) {
+            // If this isn't the first signup tag, close the previous one
+            if ($signupid !== null) {
+                $status &= fwrite($bf, end_tag('SIGNUPS_STATUS', 6, true)) > 0;
+                $status &= fwrite($bf, end_tag('SIGNUP', 5, true)) > 0;
+            }
+
+            $status &= fwrite($bf, start_tag('SIGNUP', 5, true)) > 0;
+            $status &= fwrite($bf, full_tag('ID', 6, false, $signup->id)) > 0;
+            $status &= fwrite($bf, full_tag('SESSIONID', 6, false, $signup->sessionid)) > 0;
+            $status &= fwrite($bf, full_tag('USERID', 6, false, $signup->userid)) > 0;
+            $status &= fwrite($bf, full_tag('MAILEDREMINDER', 6, false, $signup->mailedreminder)) > 0;
+            $status &= fwrite($bf, full_tag('DISCOUNTCODE', 6, false, $signup->discountcode)) > 0;
+            $status &= fwrite($bf, full_tag('NOTIFICATIONTYPE', 6, false, $signup->notificationtype)) > 0;
+            $status &= fwrite($bf, start_tag('SIGNUPS_STATUS', 6, true)) > 0;
+
+            $signupid = $signup->id;
+        }
+
+        $status &= fwrite($bf, start_tag('STATUS', 7, true)) > 0;
+        $status &= fwrite($bf, full_tag('SIGNUPID', 8, false, $signup->id)) > 0;
+        $status &= fwrite($bf, full_tag('STATUSCODE', 8, false, $signup->statuscode)) > 0;
+        $status &= fwrite($bf, full_tag('SUPERCEDED', 8, false, $signup->superceded)) > 0;
+        $status &= fwrite($bf, full_tag('GRADE', 8, false, $signup->grade)) > 0;
+        $status &= fwrite($bf, full_tag('NOTE', 8, false, $signup->note)) > 0;
+        $status &= fwrite($bf, full_tag('ADVICE', 8, false, $signup->advice)) > 0;
+        $status &= fwrite($bf, full_tag('CREATEDBY', 8, false, $signup->createdby)) > 0;
+        $status &= fwrite($bf, full_tag('TIMECREATED', 8, false, $signup->timecreated)) > 0;
+        $status &= fwrite($bf, end_tag('STATUS', 7, true)) > 0;
     }
-    $status &= fwrite($bf, end_tag('SUBMISSIONS', 4, true)) > 0;
+
+    $status &= fwrite($bf, end_tag('SIGNUPS_STATUS', 6, true)) > 0;
+    $status &= fwrite($bf, end_tag('SIGNUP', 5, true)) > 0;
+    $status &= fwrite($bf, end_tag('SIGNUPS', 4, true)) > 0;
 
     return $status;
 }
@@ -281,6 +331,8 @@ function backup_facetoface_submissions($bf, $facetofaceid)
  */
 function facetoface_check_backup_mods_instances($instance, $backup_unique_code)
 {
+    global $CFG;
+
     $info[$instance->id.'0'][0] = '<b>'.$instance->name.'</b>';
     $info[$instance->id.'0'][1] = '';
 
@@ -288,8 +340,20 @@ function facetoface_check_backup_mods_instances($instance, $backup_unique_code)
     $info[$instance->id.'1'][1] = count_records('facetoface_sessions', 'facetoface', $instance->id);
 
     if (!empty($instance->userdata)) {
-        $info[$instance->id.'2'][0] = get_string('submissions', 'facetoface');
-        $info[$instance->id.'2'][1] = count_records('facetoface_submissions', 'facetoface', $instance->id);
+        $info[$instance->id.'2'][0] = get_string('signups', 'facetoface');
+        $info[$instance->id.'2'][1] = count_records_sql(
+            "
+                SELECT
+                    COUNT(s.id)
+                FROM
+                    {$CFG->prefix}facetoface_signups s
+                INNER JOIN
+                    {$CFG->prefix}facetoface_sessions sess
+                 ON sess.id = s.sessionid
+                WHERE
+                    sess.facetoface = {$instance->id}
+            "
+        );
     }
 
     return $info;
@@ -322,12 +386,23 @@ function facetoface_check_backup_mods($course, $user_data=false, $backup_unique_
                                            AND f.course = $course");
 
     if ($user_data) {
-        $info[2][0] = get_string('submissions', 'facetoface');
-        $info[2][1] = count_records_sql("SELECT COUNT(*)
-                                             FROM {$CFG->prefix}facetoface f,
-                                                  {$CFG->prefix}facetoface_submissions s
-                                             WHERE f.id = s.facetoface
-                                               AND f.course = $course");
+        $info[2][0] = get_string('signups', 'facetoface');
+        $info[2][1] = count_records_sql(
+            "
+                SELECT
+                    COUNT(s.id)
+                FROM
+                    {$CFG->prefix}facetoface_signups s
+                INNER JOIN
+                    {$CFG->prefix}facetoface_sessions sess
+                 ON sess.id = s.sessionid
+                INNER JOIN
+                    {$CFG->prefix}facetoface f
+                 ON sess.facetoface = f.id
+                WHERE
+                    f.course = {$course}
+            "
+        );
     }
 
     return $info;

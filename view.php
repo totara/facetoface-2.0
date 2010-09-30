@@ -68,7 +68,7 @@ if ($facetoface->description) {
 }
 
 $locations = get_locations($facetoface->id);
-if (!empty($locations)) {
+if (count($locations) > 2) {
     echo '<form method="get" action="view.php">';
     echo '<div><input type="hidden" name="f" value="'.$facetoface->id.'"/>';
     choose_from_menu($locations, 'location', $location, '');
@@ -96,6 +96,7 @@ print_footer($course);
 function print_session_list($courseid, $facetofaceid, $location)
 {
     global $USER;
+    global $CFG;
 
     $timenow = time();
 
@@ -106,7 +107,7 @@ function print_session_list($courseid, $facetofaceid, $location)
     $bookedsession = null;
     if ($submissions = facetoface_get_user_submissions($facetofaceid, $USER->id)) {
         $submission = array_shift($submissions);
-        $bookedsession = $submission->sessionid;
+        $bookedsession = $submission;
     }
 
     $customfields = facetoface_get_session_customfields();
@@ -197,34 +198,44 @@ function print_session_list($courseid, $facetofaceid, $location)
 
             // Status
             $status  = get_string('bookingopen', 'facetoface');
-            if ($session->datetimeknown && facetoface_has_session_started($session, $timenow)) {
+            if ($session->datetimeknown && facetoface_has_session_started($session, $timenow) && facetoface_is_session_in_progress($session, $timenow)) {
+                $status = get_string('sessioninprogress', 'facetoface');
+                $sessionstarted = true;
+            }
+            elseif ($session->datetimeknown && facetoface_has_session_started($session, $timenow)) {
                 $status = get_string('sessionover', 'facetoface');
                 $sessionstarted = true;
             }
-            elseif ($session->id == $bookedsession) {
-                $status = get_string('enrolled', 'facetoface');
+            elseif ($bookedsession && $session->id == $bookedsession->sessionid) {
+                $signupstatus = facetoface_get_status($bookedsession->statuscode);
+
+                $status = get_string('status_'.$signupstatus, 'facetoface');
                 $isbookedsession = true;
             }
             elseif ($signupcount >= $session->capacity) {
                 $status = get_string('bookingfull', 'facetoface');
                 $sessionfull = true;
             }
+
             $sessionrow[] = $status;
 
             // Options
             $options = '';
             if ($editsessions) {
-                $options .= ' <a href="sessions.php?s='.$session->id.'" title="'.get_string('editsession', 'facetoface').'">'.get_string('edit').'</a> '
-                    . '<a href="sessions.php?s='.$session->id.'&amp;c=1" title="'.get_string('copysession', 'facetoface').'">'.get_string('copy', 'facetoface').'</a> '
-                    . '<a href="sessions.php?s='.$session->id.'&amp;d=1" title="'.get_string('deletesession', 'facetoface').'">'.get_string('delete').'</a> ';
+                $options .= ' <a href="sessions.php?s='.$session->id.'" title="'.get_string('editsession', 'facetoface').'">'
+                    . '<img src="'.$CFG->pixpath.'/t/edit.gif" class="iconsmall" alt="'.get_string('edit', 'facetoface').'" /></a> '
+                    . '<a href="sessions.php?s='.$session->id.'&amp;c=1" title="'.get_string('copysession', 'facetoface').'">'
+                    . '<img src="'.$CFG->pixpath.'/t/copy.gif" class="iconsmall" alt="'.get_string('copy', 'facetoface').'" /></a> '
+                    . '<a href="sessions.php?s='.$session->id.'&amp;d=1" title="'.get_string('deletesession', 'facetoface').'">'
+                    . '<img src="'.$CFG->pixpath.'/t/delete.gif" class="iconsmall" alt="'.get_string('delete').'" /></a><br />';
             }
             if ($viewattendees){
-                $options .= '<a href="attendees.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a> ';
+                $options .= '<a href="attendees.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a><br />';
             }
             if ($isbookedsession) {
-                $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('moreinfo', 'facetoface').'">'.get_string('moreinfo', 'facetoface').'</a><br />'
-                    . '<a href="attendees.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('seeattendees', 'facetoface').'</a><br />'
-                    . '<a href="cancelsignup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('cancelbooking', 'facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
+                $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('moreinfo', 'facetoface').'">'.get_string('moreinfo', 'facetoface').'</a><br />';
+
+                $options .= '<a href="cancelsignup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('cancelbooking', 'facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
             }
             elseif (!$sessionstarted and !$bookedsession) {
                 $options .= '<a href="signup.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'">'.get_string('signup', 'facetoface').'</a>';
@@ -272,6 +283,7 @@ function print_session_list($courseid, $facetofaceid, $location)
         $upcomingtable->summary = get_string('upcomingsessionslist', 'facetoface');
         $upcomingtable->head = $tableheader;
         $upcomingtable->rowclass = array_merge($upcomingrowclass, $upcomingtbdrowclass);
+        $upcomingtable->width = '100%';
         $upcomingtable->data = array_merge($upcomingdata, $upcomingtbddata);
         print_table($upcomingtable);
     }
@@ -287,18 +299,25 @@ function print_session_list($courseid, $facetofaceid, $location)
         $previoustable->summary = get_string('previoussessionslist', 'facetoface');
         $previoustable->head = $tableheader;
         $previoustable->rowclass = $previousrowclass;
+        $previoustable->width = '100%';
         $previoustable->data = $previousdata;
         print_table($previoustable);
     }
 }
 
+/**
+ * Get facetoface locations
+ *
+ * @param   interger    $facetofaceid
+ * @return  array
+ */
 function get_locations($facetofaceid)
 {
     global $CFG;
 
     $locationfieldid = get_field('facetoface_session_field', 'id', 'shortname', 'location');
     if (!$locationfieldid) {
-        return '';
+        return array();
     }
 
     $sql = "SELECT DISTINCT d.data AS location
@@ -319,5 +338,5 @@ function get_locations($facetofaceid)
         return $locationmenu;
     }
 
-    return '';
+    return array();
 }
