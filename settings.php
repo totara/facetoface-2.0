@@ -4,7 +4,15 @@ require_once "$CFG->dirroot/mod/facetoface/lib.php";
 
 $settings->add(new admin_setting_configtext('facetoface_fromaddress', get_string('setting:fromaddress_caption', 'facetoface'),get_string('setting:fromaddress', 'facetoface'), get_string('setting:fromaddressdefault', 'facetoface'), "/^((?:[\w\.\-])+\@(?:(?:[a-zA-Z\d\-])+\.)+(?:[a-zA-Z\d]{2,4}))$/",30));
 
-$settings->add(new admin_setting_pickroles('facetoface_sessionroles', get_string('setting:sessionroles_caption', 'facetoface'), get_string('setting:sessionroles', 'facetoface'), get_string('setting:sessionroles', 'facetoface'), PARAM_SEQUENCE));
+// Load roles
+$choices = array();
+if ($roles = get_records('role')) {
+    foreach($roles as $role) {
+        $choices[$role->id] = format_string($role->name);
+    }
+}
+
+$settings->add(new admin_setting_configmultiselect('facetoface_sessionroles', get_string('setting:sessionroles_caption', 'facetoface'), get_string('setting:sessionroles', 'facetoface'), array(), $choices));
 
 
 $settings->add(new admin_setting_heading('facetoface_manageremail_header', get_string('manageremailheading', 'facetoface'), ''));
