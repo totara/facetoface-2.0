@@ -289,7 +289,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         commit_sql();
     }
 
-    if ($result && $oldversion < 2009121701) {
+    if ($result && $oldversion < 2009122901) {
 
     /// Create table facetoface_session_roles
         $table = new XMLDBTable('facetoface_session_roles');
@@ -300,9 +300,6 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $table->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->addKeyInfo('sessionid', XMLDB_KEY_FOREIGN, array('sessionid'), 'facetoface_sessions', array('id'));
         $result = $result && create_table($table);
-    }
-
-    if ($result && $oldversion < 2009121702) {
 
     /// Create table facetoface_signups
         $table = new XMLDBTable('facetoface_signups');
@@ -329,9 +326,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $table->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->addKeyInfo('signupid', XMLDB_KEY_FOREIGN, array('signupid'), 'facetoface_signups', array('id'));
         $result = $result && create_table($table);
-    }
 
-    if ($result && $oldversion < 2009121703) {
         global $USER, $CFG;
 
     /// Migrate submissions to signups
@@ -417,10 +412,8 @@ function xmldb_facetoface_upgrade($oldversion=0) {
     /// Drop table facetoface_submissions
         $table = new XMLDBTable('facetoface_submissions');
         $result = $result && drop_table($table);
-    }
 
-    if ($result && $oldversion < 2009121704) {
-        // New field necessary for overbooking
+    // New field necessary for overbooking
         $table = new XMLDBTable('facetoface_sessions');
         $field1 = new XMLDBField('allowoverbook');
         $field1->setAttributes(XMLDB_TYPE_INTEGER, 'small', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null, 0, 'capacity');
