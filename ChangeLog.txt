@@ -1,3 +1,8 @@
+1.6.1 (UNRELEASED):
+Bug fixes:
+- Fix upgrade from 1.5.0
+- Fix mysql incompatibilities in upgrade script
+
 1.6.0 (2010-09-28):
 New features:
 - Stateful bookings, allow for multiple booking states e.g. unconfirmed
