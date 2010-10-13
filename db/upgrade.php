@@ -330,7 +330,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
 
     /// Migrate submissions to signups
         $table = new XMLDBTable('facetoface_submissions');
-        if (table_exists($table) {
+        if (table_exists($table)) {
             require_once $CFG->dirroot.'/mod/facetoface/lib.php';
 
             begin_sql();
