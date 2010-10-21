@@ -1,3 +1,7 @@
+1.6.2 (2010-10-21):
+Bug fixes:
+- Removed hardcoded references to the mdl_ DB prefix
+
 1.6.1 (2010-10-14):
 Bug fixes:
 - Fix upgrade from 1.5.0
@@ -16,7 +20,6 @@ Improvements:
 - Prevent taking attendance for a session that has yet to finish
 - Improve session details view
 - Only display location pull down if more than one location exists
-
 
 1.5.0 (UNRELEASED):
 New features:
