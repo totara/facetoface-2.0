@@ -74,6 +74,12 @@ Bugs/patches
 
 Feel free to send bug reports (and/or patches!) to the current maintainer:
 
+  Aaron Barnes <aaronb@catalyst.net.nz>
+
+
+Previous maintainer(s)
+-----------------------
+
   Francois Marier <francois@catalyst.net.nz>
 
 
