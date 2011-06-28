@@ -639,11 +639,11 @@ class facetofacelib_test extends prefix_changing_test_case {
     );
 
     function setup() {
-        //function to load test tables
+        // function to load test tables
         global $db,$CFG;
         parent::setUp();
-        //  try statement temporary - rebuilds error'ed tables
-        //  without having to manually disable setup / teardown functions
+        // try statement temporary - rebuilds error'ed tables
+        // without having to manually disable setup / teardown functions
         try {
             load_test_table($CFG->prefix . 'facetoface_signups', $this->facetoface_signups_data, $db);
             load_test_table($CFG->prefix . 'facetoface_sessions', $this->facetoface_sessions_data, $db);
@@ -674,13 +674,14 @@ class facetofacelib_test extends prefix_changing_test_case {
             load_test_table($CFG->prefix . 'facetoface_notice', $this->facetoface_notice_data, $db);
             load_test_table($CFG->prefix . 'timezone', $this->timezone_data, $db);
             load_test_table($CFG->prefix . 'user_preferences', $this->user_preferences_data, $db);
-            }
+        }
         catch (Exception $e) {
             tearDown();
             setup();
         }
-        //create sample objects
-        //facetoface object 1
+
+        // create sample objects
+        // facetoface object 1
         $this->facetoface = array();
         $this->facetoface[0] = new stdClass();
         $this->facetoface[0]->id = 1;
@@ -711,7 +712,7 @@ class facetofacelib_test extends prefix_changing_test_case {
         $this->facetoface[0]->requestmessage = 'reqmsg1';
         $this->facetoface[0]->requestinstrmngr = 'reqinstmngr1';
 
-        //facetoface object 2
+        // facetoface object 2
         $this->facetoface[1] = new stdClass();
         $this->facetoface[1]->id = 2;
         $this->facetoface[1]->instance = 2;
@@ -741,7 +742,7 @@ class facetofacelib_test extends prefix_changing_test_case {
         $this->facetoface[1]->requestmessage = 'reqmsg2';
         $this->facetoface[1]->requestinstrmngr = 'reqinstmngr2';
 
-        //session object 1
+        // session object 1
         $this->session = array();
         $this->session[0] = new stdClass();
         $this->session[0]->id = 1;
@@ -759,7 +760,7 @@ class facetofacelib_test extends prefix_changing_test_case {
         $this->session[0]->timecreated = 1300;
         $this->session[0]->timemodified = 1400;
 
-        //session object 2
+        // session object 2
         $this->session[1] = new stdClass();
         $this->session[1]->id = 2;
         $this->session[1]->facetoface = 2;
@@ -776,7 +777,7 @@ class facetofacelib_test extends prefix_changing_test_case {
         $this->session[1]->timecreated = 1300;
         $this->session[1]->timemodified = 1400;
 
-        //sessiondata object 1
+        // sessiondata object 1
         $this->sessiondata = array();
         $this->sessiondata[0] = new stdClass();
         $this->sessiondata[0]->id = 1;
@@ -786,7 +787,7 @@ class facetofacelib_test extends prefix_changing_test_case {
         $this->sessiondata[0]->discountcost = 60;
         $this->sessiondata[0]->normalcost = 75;
 
-        //sessiondata object 2
+        // sessiondata object 2
         $this->sessiondata[1] = new stdClass();
         $this->sessiondata[1]->id = 2;
         $this->sessiondata[1]->fieldid = 2;
@@ -795,26 +796,26 @@ class facetofacelib_test extends prefix_changing_test_case {
         $this->sessiondata[1]->discountcost = NULL;
         $this->sessiondata[1]->normalcost = 90;
 
-        //user object 1
+        // user object 1
         $this->user = array();
         $this->user[0] = new stdClass();
         $this->user[0]->id = 1;
         $this->user[0]->firstname = 'firstname1';
         $this->user[0]->lastname = 'lastname1';
 
-        //user object 2
+        // user object 2
         $this->user[1] = new stdClass();
         $this->user[1]->id = 2;
         $this->user[1]->firstname = 'firstname2';
         $this->user[1]->lastname = 'lastname2';
 
-        //course object 1
+        // course object 1
         $this->course = array();
         $this->course[0] = new stdClass();
         $this->course[0]->id = 1;
         $this->course[0]->enablecompletion = TRUE;
 
-        //course object 2
+        // course object 2
         $this->course[1] = new stdClass();
         $this->course[1]->id = 42;
         $this->course[1]->enablecompletion = FALSE;
@@ -822,7 +823,7 @@ class facetofacelib_test extends prefix_changing_test_case {
         // message string 1
         $this->msgtrue = 'should be true';
 
-        //message string 2
+        // message string 2
         $this->msgfalse = 'should be false';
     }
 
@@ -862,9 +863,9 @@ class facetofacelib_test extends prefix_changing_test_case {
     }
 
     function test_facetoface_get_status() {
-        //test method - returns string
+        // test method - returns string
 
-        //check for valid status codes
+        // check for valid status codes
         $this->assertEqual(facetoface_get_status(10), 'user_cancelled');
         $this->assertEqual(facetoface_get_status(20), 'session_cancelled');
         $this->assertEqual(facetoface_get_status(30), 'declined');
@@ -1740,7 +1741,7 @@ class facetofacelib_test extends prefix_changing_test_case {
     function test_facetoface_get_view_actions() {
         // test method - returns an array
 
-        //define test variables
+        // define test variables
         $testArray = array('view', 'view all');
 
         // test
@@ -1750,7 +1751,7 @@ class facetofacelib_test extends prefix_changing_test_case {
     function test_facetoface_get_post_actions() {
         // test method - returns an array
 
-        //define test variables
+        // define test variables
         $testArray = array('cancel booking', 'signup');
 
         // test
@@ -1758,9 +1759,9 @@ class facetofacelib_test extends prefix_changing_test_case {
     }
 
     function test_facetoface_user_outline() {
-        //test method - returns object
+        // test method - returns object
 
-        //test variables
+        // test variables
         $course1 = $this->course[0];
 
         $user1 = $this->user[0];
@@ -1770,7 +1771,7 @@ class facetofacelib_test extends prefix_changing_test_case {
         $mod1 = NULL;
 
         //TODO equals case? invalid case?
-        //test for valid case
+        // test for valid case
         $this->assertIsA(facetoface_user_outline($course1, $user1, $mod1, $facetoface1), 'stdClass');
     }
 
@@ -1785,17 +1786,17 @@ class facetofacelib_test extends prefix_changing_test_case {
         $mod2 = NULL;
         $facetoface2 = $this->facetoface[1];
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_user_complete($course1, $user1, $mod1, $facetoface1), $this->msgtrue);
 
-        //test for invalid case
+        // test for invalid case
         $this->assertFalse(facetoface_user_complete($course2, $user2, $mod2, $facetoface2), $this->msgfalse);
     }
 
     function test_facetoface_add_session_to_user_calendar() {
-        //test method - returns result string?
+        // test method - returns result string?
 
-        //test variables
+        // test variables
         $session1 = $this->session[0];
 
         $userid1 = 1;
@@ -1808,9 +1809,9 @@ class facetofacelib_test extends prefix_changing_test_case {
         $eventname2 = 'eventname2';
         $eventtype2 = 'booking';
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_add_session_to_user_calendar($session1, $eventname1, $userid1, $eventtype1), $this->msgtrue);
-    //TODO invalid case
+        //TODO invalid case
         //test for invalid case
         //$this->assertFalse(facetoface_add_session_to_user_calendar($session2, $eventname2, $userid2, $eventtype2), $this->msgfalse);
     }
@@ -1823,15 +1824,15 @@ class facetofacelib_test extends prefix_changing_test_case {
 
         $facetoface1 = $this->facetoface[0];
 
-        //test for valid case
+        // test for valid case
         // TODO fix the error here? or maybe LIB bug
-    //  $this->assertTrue(facetoface_add_session_to_site_calendar($session1, $facetoface1), $this->msgtrue);
+        // $this->assertTrue(facetoface_add_session_to_site_calendar($session1, $facetoface1), $this->msgtrue);
     }
 
     function test_facetoface_remove_bookings_from_user_calendar() {
-        //test method - returns boolean
+        // test method - returns boolean
 
-        //test variables
+        // test variables
         $session1 = $this->session[0];
 
         $userid1 = 1;
@@ -1840,15 +1841,15 @@ class facetofacelib_test extends prefix_changing_test_case {
 
         $userid2 = 1;
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_remove_bookings_from_user_calendar($session1, $userid1), $this->msgtrue);
 
-        //test for invalid case
+        // test for invalid case
         $this->assertFalse(facetoface_remove_bookings_from_user_calendar($session2, $userid2), $this->msgfalse);
     }
 
     function test_facetoface_remove_session_from_site_calendar() {
-        //test variables
+        // test variables
         $session1 = $this->session[0];
 
         $userid1 = 1;
@@ -1857,15 +1858,15 @@ class facetofacelib_test extends prefix_changing_test_case {
 
         $userid2 = 2;
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_remove_session_from_site_calendar($session1, $userid1), $this->msgtrue);
 
-        //test for invalid case
+        // test for invalid case
         $this->assertFalse(facetoface_remove_session_from_site_calendar($session2, $userid2), $this->msgfalse);
     }
 
     function test_facetoface_update_calendar_events() {
-        //test variables
+        // test variables
         $session1 = $this->session[0];
 
         $eventtype1 = 'event1';
@@ -1874,25 +1875,25 @@ class facetofacelib_test extends prefix_changing_test_case {
 
         $eventtype2 = 'eventInvalid';
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_update_calendar_events($session1, $eventtype1), $this->msgtrue);
 
-        //test for invalid case
+        // test for invalid case
         $this->assertFalse(facetoface_update_calendar_events($session2, $eventtype2), $this->msgfalse);
     }
 
     function test_facetoface_session_has_capacity() {
         // test method - returns boolean
 
-        //test variables
+        // test variables
         $session1 = $this->session[0];
 
         $session2 = $this->session[1];
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_session_has_capacity($session1), $this->msgtrue);
 
-        //test for invalid case
+        // test for invalid case
         $this->assertFalse(facetoface_session_has_capacity($session2), $this->msgfalse);
     }
 
@@ -1925,19 +1926,19 @@ class facetofacelib_test extends prefix_changing_test_case {
     }
 
     function test_facetoface_get_trainer_roles() {
-        //test method - returns array
+        // test method - returns array
 
         $this->assertTrue(facetoface_get_trainer_roles(), $this->msgtrue);
     }
 
     function test_facetoface_get_trainers() {
-        //test method - returns array
+        // test method - returns array
 
-        //test variables
+        // test variables
         $sessionid1 = 1;
         $roleid1 = 1;
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_get_trainers($sessionid1, $roleid1), $this->msgtrue);
 
         $this->assertTrue(facetoface_get_trainers($sessionid1), $this->msgtrue);
@@ -1946,34 +1947,34 @@ class facetofacelib_test extends prefix_changing_test_case {
     function test_facetoface_supports() {
         // test method - returns boolean
 
-        //test variables
+        // test variables
         $feature1 = 'grade_has_grade';
         $feature2 = 'UNSUPPORTED_FEATURE';
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_supports($feature1), $this->msgtrue);
 
-        //test for invalid case
+        // test for invalid case
         $this->assertFalse(facetoface_supports($feature2), $this->msgfalse);
     }
 
     function test_facetoface_manager_needed() {
-        //test method - returns boolean
+        // test method - returns boolean
 
-        //test variables
+        // test variables
         $facetoface1 = $this->facetoface[0];
 
         $facetoface2 = $this->facetoface[1];
 
-        //test for valid case
+        // test for valid case
         $this->assertTrue(facetoface_manager_needed($facetoface1), $this->msgtrue);
 
-        //test for invalid case
+        // test for invalid case
         $this->assertFalse(facetoface_manager_needed($facetoface2), $this->msgfalse);
     }
 
     function test_facetoface_list_of_sitenotices() {
-        //test method - returns string
+        // test method - returns string
 
         $this->assertTrue(facetoface_list_of_sitenotices(), $this->msgtrue);
     }
