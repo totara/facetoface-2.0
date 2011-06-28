@@ -12,7 +12,7 @@ if ($roles = get_records('role')) {
     }
 }
 
-$settings->add(new admin_setting_configmultiselect('facetoface_sessionroles', get_string('setting:sessionroles_caption', 'facetoface'), get_string('setting:sessionroles', 'facetoface'), array(), $choices));
+$settings->add(new admin_setting_configmultiselect('facetoface_session_roles', get_string('setting:sessionroles_caption', 'facetoface'), get_string('setting:sessionroles', 'facetoface'), array(), $choices));
 
 
 $settings->add(new admin_setting_heading('facetoface_manageremail_header', get_string('manageremailheading', 'facetoface'), ''));
