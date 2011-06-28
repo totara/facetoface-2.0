@@ -1040,6 +1040,10 @@ function facetoface_get_grade($userid, $courseid, $facetofaceid) {
 
 /**
  * Get list of users attending a given session
+ *
+ * @access public
+ * @param integer Session ID
+ * @return array
  */
 function facetoface_get_attendees($sessionid)
 {
@@ -1104,6 +1108,11 @@ function facetoface_get_attendees($sessionid)
 
 /**
  * Get a single attendee of a session
+ *
+ * @access public
+ * @param integer Session ID
+ * @param integer User ID
+ * @return false|object
  */
 function facetoface_get_attendee($sessionid, $userid)
 {
