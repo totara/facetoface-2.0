@@ -1657,7 +1657,7 @@ class facetofacelib_test extends prefix_changing_test_case {
         //test method - returns integer
 
         //test variables
-        $sessionid1 = 1;
+        $sessionid1 = 2;
         $sessionid2 = 42;
 
         //test for valid case
@@ -1734,10 +1734,10 @@ class facetofacelib_test extends prefix_changing_test_case {
         $session2 = $this->session[1];
 
         // test for valid case
-        $this->assertTrue(facetoface_session_has_capacity($session1), $this->msgtrue);
+        $this->assertFalse(facetoface_session_has_capacity($session1), $this->msgfalse);
 
         // test for invalid case
-        $this->assertFalse(facetoface_session_has_capacity($session2), $this->msgfalse);
+        $this->assertTrue(facetoface_session_has_capacity($session2), $this->msgtrue);
     }
 
     function test_facetoface_get_trainer_roles() {

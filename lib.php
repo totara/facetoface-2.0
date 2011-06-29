@@ -2365,7 +2365,9 @@ function facetoface_approve_requests($data) {
                 if (facetoface_session_has_capacity($session)) {
                     $status = MDL_F2F_STATUS_BOOKED;
                 } else {
-                    $status = MDL_F2F_STATUS_WAITLISTED;
+                    if($session->allowoverbook) {
+                        $status = MDL_F2F_STATUS_WAITLISTED;
+                    }
                 }
 
                 // Signup user
@@ -3193,11 +3195,6 @@ function facetoface_session_has_capacity($session, $context = false) {
 
     if (empty($session)) {
         return false;
-    }
-
-    // If allowoverbook enabled
-    if ($session->allowoverbook) {
-        return true;
     }
 
     $signupcount = facetoface_get_num_attendees($session->id);
