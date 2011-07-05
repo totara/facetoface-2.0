@@ -30,7 +30,7 @@ define('MDL_F2F_CANCEL_ICAL',		9);	    // Send just a combined text/ical message
 define('MDL_MANAGERSEMAIL_FIELD', 'managersemail');
 
 // Custom field related constants
-define('CUSTOMFIELD_DELIMITTER', ';');
+define('CUSTOMFIELD_DELIMITER', '##SEPARATOR##');
 define('CUSTOMFIELD_TYPE_TEXT',        0);
 define('CUSTOMFIELD_TYPE_SELECT',      1);
 define('CUSTOMFIELD_TYPE_MULTISELECT', 2);
@@ -766,7 +766,11 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
         $placeholder = "[session:{$field->shortname}]";
         $value = '';
         if (!empty($customdata[$field->id])) {
-            $value = $customdata[$field->id]->data;
+            if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
+                $value = str_replace(CUSTOMFIELD_DELIMITER, ', ', $customdata[$field->id]->data);
+            } else {
+                $value = $customdata[$field->id]->data;
+            }
         }
 
         $msg = str_replace($placeholder, $value, $msg);
@@ -1456,7 +1460,11 @@ function facetoface_write_activity_attendance(&$worksheet, $startingrow, $faceto
 
                         $data = '-';
                         if (!empty($customdata[$field->id])) {
-                            $data = $customdata[$field->id]->data;
+                            if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
+                                $data = str_replace(CUSTOMFIELD_DELIMITER, "\n", $customdata[$field->id]->data);
+                            } else {
+                                $data = $customdata[$field->id]->data;
+                            }
                         }
                         $worksheet->write_string($i, $j++, $data);
                     }
@@ -1547,7 +1555,11 @@ function facetoface_write_activity_attendance(&$worksheet, $startingrow, $faceto
 
                     $data = '-';
                     if (!empty($customdata[$field->id])) {
-                        $data = $customdata[$field->id]->data;
+                        if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
+                            $data = str_replace(CUSTOMFIELD_DELIMITER, "\n", $customdata[$field->id]->data);
+                        } else {
+                            $data = $customdata[$field->id]->data;
+                        }
                     }
                     $worksheet->write_string($i, $j++, $data);
                 }
@@ -3257,14 +3269,14 @@ function facetoface_print_session($session, $showcapacity, $calendaroutput=false
         $data = '';
         if (!empty($customdata[$field->id])) {
             if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
-                $values = explode(CUSTOMFIELD_DELIMITTER, $customdata[$field->id]->data);
-                $data = implode(', ', $values);
+                $values = explode(CUSTOMFIELD_DELIMITER, format_string($customdata[$field->id]->data));
+                $data = implode('<br />', $values);
             }
             else {
-                $data = $customdata[$field->id]->data;
+                $data = format_string($customdata[$field->id]->data);
             }
         }
-        $table->data[] = array(str_replace(' ', '&nbsp;', format_string($field->name)), format_string($data));
+        $table->data[] = array(str_replace(' ', '&nbsp;', format_string($field->name)), $data);
     }
 
     $strdatetime = str_replace(' ', '&nbsp;', get_string('sessiondatetime', 'facetoface'));
@@ -3363,7 +3375,7 @@ function facetoface_save_customfield_value($fieldid, $data, $otherid, $table)
 {
     $dbdata = null;
     if (is_array($data)) {
-        $dbdata = trim(implode(CUSTOMFIELD_DELIMITTER, $data), ';');
+        $dbdata = trim(implode(CUSTOMFIELD_DELIMITER, $data), ';');
     }
     else {
         $dbdata = trim($data);
@@ -3406,7 +3418,7 @@ function facetoface_get_customfield_value($field, $otherid, $table)
     if ($record = get_record("facetoface_{$table}_data", 'fieldid', $field->id, "{$table}id", $otherid)) {
         if (!empty($record->data)) {
             if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
-                return explode(CUSTOMFIELD_DELIMITTER, $record->data);
+                return explode(CUSTOMFIELD_DELIMITER, $record->data);
             }
             return $record->data;
         }
@@ -3698,7 +3710,7 @@ function facetoface_add_customfields_to_form(&$mform, $customfields, $alloptiona
         if (!$field->required) {
             $options[''] = get_string('none');
         }
-        foreach (explode(CUSTOMFIELD_DELIMITTER, $field->possiblevalues) as $value) {
+        foreach (explode(CUSTOMFIELD_DELIMITER, $field->possiblevalues) as $value) {
             $v = trim($value);
             if (!empty($v)) {
                 $options[$v] = $v;

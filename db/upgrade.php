@@ -21,6 +21,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
 
     global $CFG, $USER, $db;
 
+    require_once($CFG->dirroot . '/mod/facetoface/lib.php');
 
     $result = true;
 
@@ -509,6 +510,72 @@ function xmldb_facetoface_upgrade($oldversion=0) {
             $result = $result && drop_field($table, $field, false, true);
         }
 
+    }
+
+    if ($result && $oldversion < 2011062900) {
+        // Update existing select fields to use new seperator
+        $badrows = get_records_sql(
+            "
+                SELECT
+                    *
+                FROM
+                    {$CFG->prefix}facetoface_session_field
+                WHERE
+                    possiblevalues LIKE '%;%'
+                AND possiblevalues NOT LIKE '%" . CUSTOMFIELD_DELIMITER . "%'
+                AND type IN (".CUSTOMFIELD_TYPE_SELECT.",".CUSTOMFIELD_TYPE_MULTISELECT.")
+            "
+        );
+
+        if ($badrows) {
+            begin_sql();
+
+            foreach ($badrows as $bad) {
+                $fixedrow = new object();
+                $fixedrow->id = $bad->id;
+                $fixedrow->possiblevalues = addslashes(str_replace(';', CUSTOMFIELD_DELIMITER, $bad->possiblevalues));
+                $result = $result && update_record('facetoface_session_field', $fixedrow);
+            }
+
+            if ($result) {
+                commit_sql();
+            } else {
+                rollback_sql();
+            }
+        }
+
+        $bad_data_rows = get_records_sql(
+            "
+                SELECT
+                    sd.id, sd.data
+                FROM
+                    {$CFG->prefix}facetoface_session_field sf
+                JOIN
+                    {$CFG->prefix}facetoface_session_data sd
+                  ON
+                    sd.fieldid=sf.id
+                WHERE
+                    sd.data LIKE '%;%'
+                AND sd.data NOT LIKE '%". CUSTOMFIELD_DELIMITER ."%'
+                AND sf.type = ".CUSTOMFIELD_TYPE_MULTISELECT
+        );
+
+        if ($bad_data_rows) {
+            begin_sql();
+
+            foreach ($bad_data_rows as $bad) {
+                $fixedrow = new object();
+                $fixedrow->id = $bad->id;
+                $fixedrow->data = addslashes(str_replace(';', CUSTOMFIELD_DELIMITER, $bad->data));
+                $result = $result && update_record('facetoface_session_data', $fixedrow);
+            }
+
+            if ($result) {
+                commit_sql();
+            } else {
+                rollback_sql();
+            }
+        }
     }
 
     return $result;
