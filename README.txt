@@ -74,13 +74,13 @@ Bugs/patches
 
 Feel free to send bug reports (and/or patches!) to the current maintainer:
 
-  Aaron Barnes <aaronb@catalyst.net.nz>
+  Aaron Barnes <alastair.munro@totaralms.com>
 
 
 Previous maintainer(s)
 -----------------------
 
-  Francois Marier <francois@catalyst.net.nz>
+  Aaron Barnes <aaron.barnes@totaralms.com>
 
 
 Changes
