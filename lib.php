@@ -280,6 +280,21 @@ function facetoface_add_instance($facetoface) {
     if ($facetoface->id = insert_record('facetoface', $facetoface)) {
         facetoface_grade_item_update($facetoface);
     }
+
+    //Update events when we update instance
+    if ($sessions = facetoface_get_sessions($facetoface->id)) {
+        foreach ($sessions as $session) {
+            // Update bookings
+            $return = $return && facetoface_update_calendar_events($session, 'booking');
+            // Update sessions
+            $return = $return && facetoface_update_calendar_events($session, 'session');
+
+            // Update the session on the site calendar
+            $return = $return && facetoface_remove_session_from_site_calendar($session);
+            $return = $return && facetoface_add_session_to_site_calendar($session, $facetoface);
+        }
+    }
+
     return $facetoface->id;
 }
 
