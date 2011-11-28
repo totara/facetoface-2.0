@@ -1,5 +1,5 @@
 <?php
-
+global $DB;
 require_once '../../config.php';
 require_once 'customfield_form.php';
 
@@ -9,31 +9,27 @@ $confirm = optional_param('confirm', false, PARAM_BOOL); // delete confirmationx
 
 $field = null;
 if ($id > 0) {
-    if (!$field = get_record('facetoface_session_field', 'id', $id)) {
+    if (!$field = $DB->get_record('facetoface_session_field', array('id'=>$id))) {
         error('Field ID is incorrect: '. $id);
     }
 }
 
+$PAGE->set_url('/mod/facetoface/customfield.php', array('id' => $id, 'd'=>$d, 'confirm'=>$confirm));
+
+admin_externalpage_setup('managemodules'); // this is hacky, tehre should be a special hidden page for it
+
 $contextsystem = get_context_instance(CONTEXT_SYSTEM);
 
-require_login(0, false);
 require_capability('moodle/site:config', $contextsystem);
 
 $returnurl = "$CFG->wwwroot/admin/settings.php?section=modsettingfacetoface";
 
 // Header
-$navlinks = array();
-$navlinks[] = array('name' => get_string('administration'));
-$navlinks[] = array('name' => get_string('managemodules'));
-$navlinks[] = array('name' => get_string('activities'));
-$navlinks[] = array('name' => get_string('modulename', 'facetoface'));
 
 $title = get_string('addnewfield', 'facetoface');
 if ($field != null) {
     $title = $field->name;
 }
-$navlinks[] = array('name' => format_string($title));
-$navigation = build_navigation($navlinks);
 
 // Handle deletions
 if (!empty($d)) {
@@ -42,23 +38,29 @@ if (!empty($d)) {
     }
 
     if (!$confirm) {
-        print_header_simple(format_string($title), '', $navigation, '', '', true);
+        echo $OUTPUT->header(format_string($title), '', $navigation, '', '', true);
         notice_yesno(get_string('fielddeleteconfirm', 'facetoface', format_string($field->name)),
                      "customfield.php?id=$id&amp;d=1&amp;confirm=1&amp;sesskey=$USER->sesskey", $returnurl);
         print_footer();
         exit;
     }
     else {
-        begin_sql();
-        if (!delete_records('facetoface_session_field', 'id', $id)) {
-            rollback_sql();
-            print_error('error:couldnotdeletefield', 'facetoface', $returnurl);
+        $transaction = $DB->start_delegated_transaction();
+
+        try {
+            if (!$DB->delete_records('facetoface_session_field', 'id', $id)) {
+                throw new Exception(get_string('error:couldnotdeletefield', 'facetoface'));
+            }
+
+            if (!$DB->delete_records('facetoface_session_data', 'fieldid', $id)) {
+                throw new Exception(get_string('error:couldnotdeletefield', 'facetoface'));
+            }
+
+            $transaction->allow_commit();
+        } catch (Exception $e) {
+            $transaction->rollback($e);
         }
-        if (!delete_records('facetoface_session_data', 'fieldid', $id)) {
-            rollback_sql();
-            print_error('error:couldnotdeletefield', 'facetoface', $returnurl);
-        }
-        commit_sql();
+
         redirect($returnurl);
     }
 }
@@ -109,12 +111,12 @@ if ($fromform = $mform->get_data()) { // Form submitted
 
     if ($field != null) {
         $todb->id = $field->id;
-        if (!update_record('facetoface_session_field', $todb)) {
+        if (!$DB->update_record('facetoface_session_field', $todb)) {
             print_error('error:couldnotupdatefield', 'facetoface', $returnurl);
         }
     }
     else {
-        if (!insert_record('facetoface_session_field', $todb)) {
+        if (!$DB->insert_record('facetoface_session_field', $todb)) {
             print_error('error:couldnotaddfield', 'facetoface', $returnurl);
         }
     }
@@ -138,12 +140,12 @@ elseif ($field != null) { // Edit mode
     $mform->set_data($toform);
 }
 
-print_header_simple(format_string($title), '', $navigation, '', '', true);
+echo $OUTPUT->header();
 
-print_box_start();
-print_heading($title);
+echo $OUTPUT->box_start();
+echo $OUTPUT->heading($title);
 
 $mform->display();
 
-print_box_end();
-print_footer();
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer();

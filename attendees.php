@@ -25,6 +25,7 @@
 require_once dirname(dirname(dirname(__FILE__))).'/config.php';
 require_once $CFG->dirroot.'/mod/facetoface/lib.php';
 
+global $DB;
 
 /**
  * Load and validate base data
@@ -43,10 +44,10 @@ $backtoallsessions = optional_param('backtoallsessions', 0, PARAM_INT);
 if (!$session = facetoface_get_session($s)) {
     print_error('error:incorrectcoursemodulesession', 'facetoface');
 }
-if (!$facetoface = get_record('facetoface', 'id', $session->facetoface)) {
+if (!$facetoface = $DB->get_record('facetoface', array('id'=>$session->facetoface))) {
     print_error('error:incorrectfacetofaceid', 'facetoface');
 }
-if (!$course = get_record('course', 'id', $facetoface->course)) {
+if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
     print_error('error:coursemisconfigured', 'facetoface');
 }
 if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
@@ -75,9 +76,9 @@ $cancellations = facetoface_get_cancellations($session->id);
  *   - Requires mod/facetoface:takeattendance capabilities in the course
  *
  */
-require_login();
 
 $context = get_context_instance(CONTEXT_COURSE, $course->id);
+require_course_login($course);
 
 // Actions the user can perform
 $can_view_attendees = has_capability('mod/facetoface:viewattendees', $context);
@@ -149,19 +150,14 @@ add_to_log($course->id, 'facetoface', 'view attendees', "view.php?id=$cm->id", $
 
 $pagetitle = format_string($facetoface->name);
 
-$link = "{$CFG->wwwroot}/course/view.php?id={$course->id}";
-$navlinks[] = array('name' => $course->shortname, 'link' => $link, 'type' => 'title');
-$link = "{$CFG->wwwroot}/mod/facetoface/index.php?id={$course->id}";
-$navlinks[] = array('name' => get_string('modulenameplural', 'facetoface'), 'link' => $link, 'type' => 'title');
-$link = "{$CFG->wwwroot}/mod/facetoface/view.php?f={$facetoface->id}";
-$navlinks[] = array('name' => $pagetitle, 'link' => $link, 'type' => 'activityinstance');
+$PAGE->set_url('/mod/facetoface/attendees.php', array('s' => $s));
+$PAGE->set_context($context);
+$PAGE->set_cm($cm);
 
-$navlinks[] = array('name' => get_string('attendees', 'facetoface'), 'link' => '', 'type' => 'title');
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($course->fullname);
 
-$navigation = build_navigation($navlinks);
-$button = update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface'));
-
-print_header_simple($pagetitle, '', $navigation, '', '', true, $button, navmenu($course, $cm));
+echo $OUTPUT->header();
 
 
 /**
@@ -173,8 +169,8 @@ if ($takeattendance && $session->datetimeknown && !facetoface_has_session_starte
     print_error('error:canttakeattendanceforunstartedsession', 'facetoface', $link);
 }
 
-print_box_start();
-print_heading(format_string($facetoface->name), 'center');
+echo $OUTPUT->box_start();
+echo $OUTPUT->heading(format_string($facetoface->name));
 
 if ($can_view_session) {
     facetoface_print_session($session, true);
@@ -191,7 +187,7 @@ if ($can_view_attendees || $can_take_attendance) {
         $heading = get_string('attendees', 'facetoface');
     }
 
-    print_heading($heading, 'center');
+    echo $OUTPUT->heading($heading);
 
     if (empty($attendees)) {
         notify(get_string('nosignedupusers', 'facetoface'));
@@ -215,7 +211,7 @@ if ($can_view_attendees || $can_take_attendance) {
             }
         }
 
-        $table = new object();
+        $table = new html_table();
         $table->head = array(get_string('name'));
         $table->summary = get_string('attendeestablesummary', 'facetoface');
         $table->align = array('left');
@@ -242,7 +238,7 @@ if ($can_view_attendees || $can_take_attendance) {
             $table->align[] = 'center';
         }
 
-        foreach($attendees as $attendee) {
+        foreach ($attendees as $attendee) {
             $data = array();
             $data[] = "<a href=\"$CFG->wwwroot/user/view.php?id={$attendee->id}&amp;course={$course->id}\">". format_string(fullname($attendee)).'</a>';
 
@@ -252,7 +248,7 @@ if ($can_view_attendees || $can_take_attendance) {
 
                 $optionid = 'submissionid_'.$attendee->submissionid;
                 $status = $attendee->statuscode;
-                $select = choose_from_menu($status_options, $optionid, $status, 'choose', '', '0', true);
+                $select = html_writer::select($status_options, $optionid, $status);
                 $data[] = $select;
             }
             else {
@@ -267,7 +263,7 @@ if ($can_view_attendees || $can_take_attendance) {
             $table->data[] = $data;
         }
 
-        print_table($table);
+        echo html_writer::table($table);
 
         if ($takeattendance) {
             echo '<p>';
@@ -312,14 +308,14 @@ if ($can_approve_requests) {
         notify(get_string('noactionableunapprovedrequests', 'facetoface'));
     }
     else {
-        print_heading(get_string('unapprovedrequests', 'facetoface'), 'center');
+        $OUTPUT->heading(get_string('unapprovedrequests', 'facetoface'));
 
         echo '<form action="attendees.php?s='.$s.'" method="post">';
         echo '<input type="hidden" name="sesskey" value="'.$USER->sesskey.'" />';
         echo '<input type="hidden" name="s" value="'.$s.'" />';
         echo '<input type="hidden" name="backtoallsessions" value="'.$backtoallsessions.'" /></p>';
 
-        $table = new object();
+        $table = new html_table();
         $table->summary = get_string('requeststablesummary', 'facetoface');
         $table->head = array(get_string('name'), get_string('timerequested', 'facetoface'),
                             get_string('decidelater', 'facetoface'), get_string('decline', 'facetoface'), get_string('approve', 'facetoface'));
@@ -336,7 +332,7 @@ if ($can_approve_requests) {
             $table->data[] = $data;
         }
 
-        print_table($table);
+        echo html_writer::table($table);
 
         echo '<p><input type="submit" value="Update requests" /></p>';
         echo '</form>';
@@ -350,9 +346,9 @@ if ($can_approve_requests) {
 if (!$takeattendance && $can_view_cancellations && $cancellations) {
 
     echo '<br />';
-    print_heading(get_string('cancellations', 'facetoface'), 'center');
+    echo $OUTPUT->heading(get_string('cancellations', 'facetoface'));
 
-    $table = new object();
+    $table = new html_table();
     $table->summary = get_string('cancellationstablesummary', 'facetoface');
     $table->head = array(get_string('name'), get_string('timesignedup', 'facetoface'),
                          get_string('timecancelled', 'facetoface'), get_string('cancelreason', 'facetoface'));
@@ -366,11 +362,11 @@ if (!$takeattendance && $can_view_cancellations && $cancellations) {
         $data[] = format_string($attendee->cancelreason);
         $table->data[] = $data;
     }
-    print_table($table);
+    echo html_writer::table($table);
 }
 
 /**
  * Print page footer
  */
-print_box_end();
-print_footer($course);
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer($course);

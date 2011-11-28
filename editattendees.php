@@ -1,7 +1,8 @@
 <?php
-
 require_once '../../config.php';
 require_once 'lib.php';
+
+global $DB, $THEME;
 
 define('MAX_USERS_PER_PAGE', 5000);
 
@@ -17,10 +18,10 @@ $backtoallsessions = optional_param('backtoallsessions', 0, PARAM_INT); // facet
 if (!$session = facetoface_get_session($s)) {
     print_error('error:incorrectcoursemodulesession', 'facetoface');
 }
-if (!$facetoface = get_record('facetoface', 'id', $session->facetoface)) {
+if (!$facetoface = $DB->get_record('facetoface', array('id'=>$session->facetoface))) {
     print_error('error:incorrectfacetofaceid', 'facetoface');
 }
-if (!$course = get_record('course', 'id', $facetoface->course)) {
+if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
     print_error('error:coursemisconfigured', 'facetoface');
 }
 if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
@@ -55,9 +56,9 @@ if ($frm = data_submitted()) {
 
             // Make sure that the user is enroled in the course
             if (!has_capability('moodle/course:view', $context, $adduser)) {
-                $user = get_record('user', 'id', $adduser);
+                $user = $DB->get_record('user', array('id'=>$adduser));
 
-                if (!enrol_into_course($course, $user, 'manual')) {
+                if (!enrol_try_internal_enrol($course->id, $user->id)) {
                     $errors[] = get_string('error:enrolmentfailed', 'facetoface', fullname($user));
                     $errors[] = get_string('error:addattendee', 'facetoface', fullname($user));
                     continue; // don't sign the user up
@@ -65,8 +66,8 @@ if ($frm = data_submitted()) {
             }
 
             if (facetoface_get_user_submissions($facetoface->id, $adduser)) {
-                $erruser = get_record('user', 'id', $adduser, '','','','', 'id, firstname, lastname');
-                $errors[] = get_string('error:addalreadysignedupattendee', 'facetoface', fullname($erruser));
+                $erruser = $DB->get_record('user', array('id'=>$adduser),'id, firstname, lastname');
+                $errors[] = fullname($erruser).get_string('error:addalreadysignedupattendee', 'facetoface');
             }
             else {
                 if (!facetoface_session_has_capacity($session, $context)) {
@@ -83,7 +84,7 @@ if ($frm = data_submitted()) {
 
                 if (!facetoface_user_signup($session, $facetoface, $course, '', MDL_F2F_BOTH,
                                                 $status, $adduser, !$suppressemail)) {
-                    $erruser = get_record('user', 'id', $adduser, '','','','', 'id, firstname, lastname');
+                    $erruser = $DB->get_record('user', array('id'=>$adduser),'id, firstname, lastname');
                     $errors[] = get_string('error:addattendee', 'facetoface', fullname($erruser));
                 }
             }
@@ -107,7 +108,7 @@ if ($frm = data_submitted()) {
             }
             else {
                 $errors[] = $cancelerr;
-                $erruser = get_record('user', 'id', $removeuser, '','','','', 'id, firstname, lastname');
+                $erruser = $DB->get_record('user', array('id'=>$removeuser),'id, firstname, lastname');
                 $errors[] = get_string('error:removeattendee', 'facetoface', fullname($erruser));
             }
         }
@@ -124,16 +125,17 @@ if ($frm = data_submitted()) {
 
 /// Main page
 $pagetitle = format_string($facetoface->name);
-$navlinks[] = array('name' => $strfacetofaces, 'link' => "index.php?id=$course->id", 'type' => 'title');
-$navlinks[] = array('name' => $pagetitle, 'link' => "view.php?f=$facetoface->id", 'type' => 'activityinstance');
-$navlinks[] = array('name' => get_string('attendees', 'facetoface'), 'link' => "attendees.php?s=$session->id&amp;backtoallsessions=$backtoallsessions", 'type' => 'activityinstance');
-$navlinks[] = array('name' => get_string('addremoveattendees', 'facetoface'), 'link' => '', 'type' => 'title');
-$navigation = build_navigation($navlinks);
-print_header_simple($pagetitle, '', $navigation, '', '', true,
-                    update_module_button($cm->id, $course->id, $strfacetoface), navmenu($course, $cm));
 
-print_box_start();
-print_heading(get_string('addremoveattendees', 'facetoface'), 'center');
+$PAGE->set_cm($cm);
+$PAGE->set_url('/mod/facetoface/editattendees.php', array('s' => $s, 'backtoallsessions' => $backtoallsessions));
+
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($course->fullname);
+echo $OUTPUT->header();
+
+
+echo $OUTPUT->box_start();
+echo $OUTPUT->heading(get_string('addremoveattendees', 'facetoface'));
 
 /// Get the list of currently signed-up users
 $existingusers = facetoface_get_attendees($session->id);
@@ -144,8 +146,8 @@ $select  = "username <> 'guest' AND deleted = 0 AND confirmed = 1";
 /// Apply search terms
 $searchtext = trim($searchtext);
 if ($searchtext !== '') {   // Search for a subset of remaining users
-    $LIKE      = sql_ilike();
-    $FULLNAME  = sql_fullname();
+    $LIKE      = $DB->sql_ilike();
+    $FULLNAME  = $DB->sql_fullname();
 
     $selectsql = " AND ($FULLNAME $LIKE '%$searchtext%' OR
                             email $LIKE '%$searchtext%' OR
@@ -155,27 +157,27 @@ if ($searchtext !== '') {   // Search for a subset of remaining users
 }
 
 /// All non-signed up system users
-$availableusers = get_recordset_sql('SELECT id, firstname, lastname, email
-                                       FROM '.$CFG->prefix.'user
+$availableusers = $DB->get_recordset_sql('SELECT id, firstname, lastname, email
+                                       FROM {user}
                                       WHERE '.$select.'
                                         AND id NOT IN
                                           (
                                             SELECT u.id
-                                              FROM '.$CFG->prefix.'facetoface_signups s
-                                              JOIN '.$CFG->prefix.'facetoface_signups_status ss ON s.id = ss.signupid
-                                              JOIN '.$CFG->prefix.'user u ON u.id=s.userid
+                                              FROM {facetoface_signups} s
+                                              JOIN {facetoface_signups_status} ss ON s.id = ss.signupid
+                                              JOIN {user} u ON u.id=s.userid
                                              WHERE s.sessionid='.$session->id.'
                                                AND ss.statuscode >= '.MDL_F2F_STATUS_BOOKED.'
                                                AND ss.superceded = 0
                                           )
                                           ORDER BY lastname ASC, firstname ASC');
 
-$usercount = count_records_select('user', $select) - $existingcount;
+$usercount = $DB->count_records_select('user', $select) - $existingcount;
 
 
 // Get all signed up non-attendees
 $nonattendees = 0;
-$nonattendees_rs = get_recordset_sql(
+$nonattendees_rs = $DB->get_recordset_sql(
     "
         SELECT
             u.id,
@@ -184,15 +186,15 @@ $nonattendees_rs = get_recordset_sql(
             u.email,
             ss.statuscode
         FROM
-            {$CFG->prefix}facetoface_sessions s
+            {facetoface_sessions} s
         JOIN
-            {$CFG->prefix}facetoface_signups su
+            {facetoface_signups} su
          ON s.id = su.sessionid
         JOIN
-            {$CFG->prefix}facetoface_signups_status ss
+            {facetoface_signups_status} ss
          ON su.id = ss.signupid
         JOIN
-            {$CFG->prefix}user u
+            {user} u
          ON u.id = su.userid
         WHERE
             s.id = {$session->id}
@@ -203,13 +205,13 @@ $nonattendees_rs = get_recordset_sql(
     "
 );
 
-$table = new object();
+$table = new html_table();
 $table->head = array(get_string('name'), get_string('email'), get_string('status'));
 $table->align = array('left');
 $table->size = array('50%');
 $table->width = '70%';
 
-while ($user = rs_fetch_next_record($nonattendees_rs)) {
+foreach ($nonattendees_rs as $user) {
     $data = array();
     $data[] = fullname($user);
     $data[] = $user->email;
@@ -223,21 +225,23 @@ while ($user = rs_fetch_next_record($nonattendees_rs)) {
 /// Prints a form to add/remove users from the session
 include('editattendees.html');
 
+$nonattendees_rs->close();
+
 if (!empty($errors)) {
     $msg = '<p>';
     foreach ($errors as $e) {
         $msg .= $e.'<br />';
     }
     $msg .= '</p>';
-    print_simple_box_start('center');
+    echo $OUTPUT->box_start('center');
     notify($msg);
-    print_simple_box_end();
+    echo $OUTPUT->box_end();
 }
 
 // Bottom of the page links
-print '<p style="text-align: center">';
+echo '<p style="text-align: center">';
 $url = $CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions;
-print '<a href="'.$url.'">'.get_string('goback', 'facetoface').'</a></p>';
+echo '<a href="'.$url.'">'.get_string('goback', 'facetoface').'</a></p>';
 
-print_box_end();
-print_footer($course);
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer($course);

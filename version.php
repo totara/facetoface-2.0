@@ -5,6 +5,6 @@
 //  This fragment is called by /admin/index.php
 ////////////////////////////////////////////////////////////////////////////////
 
-$module->version  = 2011062902;
-$module->requires = 2007021500;  // Requires this Moodle version
+$module->version  = 2011120703;
+$module->requires = 2010080300;  // Requires this Moodle version
 $module->cron     = 60;

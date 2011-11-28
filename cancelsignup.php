@@ -4,6 +4,8 @@ require_once '../../config.php';
 require_once 'lib.php';
 require_once 'cancelsignup_form.php';
 
+global $DB;
+
 $s  = required_param('s', PARAM_INT); // facetoface session ID
 $confirm           = optional_param('confirm', false, PARAM_BOOL);
 $backtoallsessions = optional_param('backtoallsessions', 0, PARAM_INT);
@@ -11,10 +13,10 @@ $backtoallsessions = optional_param('backtoallsessions', 0, PARAM_INT);
 if (!$session = facetoface_get_session($s)) {
     print_error('error:incorrectcoursemodulesession', 'facetoface');
 }
-if (!$facetoface = get_record('facetoface', 'id', $session->facetoface)) {
+if (!$facetoface = $DB->get_record('facetoface', array('id'=>$session->facetoface))) {
     print_error('error:incorrectfacetofaceid', 'facetoface');
 }
-if (!$course = get_record('course', 'id', $facetoface->course)) {
+if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
     print_error('error:coursemisconfigured', 'facetoface');
 }
 if (!$cm = get_coursemodule_from_instance("facetoface", $facetoface->id, $course->id)) {
@@ -75,19 +77,22 @@ if ($fromform = $mform->get_data()) { // Form submitted
 }
 
 $pagetitle = format_string($facetoface->name);
-$navlinks[] = array('name' => get_string('modulenameplural', 'facetoface'), 'link' => "index.php?id=$course->id", 'type' => 'title');
-$navlinks[] = array('name' => $pagetitle, 'link' => '', 'type' => 'activityinstance');
-$navigation = build_navigation($navlinks);
-print_header_simple($pagetitle, '', $navigation, '', '', true,
-                    update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')));
+
+$PAGE->set_cm($cm);
+$PAGE->set_url('/mod/facetoface/cancelsignup.php', array('s' => $s, 'backtoallsessions' => $backtoallsessions, 'confirm' => $confirm));
+
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($course->fullname);
+
+echo $OUTPUT->header();
 
 $heading = get_string('cancelbookingfor', 'facetoface', $facetoface->name);
 
 $viewattendees = has_capability('mod/facetoface:viewattendees', $context);
 $signedup = facetoface_check_signup($facetoface->id);
 
-print_box_start();
-print_heading($heading, 'center');
+echo $OUTPUT->box_start();
+echo $OUTPUT->heading($heading);
 
 if ($signedup) {
     facetoface_print_session($session, $viewattendees);
@@ -97,5 +102,5 @@ else {
     print_error('notsignedup', 'facetoface', $returnurl);
 }
 
-print_box_end();
-print_footer($course);
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer($course);

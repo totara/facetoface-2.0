@@ -1,13 +1,13 @@
 <?php
-
+global $CFG, $USER,$DB;
 require_once "$CFG->dirroot/mod/facetoface/lib.php";
 
 $settings->add(new admin_setting_configtext('facetoface_fromaddress', get_string('setting:fromaddress_caption', 'facetoface'),get_string('setting:fromaddress', 'facetoface'), get_string('setting:fromaddressdefault', 'facetoface'), "/^((?:[\w\.\-])+\@(?:(?:[a-zA-Z\d\-])+\.)+(?:[a-zA-Z\d]{2,4}))$/",30));
 
 // Load roles
 $choices = array();
-if ($roles = get_records('role')) {
-    foreach($roles as $role) {
+if ($roles = $DB->get_records('role')) {
+    foreach ($roles as $role) {
         $choices[$role->id] = format_string($role->name);
     }
 }

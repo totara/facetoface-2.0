@@ -1,4 +1,5 @@
 <?php
+global $DB, $OUTPUT, $PAGE;
 
 require_once '../../config.php';
 require_once 'lib.php';
@@ -15,13 +16,13 @@ $nbdays = 1; // default number to show
 
 $session = null;
 if ($id) {
-    if (!$cm = get_record('course_modules', 'id', $id)) {
+    if (!$cm = $DB->get_record('course_modules', array('id'=>$id))) {
         error(get_string('error:incorrectcoursemoduleid', 'facetoface'));
     }
-    if (!$course = get_record('course', 'id', $cm->course)) {
+    if (!$course = $DB->get_record('course', array('id'=>$cm->course))) {
         error(get_string('error:coursemisconfigured', 'facetoface'));
     }
-    if (!$facetoface = get_record('facetoface', 'id', $cm->instance)) {
+    if (!$facetoface =$DB->get_record('facetoface',array('id'=>$cm->instance))) {
         error(get_string('error:incorrectcoursemodule', 'facetoface'));
     }
 }
@@ -29,10 +30,10 @@ elseif ($s) {
      if (!$session = facetoface_get_session($s)) {
          error(get_string('error:incorrectcoursemodulesession', 'facetoface'));
      }
-     if (!$facetoface = get_record('facetoface', 'id', $session->facetoface)) {
+     if (!$facetoface = $DB->get_record('facetoface',array('id'=>$session->facetoface))) {
          error(get_string('error:incorrectfacetofaceid', 'facetoface'));
      }
-     if (!$course = get_record('course', 'id', $facetoface->course)) {
+     if (!$course = $DB->get_record('course', array('id'=> $facetoface->course))) {
          error(get_string('error:coursemisconfigured', 'facetoface'));
      }
      if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
@@ -42,10 +43,10 @@ elseif ($s) {
      $nbdays = count($session->sessiondates);
 }
 else {
-    if (!$facetoface = get_record('facetoface', 'id', $f)) {
+    if (!$facetoface = $DB->get_record('facetoface', array('id'=>$f))) {
         error(get_string('error:incorrectfacetofaceid', 'facetoface'));
     }
-    if (!$course = get_record('course', 'id', $facetoface->course)) {
+    if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
         error(get_string('error:coursemisconfigured', 'facetoface'));
     }
     if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
@@ -130,7 +131,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
     $todb->details = trim($fromform->details);
 
     $sessionid = null;
-    begin_sql();
+    //begin_sql();
 
     $update = false;
     if (!$c and $session != null) {
@@ -139,20 +140,20 @@ if ($fromform = $mform->get_data()) { // Form submitted
 
         $todb->id = $session->id;
         if (!facetoface_update_session($todb, $sessiondates)) {
-            rollback_sql();
+            // rollback_sql();
             add_to_log($course->id, 'facetoface', 'update session (FAILED)', "sessions.php?s=$session->id", $facetoface->id, $cm->id);
             print_error('error:couldnotupdatesession', 'facetoface', $returnurl);
         }
 
         // Remove old site-wide calendar entry
         if (!facetoface_remove_session_from_site_calendar($session)) {
-            rollback_sql();
+            // rollback_sql();
             print_error('error:couldnotupdatecalendar', 'facetoface', $returnurl);
         }
     }
     else {
         if (!$sessionid = facetoface_add_session($todb, $sessiondates)) {
-            rollback_sql();
+            // rollback_sql();
             add_to_log($course->id, 'facetoface', 'add session (FAILED)', 'sessions.php?f='.$facetoface->id, $facetoface->id, $cm->id);
             print_error('error:couldnotaddsession', 'facetoface', $returnurl);
         }
@@ -165,7 +166,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
         }
 
         if (!facetoface_save_customfield_value($field->id, $fromform->$fieldname, $sessionid, 'session')) {
-            rollback_sql();
+            // rollback_sql();
             print_error('error:couldnotsavecustomfield', 'facetoface', $returnurl);
         }
     }
@@ -177,13 +178,13 @@ if ($fromform = $mform->get_data()) { // Form submitted
 
     // Retrieve record that was just inserted/updated
     if (!$session = facetoface_get_session($sessionid)) {
-        rollback_sql();
+        // rollback_sql();
         print_error('error:couldnotfindsession', 'facetoface', $returnurl);
     }
 
     // Put the session in the site-wide calendar (needs customfields to be up to date)
     if (!facetoface_add_session_to_site_calendar($session, $facetoface)) {
-        rollback_sql();
+        // rollback_sql();
         print_error('error:couldnotupdatecalendar', 'facetoface', $returnurl);
     }
 
@@ -194,7 +195,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
         add_to_log($course->id, 'facetoface', 'added session', 'facetoface', 'sessions.php?f='.$facetoface->id, $facetoface->id, $cm->id);
     }
 
-    commit_sql();
+    // commit_sql();
     redirect($returnurl);
 }
 elseif ($session != null) { // Edit mode
@@ -243,15 +244,16 @@ else {
 }
 
 $pagetitle = format_string($facetoface->name);
-$navlinks[] = array('name' => get_string('modulenameplural', 'facetoface'), 'link' => "index.php?id=$course->id", 'type' => 'title');
-$navlinks[] = array('name' => $pagetitle, 'link' => "view.php?f=$facetoface->id", 'type' => 'activityinstance');
-$navlinks[] = array('name' => $heading, 'link' => '', 'type' => 'title');
-$navigation = build_navigation($navlinks);
-print_header_simple($pagetitle, '', $navigation, '', '', true,
-                    update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')), navmenu($course, $cm));
 
-print_box_start();
-print_heading($heading, 'center');
+$PAGE->set_cm($cm);
+$PAGE->set_url('/mod/facetoface/sessions.php', array('f' => $f));
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($course->fullname);
+
+echo $OUTPUT->header();
+
+echo $OUTPUT->box_start();
+echo $OUTPUT->heading($heading);
 
 if (!empty($errorstr)) {
     echo '<div class="notifyproblem" align="center"><span style="font-size: 12px; line-height: 18px;">'.$errorstr.'</span></div>';
@@ -260,12 +262,14 @@ if (!empty($errorstr)) {
 if ($d) {
     $viewattendees = has_capability('mod/facetoface:viewattendees', $context);
     facetoface_print_session($session, $viewattendees);
-    notice_yesno(get_string('deletesessionconfirm', 'facetoface', format_string($facetoface->name)),
-                 "sessions.php?s=$session->id&amp;d=1&amp;confirm=1&amp;sesskey=$USER->sesskey", $returnurl);
+    $optionsyes = array('sesskey'=>sesskey(), 's'=>$session->id, 'd'=>1, 'confirm'=>1);
+    echo $OUTPUT->confirm(get_string('deletesessionconfirm', 'facetoface', format_string($facetoface->name)),
+        new moodle_url('sessions.php', $optionsyes),
+        new moodle_url($returnurl));
 }
 else {
     $mform->display();
 }
 
-print_box_end();
-print_footer($course);
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer($course);

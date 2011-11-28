@@ -3,9 +3,11 @@
 require_once '../../config.php';
 require_once 'lib.php';
 
+global $DB;
+
 $id = required_param('id', PARAM_INT); // Course Module ID
 
-if (!$course = get_record('course', 'id', $id)) {
+if (!$course = $DB->get_record('course', ('id'=>$id))) {
     print_error('error:coursemisconfigured', 'facetoface');
 }
 
@@ -24,9 +26,13 @@ $strcourse = get_string('course');
 $strname = get_string('name');
 
 $pagetitle = format_string($strfacetofaces);
-$navlinks[] = array('name' => $pagetitle, 'link' => '', 'type' => 'title');
-$navigation = build_navigation($navlinks);
-print_header_simple($pagetitle, '', $navigation, '', '', true, '', navmenu($course));
+
+$PAGE->set_url('/mod/facetoface/signup.php', array('s' => $s, 'backtoallsessions' => $backtoallsessions));
+
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($course->fullname);
+
+echo $OUTPUT->header();
 
 if (!$facetofaces = get_all_instances_in_course('facetoface', $course)) {
     notice(get_string('nofacetofaces', 'facetoface'), "../../course/view.php?id=$course->id");
@@ -81,14 +87,14 @@ foreach ($facetofaces as $facetoface) {
 
     $totalsignupcount = 0;
     if ($sessions = facetoface_get_sessions($facetoface->id)) {
-        foreach($sessions as $session) {
+        foreach ($sessions as $session) {
             if (!facetoface_has_session_started($session, $timenow)) {
                 $signupcount = facetoface_get_num_attendees($session->id);
                 $totalsignupcount += $signupcount;
             }
         }
     }
-        
+
     $courselink = '<a title="'.$course->shortname.'" href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'">'.$course->shortname.'</a>';
     if ($course->format == 'weeks' or $course->format == 'topics') {
         if (has_capability('mod/facetoface:viewattendees', $context)) {
@@ -105,5 +111,5 @@ foreach ($facetofaces as $facetoface) {
 
 echo "<br />";
 
-print_table($table);
-print_footer($course);
+echo html_writer::table($table);
+echo $OUTPUT->footer($course);

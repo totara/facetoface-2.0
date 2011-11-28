@@ -32,9 +32,8 @@ require_once("{$CFG->dirroot}/mod/facetoface/lib.php");
 
 class mod_facetoface_session_form extends moodleform {
 
-    function definition()
-    {
-        global $CFG;
+    function definition() {
+        global $CFG,$DB;
 
         $mform =& $this->_form;
 
@@ -52,13 +51,13 @@ class mod_facetoface_session_form extends moodleform {
         // Hack to put help files on these custom fields.
         // TODO: add to the admin page a feature to put help text on custom fields
         if ($mform->elementExists('custom_location')){
-            $mform->setHelpButton('custom_location',array('location',get_string('location','facetoface'),'facetoface'));
+            $mform->addHelpButton('custom_location', 'location', 'facetoface');
         }
         if ($mform->elementExists('custom_venue')){
-            $mform->setHelpButton('custom_venue',array('venue',get_string('venue','facetoface'),'facetoface'));
+            $mform->addHelpButton('custom_venue', 'venue', 'facetoface');
         }
         if ($mform->elementExists('custom_room')){
-            $mform->setHelpButton('custom_room',array('room',get_string('room','facetoface'),'facetoface'));
+            $mform->addHelpButton('custom_room', 'room', 'facetoface');
         }
 
         $formarray  = array();
@@ -67,7 +66,7 @@ class mod_facetoface_session_form extends moodleform {
         $mform->addGroup($formarray,'datetimeknown_group', get_string('sessiondatetimeknown','facetoface'), array(' '),false);
         $mform->addGroupRule('datetimeknown_group', null, 'required', null, 'client');
         $mform->setDefault('datetimeknown', false);
-        $mform->setHelpButton('datetimeknown_group', array('sessiondatetimeknown', get_string('sessiondatetimeknown', 'facetoface'), 'facetoface'));
+        $mform->addHelpButton('datetimeknown_group', 'sessiondatetimeknown', 'facetoface');
 
         $repeatarray = array();
         $repeatarray[] = &$mform->createElement('hidden', 'sessiondateid', 0);
@@ -93,14 +92,14 @@ class mod_facetoface_session_form extends moodleform {
         $mform->addRule('capacity', null, 'required', null, 'client');
         $mform->setType('capacity', PARAM_INT);
         $mform->setDefault('capacity', 10);
-        $mform->setHelpButton('capacity', array('capacity', get_string('capacity', 'facetoface'), 'facetoface'));
+        $mform->addHelpButton('capacity', 'capacity', 'facetoface');
 
         $mform->addElement('checkbox', 'allowoverbook', get_string('allowoverbook', 'facetoface'));
-        $mform->setHelpButton('allowoverbook', array('allowoverbook', get_string('allowoverbook', 'facetoface'), 'facetoface'));
+        $mform->addHelpButton('allowoverbook', 'allowoverbook', 'facetoface');
 
         $mform->addElement('text', 'duration', get_string('duration', 'facetoface'), 'size="5"');
         $mform->setType('duration', PARAM_TEXT);
-        $mform->setHelpButton('duration', array('duration', get_string('duration', 'facetoface'), 'facetoface'));
+        $mform->addHelpButton('duration', 'duration', 'facetoface');
 
         if (!get_config(NULL, 'facetoface_hidecost')) {
             $formarray  = array();
@@ -108,7 +107,7 @@ class mod_facetoface_session_form extends moodleform {
             $formarray[] = $mform->createElement('static', 'normalcosthint', '','<span class="hint-text">'.get_string('normalcosthinttext','facetoface').'</span>');
             $mform->addGroup($formarray,'normalcost_group', get_string('normalcost','facetoface'), array(' '),false);
             $mform->setType('normalcost', PARAM_TEXT);
-            $mform->setHelpButton('normalcost_group', array('normalcost', get_string('normalcost', 'facetoface'), 'facetoface'));
+            $mform->addHelpButton('normalcost_group', 'normalcost', 'facetoface');
 
             if (!get_config(NULL, 'facetoface_hidediscount')) {
                 $formarray  = array();
@@ -116,13 +115,13 @@ class mod_facetoface_session_form extends moodleform {
                 $formarray[] = $mform->createElement('static', 'discountcosthint', '','<span class="hint-text">'.get_string('discountcosthinttext','facetoface').'</span>');
                 $mform->addGroup($formarray,'discountcost_group', get_string('discountcost','facetoface'), array(' '),false);
                 $mform->setType('discountcost', PARAM_TEXT);
-                $mform->setHelpButton('discountcost_group', array('discountcost', get_string('discountcost', 'facetoface'), 'facetoface'));
+                $mform->addHelpButton('discountcost_group', 'discountcost', 'facetoface');
             }
         }
 
         $mform->addElement('htmleditor', 'details', get_string('details', 'facetoface'), '');
         $mform->setType('details', PARAM_RAW);
-        $mform->setHelpButton('details', array('details', get_string('details', 'facetoface'), 'facetoface'));
+        $mform->addHelpButton('details', 'details', 'facetoface');
 
         // Choose users for trainer roles
         $rolenames = facetoface_get_trainer_roles();
@@ -140,15 +139,15 @@ class mod_facetoface_session_form extends moodleform {
                 $context = get_context_instance(CONTEXT_COURSE, $this->_customdata['course']->id);
 
                 // Attempt to load users with this role in this course
-                $rs = get_recordset_sql("
+                $rs = $DB->get_recordset_sql("
                     SELECT
                         u.id,
                         u.firstname,
                         u.lastname
                     FROM
-                        {$CFG->prefix}role_assignments ra
+                        {role_assignments} ra
                     LEFT JOIN
-                        {$CFG->prefix}user u
+                        {user} u
                       ON ra.userid = u.id
                     WHERE
                         contextid = {$context->id}
@@ -160,10 +159,10 @@ class mod_facetoface_session_form extends moodleform {
                 }
 
                 $choices = array();
-                while ($roleuser = rs_fetch_next_record($rs)) {
+                foreach ($rs as $roleuser) {
                     $choices[$roleuser->id] = fullname($roleuser);
                 }
-                rs_close($rs);
+                $rs->close();
 
                 // Show header (if haven't already)
                 if ($choices && !$header_shown) {
@@ -210,16 +209,15 @@ class mod_facetoface_session_form extends moodleform {
         $this->add_action_buttons();
     }
 
-    function validation($data, $files)
-    {
+    function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $dateids = $data['sessiondateid'];
         $dates = count($dateids);
-        for($i=0; $i < $dates; $i++) {
+        for ($i=0; $i < $dates; $i++) {
             $starttime = $data["timestart[$i]"];
             $endtime = $data["timefinish[$i]"];
             $removecheckbox = empty($data["datedelete"]) ? array() : $data["datedelete"];
-            if($starttime > $endtime && !isset($removecheckbox[$i])) {
+            if ($starttime > $endtime && !isset($removecheckbox[$i])) {
                 $errstr = get_string('error:sessionstartafterend','facetoface');
                 $errors['timestart['.$i.']'] = $errstr;
                 $errors['timefinish['.$i.']'] = $errstr;

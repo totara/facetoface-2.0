@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 Face-to-face module for Moodle
-Copyright (C) 2007-2009 Catalyst IT (http://www.catalyst.net.nz)
+Copyright (C) 2007-2011 Catalyst IT (http://www.catalyst.net.nz)
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the Free
@@ -34,7 +34,7 @@ sign-up for a session or cancel.
 Requirements
 -------------
 
-* Moodle 1.9
+* Moodle 2.1
 
 
 Installation
@@ -48,26 +48,6 @@ Installation
 3- (Optional) Change the default options in the activity modules
    configuration.
 
-
-Integration with the course page
----------------------------------
-
-To display the session dates directly on the course page, add the following
-code to the print_section() function in course/lib.php:
-
---- /home/francois/code/cvs/moodle18/course/lib.php 2007-10-05 20:19:29.000000000 +1300
-+++ course/lib.php  2007-11-06 21:14:08.000000000 +1300
-@@ -1382,6 +1382,10 @@
-                         echo "</span>";
-                     }
-
-+                } elseif ($mod->modname == 'facetoface') {
-+                    include_once($CFG->dirroot.'/mod/facetoface/lib.php');
-+                    echo facetoface_print_coursemodule_info($mod);
-+
-                 } else { // Normal activity
-
-                     //Accessibility: for files get description via icon.
 
 Bugs/patches
 -------------

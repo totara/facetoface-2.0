@@ -3,27 +3,29 @@
 require_once '../../config.php';
 require_once 'lib.php';
 
+global $DB, $OUTPUT;
+
 $id = optional_param('id', 0, PARAM_INT); // Course Module ID
 $f = optional_param('f', 0, PARAM_INT); // facetoface ID
 $location = optional_param('location', '', PARAM_TEXT); // location
 $download = optional_param('download', '', PARAM_ALPHA); // download attendance
 
 if ($id) {
-    if (!$cm = get_record('course_modules', 'id', $id)) {
+    if (!$cm = $DB->get_record('course_modules', array('id'=>$id))) {
         print_error('error:incorrectcoursemoduleid', 'facetoface');
     }
-    if (!$course = get_record('course', 'id', $cm->course)) {
+    if (!$course = $DB->get_record('course', array('id'=>$cm->course))) {
         print_error('error:coursemisconfigured', 'facetoface');
     }
-    if (!$facetoface = get_record('facetoface', 'id', $cm->instance)) {
+    if (!$facetoface = $DB->get_record('facetoface', array('id'=>$cm->instance))) {
         print_error('error:incorrectcoursemodule', 'facetoface');
     }
 }
 elseif ($f) {
-    if (!$facetoface = get_record('facetoface', 'id', $f)) {
+    if (!$facetoface = $DB->get_record('facetoface', array('id'=>$f))) {
         print_error('error:incorrectfacetofaceid', 'facetoface');
     }
-    if (!$course = get_record('course', 'id', $facetoface->course)) {
+    if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
         print_error('error:coursemisconfigured', 'facetoface');
     }
     if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
@@ -47,31 +49,37 @@ require_capability('mod/facetoface:view', $context);
 
 add_to_log($course->id, 'facetoface', 'view', "view.php?id=$cm->id", $facetoface->id, $cm->id);
 
+
+$PAGE->set_url('/mod/facetoface/view.php', array('id' => $cm->id));
+$PAGE->set_context($context);
+$PAGE->set_cm($cm);
+
+$title = $course->shortname . ': ' . format_string($facetoface->name);
+
+$PAGE->set_title($title);
+$PAGE->set_heading($course->fullname);
+
 $pagetitle = format_string($facetoface->name);
-$navlinks[] = array('name' => get_string('modulenameplural', 'facetoface'), 'link' => "index.php?id=$course->id", 'type' => 'title');
-$navlinks[] = array('name' => $pagetitle, 'link' => '', 'type' => 'activityinstance');
-$navigation = build_navigation($navlinks);
-print_header_simple($pagetitle, '', $navigation, '', '', true,
-                    update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')), navmenu($course, $cm));
+
+echo $OUTPUT->header();
 
 if (empty($cm->visible) and !has_capability('mod/facetoface:viewemptyactivities', $context)) {
     notice(get_string('activityiscurrentlyhidden'));
 }
+echo $OUTPUT->box_start();
+echo $OUTPUT->heading(get_string('allsessionsin', 'facetoface', $facetoface->name), 2);
 
-print_box_start();
-print_heading(get_string('allsessionsin', 'facetoface', $facetoface->name), "center");
-
-if ($facetoface->description) {
-    print_box_start('generalbox','description');
-    echo format_text($facetoface->description, FORMAT_HTML);
-    print_box_end();
+if ($facetoface->intro) {
+    echo $OUTPUT->box_start('generalbox','description');
+    echo format_text($facetoface->intro, $facetoface->introformat);
+    echo $OUTPUT->box_end();
 }
 
 $locations = get_locations($facetoface->id);
 if (count($locations) > 2) {
     echo '<form method="get" action="view.php">';
     echo '<div><input type="hidden" name="f" value="'.$facetoface->id.'"/>';
-    choose_from_menu($locations, 'location', $location, '');
+    echo html_writer::select($locations, 'location', $location, '');
     echo '<input type="submit" value="'.get_string('showbylocation','facetoface').'"/>';
     echo '</div></form>';
 }
@@ -79,24 +87,22 @@ if (count($locations) > 2) {
 print_session_list($course->id, $facetoface->id, $location);
 
 if (has_capability('mod/facetoface:viewattendees', $context)) {
-    print_heading(get_string('exportattendance', 'facetoface'), "center");
+    echo $OUTPUT->heading(get_string('exportattendance', 'facetoface'));
     echo '<form method="get" action="view.php">';
     echo '<div><input type="hidden" name="f" value="'.$facetoface->id.'"/>';
     echo get_string('format', 'facetoface') . '&nbsp;';
     $formats = array('excel' => get_string('excelformat', 'facetoface'),
                      'ods' => get_string('odsformat', 'facetoface'));
-    choose_from_menu($formats, 'download', 'excel', '');
+    echo html_writer::select($formats, 'download', 'excel', '');
     echo '<input type="submit" value="'.get_string('exporttofile','facetoface').'"/>';
     echo '</div></form>';
 }
 
-print_box_end();
-print_footer($course);
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer($course);
 
-function print_session_list($courseid, $facetofaceid, $location)
-{
-    global $USER;
-    global $CFG;
+function print_session_list($courseid, $facetofaceid, $location) {
+    global $CFG, $USER, $DB, $OUTPUT;
 
     $timenow = time();
 
@@ -138,7 +144,7 @@ function print_session_list($courseid, $facetofaceid, $location)
     $previousrowclass = array();
 
     if ($sessions = facetoface_get_sessions($facetofaceid, $location) ) {
-        foreach($sessions as $session) {
+        foreach ($sessions as $session) {
             $sessionrow = array();
 
             $sessionstarted = false;
@@ -147,7 +153,7 @@ function print_session_list($courseid, $facetofaceid, $location)
             $isbookedsession = false;
 
             // Custom fields
-            $customdata = get_records('facetoface_session_data', 'sessionid', $session->id, '', 'fieldid, data');
+            $customdata = $DB->get_records('facetoface_session_data', array('sessionid'=>$session->id), '', 'fieldid, data');
             foreach ($customfields as $field) {
                 if (empty($field->showinsummary)) {
                     continue;
@@ -228,11 +234,11 @@ function print_session_list($courseid, $facetofaceid, $location)
             $options = '';
             if ($editsessions) {
                 $options .= ' <a href="sessions.php?s='.$session->id.'" title="'.get_string('editsession', 'facetoface').'">'
-                    . '<img src="'.$CFG->pixpath.'/t/edit.gif" class="iconsmall" alt="'.get_string('edit', 'facetoface').'" /></a> '
+                    . '<img src="'.$OUTPUT->pix_url('t/edit').'" class="iconsmall" alt="'.get_string('edit', 'facetoface').'" /></a> '
                     . '<a href="sessions.php?s='.$session->id.'&amp;c=1" title="'.get_string('copysession', 'facetoface').'">'
-                    . '<img src="'.$CFG->pixpath.'/t/copy.gif" class="iconsmall" alt="'.get_string('copy', 'facetoface').'" /></a> '
+                    . '<img src="'.$OUTPUT->pix_url('t/copy').'" class="iconsmall" alt="'.get_string('copy', 'facetoface').'" /></a> '
                     . '<a href="sessions.php?s='.$session->id.'&amp;d=1" title="'.get_string('deletesession', 'facetoface').'">'
-                    . '<img src="'.$CFG->pixpath.'/t/delete.gif" class="iconsmall" alt="'.get_string('delete').'" /></a><br />';
+                    . '<img src="'.$OUTPUT->pix_url('t/delete').'" class="iconsmall" alt="'.get_string('delete').'" /></a><br />';
             }
             if ($viewattendees){
                 $options .= '<a href="attendees.php?s='.$session->id.'&amp;backtoallsessions='.$facetofaceid.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('attendees', 'facetoface').'</a><br />';
@@ -279,18 +285,18 @@ function print_session_list($courseid, $facetofaceid, $location)
     }
 
     // Upcoming sessions
-    print_heading(get_string('upcomingsessions', 'facetoface'));
+    echo $OUTPUT->heading(get_string('upcomingsessions', 'facetoface'));
     if (empty($upcomingdata) and empty($upcomingtbddata)) {
         print_string('noupcoming', 'facetoface');
     }
     else {
-        $upcomingtable = new object();
+        $upcomingtable = new html_table();
         $upcomingtable->summary = get_string('upcomingsessionslist', 'facetoface');
         $upcomingtable->head = $tableheader;
         $upcomingtable->rowclass = array_merge($upcomingrowclass, $upcomingtbdrowclass);
         $upcomingtable->width = '100%';
         $upcomingtable->data = array_merge($upcomingdata, $upcomingtbddata);
-        print_table($upcomingtable);
+        echo html_writer::table($upcomingtable);
     }
 
     if ($editsessions) {
@@ -299,14 +305,14 @@ function print_session_list($courseid, $facetofaceid, $location)
 
     // Previous sessions
     if (!empty($previousdata)) {
-        print_heading(get_string('previoussessions', 'facetoface'));
-        $previoustable = new object();
+        echo $OUTPUT->heading(get_string('previoussessions', 'facetoface'));
+        $previoustable = new html_table();
         $previoustable->summary = get_string('previoussessionslist', 'facetoface');
         $previoustable->head = $tableheader;
         $previoustable->rowclass = $previousrowclass;
         $previoustable->width = '100%';
         $previoustable->data = $previousdata;
-        print_table($previoustable);
+        echo html_writer::table($previoustable);
     }
 }
 
@@ -316,22 +322,21 @@ function print_session_list($courseid, $facetofaceid, $location)
  * @param   interger    $facetofaceid
  * @return  array
  */
-function get_locations($facetofaceid)
-{
-    global $CFG;
+function get_locations($facetofaceid) {
+    global $CFG, $DB;
 
-    $locationfieldid = get_field('facetoface_session_field', 'id', 'shortname', 'location');
+    $locationfieldid = $DB->get_field('facetoface_session_field', 'id', array('shortname'=>'location'));
     if (!$locationfieldid) {
         return array();
     }
 
     $sql = "SELECT DISTINCT d.data AS location
-              FROM {$CFG->prefix}facetoface f
-              JOIN {$CFG->prefix}facetoface_sessions s ON s.facetoface = f.id
-              JOIN {$CFG->prefix}facetoface_session_data d ON d.sessionid = s.id
+              FROM {facetoface} f
+              JOIN {facetoface_sessions} s ON s.facetoface = f.id
+              JOIN {facetoface_session_data} d ON d.sessionid = s.id
              WHERE f.id = $facetofaceid AND d.fieldid = $locationfieldid";
 
-    if ($records = get_records_sql($sql)) {
+    if ($records = $DB->get_records_sql($sql)) {
         $locationmenu[''] = get_string('alllocations', 'facetoface');
 
         $i=1;

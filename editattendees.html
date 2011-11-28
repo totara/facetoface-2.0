@@ -31,15 +31,14 @@
           <br />
           <input type="checkbox" id="suppressemail" name="suppressemail" value="1" <?php echo $suppressemail ? 'checked="checked"' : '' ?> />
           <label for="suppressemail"><?php print_string('suppressemail', 'facetoface'); ?></label>
-          <?php helpbutton('suppressemail', get_string('suppressemail', 'facetoface'), 'facetoface'); ?>
+          <?php echo $OUTPUT->help_icon('suppressemail', 'facetoface'); ?>
       </td>
       <td valign="top">
         <br />
-        <?php check_theme_arrows(); ?>
         <p class="arrow_button">
-            <input name="add" id="add" type="submit" value="<?php echo '&nbsp;'.$THEME->larrow.' &nbsp; &nbsp; '.get_string('add'); ?>" title="<?php print_string('add'); ?>" />
+            <input name="add" id="add" type="submit" value="<?php echo '&nbsp;'.$OUTPUT->larrow().' &nbsp; &nbsp; '.get_string('add'); ?>" title="<?php print_string('add'); ?>" />
             <br />
-            <input name="remove" id="remove" type="submit" value="<?php echo '&nbsp; '.$THEME->rarrow.' &nbsp; &nbsp; '.get_string('remove'); ?>" title="<?php print_string('remove'); ?>" />
+            <input name="remove" id="remove" type="submit" value="<?php echo '&nbsp; '.$OUTPUT->rarrow().' &nbsp; &nbsp; '.get_string('remove'); ?>" title="<?php print_string('remove'); ?>" />
         </p>
       </td>
       <td valign="top">
@@ -53,7 +52,7 @@
             $i=0;
             if (!empty($searchtext)) {
                 echo "<optgroup label=\"$strsearchresults (" . $availableusers->_numOfRows . ")\">\n";
-                while ($user = rs_fetch_next_record($availableusers)) {
+                foreach ($availableusers as $user) {
                     $fullname = fullname($user, true);
                     echo "<option value=\"$user->id\">".$fullname.", ".$user->email."</option>\n";
                     $i++;
@@ -65,7 +64,7 @@
                     echo '<optgroup label="'.get_string('toomanytoshow').'"><option></option></optgroup>'."\n"
                           .'<optgroup label="'.get_string('trysearching').'"><option></option></optgroup>'."\n";
                 } else {
-                    while ($user = rs_fetch_next_record($availableusers)) {
+                    foreach ($availableusers as $user) {
                         $fullname = fullname($user, true);
                         echo "<option value=\"$user->id\">".$fullname.", ".$user->email."</option>\n";
                         $i++;
@@ -103,8 +102,8 @@
 
         if ($nonattendees) {
             echo '<br />';
-            print_heading(get_string('unapprovedrequests', 'facetoface').' ('.$nonattendees.')');
-            print_table($table);
+            echo $OUTPUT->heading(get_string('unapprovedrequests', 'facetoface').' ('.$nonattendees.')');
+            echo html_writer::table($table);
         }
 
     ?>

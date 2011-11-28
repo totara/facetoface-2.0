@@ -4,16 +4,18 @@ require_once '../../config.php';
 require_once 'lib.php';
 require_once 'signup_form.php';
 
+global $DB;
+
 $s = required_param('s', PARAM_INT); // facetoface session ID
 $backtoallsessions = optional_param('backtoallsessions', 0, PARAM_INT);
 
 if (!$session = facetoface_get_session($s)) {
     print_error('error:incorrectcoursemodulesession', 'facetoface');
 }
-if (!$facetoface = get_record('facetoface', 'id', $session->facetoface)) {
+if (!$facetoface = $DB->get_record('facetoface', array('id'=>$session->facetoface))) {
     print_error('error:incorrectfacetofaceid', 'facetoface');
 }
-if (!$course = get_record('course', 'id', $facetoface->course)) {
+if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
     print_error('error:coursemisconfigured', 'facetoface');
 }
 if (!$cm = get_coursemodule_from_instance("facetoface", $facetoface->id, $course->id)) {
@@ -30,9 +32,12 @@ if ($backtoallsessions) {
 }
 
 $pagetitle = format_string($facetoface->name);
-$navlinks[] = array('name' => get_string('modulenameplural', 'facetoface'), 'link' => "index.php?id=$course->id", 'type' => 'title');
-$navlinks[] = array('name' => $pagetitle, 'link' => '', 'type' => 'activityinstance');
-$navigation = build_navigation($navlinks);
+
+$PAGE->set_cm($cm);
+$PAGE->set_url('/mod/facetoface/signup.php', array('s' => $s, 'backtoallsessions' => $backtoallsessions));
+
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($course->fullname);
 
 // Guests can't signup for a session, so offer them a choice of logging in or going back.
 if (isguestuser()) {
@@ -41,11 +46,10 @@ if (isguestuser()) {
         $loginurl = str_replace('http:','https:', $loginurl);
     }
 
-    print_header_simple($pagetitle, '', $navigation, '', '', true,
-                    update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')));
+    echo $OUTPUT->header();
     notice_yesno('<p>' . get_string('guestsno', 'facetoface') . "</p>\n\n</p>" .
         get_string('liketologin') . '</p>', $loginurl, get_referer(false));
-    print_footer();
+    echo $OUTPUT->footer();
     exit();
 }
 
@@ -119,8 +123,7 @@ elseif ($manageremail !== false) {
     $mform->set_data($toform);
 }
 
-print_header_simple($pagetitle, '', $navigation, '', '', true,
-                    update_module_button($cm->id, $course->id, get_string('modulename', 'facetoface')));
+echo $OUTPUT->header();
 
 $heading = get_string('signupfor', 'facetoface', $facetoface->name);
 
@@ -131,8 +134,8 @@ if ($signedup and $signedup != $session->id) {
     print_error('error:signedupinothersession', 'facetoface', $returnurl);
 }
 
-print_box_start();
-print_heading($heading, 'center');
+echo $OUTPUT->box_start();
+echo $OUTPUT->heading($heading);
 
 $timenow = time();
 
@@ -143,15 +146,15 @@ if ($session->datetimeknown && facetoface_has_session_started($session, $timenow
     $errorstring = facetoface_is_session_in_progress($session, $timenow) ? $inprogress_str : $over_str;
 
     echo '<br />' . $errorstring;
-    print_box_end();
-    print_footer($course);
+    echo $OUTPUT->box_end();
+    echo $OUTPUT->footer($course);
     exit;
 }
 
 if (!$signedup && !facetoface_session_has_capacity($session, $context) && (!$session->allowoverbook)) {
     print_error('sessionisfull', 'facetoface', $returnurl);
-    print_box_end();
-    print_footer($course);
+    echo $OUTPUT->box_end();
+    echo $OUTPUT->footer($course);
     exit;
 }
 
@@ -183,5 +186,5 @@ elseif (facetoface_manager_needed($facetoface) && !facetoface_get_manageremail($
     $mform->display();
 }
 
-print_box_end();
-print_footer($course);
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer($course);

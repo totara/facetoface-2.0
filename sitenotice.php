@@ -3,37 +3,35 @@
 require_once '../../config.php';
 require_once 'sitenotice_form.php';
 
+global $DB;
+
 $id      = required_param('id', PARAM_INT); // ID in facetoface_notice
 $d       = optional_param('d', false, PARAM_BOOL); // set to true to delete the given notice
 $confirm = optional_param('confirm', false, PARAM_BOOL); // delete confirmation
 
 $notice = null;
 if ($id > 0) {
-    if (!$notice = get_record('facetoface_notice', 'id', $id)) {
+    if (!$notice = $DB->get_record('facetoface_notice', array('id'=>$id))) {
         error('Notice ID is incorrect: '. $id);
     }
 }
 
+$PAGE->set_url('/mod/facetoface/sitenotice.php', array('id' => $id, 'd'=>$d, 'confirm'=>$confirm));
+
+admin_externalpage_setup('managemodules'); // this is hacky, tehre should be a special hidden page for it
+
 $contextsystem = get_context_instance(CONTEXT_SYSTEM);
 
-require_login(0, false);
 require_capability('moodle/site:config', $contextsystem);
 
 $returnurl = "$CFG->wwwroot/admin/settings.php?section=modsettingfacetoface";
-
-// Header
-$navlinks = array();
-$navlinks[] = array('name' => get_string('administration'));
-$navlinks[] = array('name' => get_string('managemodules'));
-$navlinks[] = array('name' => get_string('activities'));
-$navlinks[] = array('name' => get_string('modulename', 'facetoface'));
 
 $title = get_string('addnewnotice', 'facetoface');
 if ($notice != null) {
     $title = $notice->name;
 }
-$navlinks[] = array('name' => format_string($title));
-$navigation = build_navigation($navlinks);
+
+$PAGE->set_title($title);
 
 // Handle deletions
 if (!empty($d)) {
@@ -42,27 +40,31 @@ if (!empty($d)) {
     }
 
     if (!$confirm) {
-        print_header_simple(format_string($title), '', $navigation, '', '', true);
+        echo $OUTPUT->header();
+        echo $OUTPUT->heading($title);
+
         $info = new object();
         $info->name = format_string($notice->name);
         $info->text = format_text($notice->text, FORMAT_HTML);
-        notice_yesno(get_string('noticedeleteconfirm', 'facetoface', $info),
-                     "sitenotice.php?id=$id&amp;d=1&amp;confirm=1&amp;sesskey=$USER->sesskey", $returnurl);
-        print_footer();
+        $optionsyes = array('id'=>$id, 'sesskey'=>$USER->sesskey, 'd'=>1, 'confirm'=>1);
+        echo $OUTPUT->confirm(get_string('noticedeleteconfirm', 'facetoface', $info),
+            new moodle_url("sitenotice.php", $optionsyes),
+            new moodle_url($returnurl));
+        echo $OUTPUT->footer();
         exit;
     }
     else {
-        begin_sql();
-        if (!delete_records('facetoface_notice', 'id', $id)) {
-            rollback_sql();
+        try{
+            $transaction = $DB->start_delegated_transaction();
+            $DB->delete_records('facetoface_notice', array('id'=>$id));
+            $DB->delete_records('facetoface_notice_data', array('noticeid'=>$id));
+            $transaction->allow_commit();
+            redirect($returnurl);
+        }
+        catch(Exception $e){
+            $transaction->rollback($e);
             print_error('error:couldnotdeletenotice', 'facetoface', $returnurl);
         }
-        if (!delete_records('facetoface_notice_data', 'noticeid', $id)) {
-            rollback_sql();
-            print_error('error:couldnotdeletenotice', 'facetoface', $returnurl);
-        }
-        commit_sql();
-        redirect($returnurl);
     }
 }
 
@@ -83,39 +85,32 @@ if ($fromform = $mform->get_data()) { // Form submitted
     $todb->name = trim($fromform->name);
     $todb->text = trim($fromform->text);
 
-    begin_sql();
-
-    if ($notice != null) {
-        $todb->id = $notice->id;
-        if (!update_record('facetoface_notice', $todb)) {
-            rollback_sql();
-            print_error('error:couldnotupdatenotice', 'facetoface', $returnurl);
+	try{
+        $transaction = $DB->start_delegated_transaction();
+        if ($notice != null) {
+            $todb->id = $notice->id;
+            $DB->update_record('facetoface_notice', $todb);
         }
+        else {
+            $notice = new object();
+            $notice->id = $DB->insert_record('facetoface_notice', $todb);
+        }
+
+        foreach ($customfields as $field) {
+            $fieldname = "custom_$field->shortname";
+            if (empty($fromform->$fieldname)) {
+                $fromform->$fieldname = ''; // need to be able to clear fields
+            }
+            facetoface_save_customfield_value($field->id, $fromform->$fieldname, $notice->id, 'notice');
+        }
+        $transaction->allow_commit();
+        redirect($returnurl);
     }
-    else {
-        $notice = new object();
-        if (!$notice->id = insert_record('facetoface_notice', $todb)) {
-            rollback_sql();
-            print_error('error:couldnotaddnotice', 'facetoface', $returnurl);
-        }
+    catch(Exception $e){
+        $transaction->rollback($e);
+        print_error('error:couldnotupdatesitenotice', 'facetoface', $returnurl);
     }
-
-    foreach ($customfields as $field) {
-        $fieldname = "custom_$field->shortname";
-        if (empty($fromform->$fieldname)) {
-            $fromform->$fieldname = ''; // need to be able to clear fields
-        }
-
-        if (!facetoface_save_customfield_value($field->id, $fromform->$fieldname, $notice->id, 'notice')) {
-            rollback_sql();
-            print_error('error:couldnotsavecustomfield', 'facetoface', $returnurl);
-        }
-    }
-
-    commit_sql();
-    redirect($returnurl);
-}
-elseif ($notice != null) { // Edit mode
+} elseif ($notice != null) { // Edit mode
     // Set values for the form
     $toform = new object();
     $toform->name = $notice->name;
@@ -129,12 +124,12 @@ elseif ($notice != null) { // Edit mode
     $mform->set_data($toform);
 }
 
-print_header_simple(format_string($title), '', $navigation, '', '', true);
+echo $OUTPUT->header();
 
-print_box_start();
-print_heading($title);
+echo $OUTPUT->box_start();
+echo $OUTPUT->heading($title);
 
 $mform->display();
 
-print_box_end();
-print_footer();
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer();
