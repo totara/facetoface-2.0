@@ -2898,7 +2898,7 @@ function facetoface_update_grades($facetoface=null, $userid=0) {
  * @return int 0 if ok, error code otherwise
  */
 function facetoface_grade_item_update($facetoface, $grades=NULL) {
-    global $CFG;
+    global $CFG, $DB;
 
     if (!isset($facetoface->cmidnumber)) {
 
@@ -2906,7 +2906,7 @@ function facetoface_grade_item_update($facetoface, $grades=NULL) {
                   FROM {course_modules} cm
                   JOIN {modules} m ON m.id = cm.module
                  WHERE m.name='facetoface' AND cm.instance = $facetoface->id";
-        $facetoface->cmidnumber = get_field_sql($sql);
+        $facetoface->cmidnumber = $DB->get_field_sql($sql);
     }
 
     $params = array('itemname'=>$facetoface->name,
