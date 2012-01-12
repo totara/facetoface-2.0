@@ -174,7 +174,6 @@ class mod_facetoface_session_form extends moodleform {
                 if (count($choices) < 4) {
                     $role_shown = false;
                     foreach ($choices as $cid => $choice) {
-                        $mform->addElement('advcheckbox', 'trainerrole['.$role.']['.$cid.']', $rolename, $choice, null, array('', $cid));
                         // Only display the role title for the first checkbox for each role
                         if (!$role_shown) {
                             $roledisplay = $rolename;
