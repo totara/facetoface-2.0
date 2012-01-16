@@ -3540,7 +3540,7 @@ function facetoface_update_trainers($sessionid, $form) {
     // Load current trainers
     $old_trainers = facetoface_get_trainers($sessionid);
 
-    // begin_sql();
+    $transaction = $DB->start_delegated_transaction();
 
     // Loop through form data and add any new trainers
     foreach ($form as $roleid => $trainers) {
@@ -3562,7 +3562,7 @@ function facetoface_update_trainers($sessionid, $form) {
 
                 if (!$DB->insert_record('facetoface_session_roles', $newtrainer)) {
                     error('Could not save new face-to-face session trainer');
-                    // rollback_sql();
+                    $transaction->force_transaction_rollback();
                     return false;
                 }
             } else {
@@ -3582,16 +3582,16 @@ function facetoface_update_trainers($sessionid, $form) {
 
             // Delete any remaining trainers
             foreach ($trainers as $trainer) {
-                if (!$DB->delete_records('facetoface_session_roles', 'sessionid', $sessionid, 'roleid', $roleid, 'userid', $trainer->id)) {
+                if (!$DB->delete_records('facetoface_session_roles', array('sessionid'=>$sessionid, 'roleid'=>$roleid, 'userid'=>$trainer->id))) {
                     error('Could not delete a face-to-face session trainer');
-                    // rollback_sql();
+                    $transaction->force_transaction_rollback();
                     return false;
                 }
             }
         }
     }
 
-    // commit_sql();
+    $transaction->allow_commit();
 
     return true;
 }
