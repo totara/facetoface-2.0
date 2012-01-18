@@ -3234,23 +3234,26 @@ function facetoface_remove_session_from_site_calendar($session) {
 function facetoface_update_calendar_events($session, $eventtype) {
     global $CFG, $DB;
 
+    $whereclause = "modulename = 'facetoface' AND
+                    eventtype = 'facetoface$eventtype' AND
+                    instance = {$session->facetoface}";
+
     if ('session' == $eventtype) {
-        $whereclause = " WHERE description LIKE ?";
-    } else {
-        $whereclause = "";
+        $whereclause .= " AND description LIKE '%attendees.php?s={$session->id}%'";
     }
 
     // Find all users with this session in their calendar
     $users = $DB->get_records_sql("SELECT DISTINCT userid
-        FROM {event} {$whereclause}", array("%attendees.php?s={$session->id}%"));
+                                FROM {event}
+                               WHERE ?", array($whereclause));
 
     $result = true;
-    if ($users and count($users) > 0) {
+    if ($users && count($users) > 0) {
         // Delete the existing events
-        $result = $result && $DB->delete_records_select('event', $whereclause);
+        $result = $result && $DB->delete_records_select('event', "?", array($whereclause));
 
         // Add this session to these users' calendar
-        $eventname = $DB->get_field('facetoface', 'name', array('id'=>$session->facetoface));
+        $eventname = $DB->get_field('facetoface', 'name', array('id' => $session->facetoface));
         foreach ($users as $user) {
             $result = $result && facetoface_add_session_to_user_calendar($session, addslashes($eventname), $user->userid, $eventtype);
         }
