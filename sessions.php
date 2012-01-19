@@ -17,40 +17,40 @@ $nbdays = 1; // default number to show
 $session = null;
 if ($id) {
     if (!$cm = $DB->get_record('course_modules', array('id'=>$id))) {
-        error(get_string('error:incorrectcoursemoduleid', 'facetoface'));
+        print_error('error:incorrectcoursemoduleid', 'facetoface');
     }
     if (!$course = $DB->get_record('course', array('id'=>$cm->course))) {
-        error(get_string('error:coursemisconfigured', 'facetoface'));
+        print_error('error:coursemisconfigured', 'facetoface');
     }
     if (!$facetoface =$DB->get_record('facetoface',array('id'=>$cm->instance))) {
-        error(get_string('error:incorrectcoursemodule', 'facetoface'));
+        print_error('error:incorrectcoursemodule', 'facetoface');
     }
 }
 elseif ($s) {
      if (!$session = facetoface_get_session($s)) {
-         error(get_string('error:incorrectcoursemodulesession', 'facetoface'));
+         print_error('error:incorrectcoursemodulesession', 'facetoface');
      }
      if (!$facetoface = $DB->get_record('facetoface',array('id'=>$session->facetoface))) {
-         error(get_string('error:incorrectfacetofaceid', 'facetoface'));
+         print_error('error:incorrectfacetofaceid', 'facetoface');
      }
      if (!$course = $DB->get_record('course', array('id'=> $facetoface->course))) {
-         error(get_string('error:coursemisconfigured', 'facetoface'));
+         print_error('error:coursemisconfigured', 'facetoface');
      }
      if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
-         error(get_string('error:incorrectcoursemoduleid', 'facetoface'));
+         print_error('error:incorrectcoursemoduleid', 'facetoface');
      }
 
      $nbdays = count($session->sessiondates);
 }
 else {
     if (!$facetoface = $DB->get_record('facetoface', array('id'=>$f))) {
-        error(get_string('error:incorrectfacetofaceid', 'facetoface'));
+        print_error('error:incorrectfacetofaceid', 'facetoface');
     }
     if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
-        error(get_string('error:coursemisconfigured', 'facetoface'));
+        print_error('error:coursemisconfigured', 'facetoface');
     }
     if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
-        error(get_string('error:incorrectcoursemoduleid', 'facetoface'));
+        print_error('error:incorrectcoursemoduleid', 'facetoface');
     }
 }
 
