@@ -27,7 +27,7 @@ $strname = get_string('name');
 
 $pagetitle = format_string($strfacetofaces);
 
-$PAGE->set_url('/mod/facetoface/signup.php', array('s' => $s, 'backtoallsessions' => $backtoallsessions));
+$PAGE->set_url('/mod/facetoface/index.php', array('id' => $id));
 
 $PAGE->set_title($pagetitle);
 $PAGE->set_heading($course->fullname);
@@ -40,6 +40,9 @@ if (!$facetofaces = get_all_instances_in_course('facetoface', $course)) {
 }
 
 $timenow = time();
+
+$table = new html_table();
+$table->width = '100%';
 
 if ($course->format == 'weeks' && has_capability('mod/facetoface:viewattendees', $context)) {
     $table->head  = array ($strweek, $strfacetofacename, get_string('sign-ups', 'facetoface'));
