@@ -7,7 +7,7 @@ global $DB;
 
 $id = required_param('id', PARAM_INT); // Course Module ID
 
-if (!$course = $DB->get_record('course', ('id'=>$id))) {
+if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('error:coursemisconfigured', 'facetoface');
 }
 
