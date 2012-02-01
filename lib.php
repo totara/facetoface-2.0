@@ -877,7 +877,7 @@ function facetoface_cron()
             continue;
         }
 
-        if (!$user = $DB->get_record('user', 'id', $signupdata->userid)) {
+        if (!$user = $DB->get_record('user', array('id' => $signupdata->userid))) {
             continue;
         }
 
@@ -886,10 +886,10 @@ function facetoface_cron()
         $USER->lang = $user->lang;
         $USER->timezone = $user->timezone;
 
-        if (!$course = $DB->get_record('course', 'id', $signupdata->course)) {
+        if (!$course = $DB->get_record('course', array('id' => $signupdata->course))) {
             continue;
         }
-        if (!$facetoface = $DB->get_record('facetoface', 'id', $signupdata->facetofaceid)) {
+        if (!$facetoface = $DB->get_record('facetoface', array('id' => $signupdata->facetofaceid))) {
             continue;
         }
 
