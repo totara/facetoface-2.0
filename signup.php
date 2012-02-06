@@ -158,12 +158,12 @@ if (!$signedup && !facetoface_session_has_capacity($session, $context) && (!$ses
     exit;
 }
 
-facetoface_print_session($session, $viewattendees);
+echo facetoface_print_session($session, $viewattendees);
 
 if ($signedup) {
     if (!($session->datetimeknown && facetoface_has_session_started($session, $timenow))) {
         // Cancellation link
-        echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/cancelsignup.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions.'" title="'.get_string('cancelbooking','facetoface').'">'.get_string('cancelbooking', 'facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
+        echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/cancelsignup.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions.'" title="'.get_string('cancelbooking','facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
         echo ' &ndash; ';
     }
     // See attendees link
