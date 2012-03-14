@@ -30,8 +30,8 @@ $string['bookingcompleted'] = 'Your booking has been completed.';
 $string['bookingfull'] = 'Booking full';
 $string['bookingopen'] = 'Booking open';
 $string['bookingstatus'] = 'You are booked for the following session';
-$string['calendareventdescriptionbooking'] = 'You are booked for this <a href=\"{$a}\">Face-to-face session</a>.';
-$string['calendareventdescriptionsession'] = 'You have created this <a href=\"{$a}\">Face-to-face session</a>.';
+$string['calendareventdescriptionbooking'] = 'You are booked for this <a href="{$a}">Face-to-face session</a>.';
+$string['calendareventdescriptionsession'] = 'You have created this <a href="{$a}">Face-to-face session</a>.';
 $string['calendaroptions'] = 'Calendar options';
 $string['cancelbooking'] = 'Cancel booking';
 $string['cancelbookingfor'] = 'Cancel booking for {$a}';
@@ -288,12 +288,12 @@ $string['setting:addchangemanageremaildefault'] = 'Ask users for their manager\'
 $string['setting:addchangemanageremail_caption'] = 'Manager\'s email:';
 $string['setting:defaultcancellationinstrmngr'] = 'Default cancellation message sent to managers.';
 $string['setting:defaultcancellationinstrmngr_caption'] = 'Cancellation message (managers)';
-$string['setting:defaultcancellationinstrmngrdefault'] = "*** Advice only ****
+$string['setting:defaultcancellationinstrmngrdefault'] = '*** Advice only ****
 
 This is to advise that [firstname] [lastname] is no longer signed-up for the following course and listed you as their Team Leader / Manager.
 
-*** [firstname] [lastname]'s booking cancellation is copied below ****
-";
+*** [firstname] [lastname]\'s booking cancellation is copied below ****
+';
 $string['setting:defaultcancellationmessage'] = 'Default cancellation message sent to the user.';
 $string['setting:defaultcancellationmessage_caption'] = 'Cancellation message';
 $string['setting:defaultcancellationmessagedefault'] = 'This is to advise that your booking on the following course has been cancelled:
@@ -316,14 +316,14 @@ $string['setting:defaultcancellationsubject_caption'] = 'Cancellation subject';
 $string['setting:defaultcancellationsubjectdefault'] = 'Course booking cancellation';
 $string['setting:defaultconfirmationinstrmngr'] = 'Default confirmation message sent to managers.';
 $string['setting:defaultconfirmationinstrmngr_caption'] = 'Confirmation message (managers)';
-$string['setting:defaultconfirmationinstrmngrdefault'] = "*** Advice only ****
+$string['setting:defaultconfirmationinstrmngrdefault'] = '*** Advice only ****
 
 This is to advise that [firstname] [lastname] has been booked for the following course and listed you as their Team Leader / Manager.
 
 If you are not their Team Leader / Manager and believe you have received this email by mistake please reply to this email.  If have concerns about your staff member taking this course please discuss this with them directly.
 
-*** [firstname] [lastname]'s booking confirmation is copied below ****
-";
+*** [firstname] [lastname]\'s booking confirmation is copied below ****
+';
 $string['setting:defaultconfirmationmessage'] = 'Default confirmation message sent to users.';
 $string['setting:defaultconfirmationmessage_caption'] = 'Confirmation message';
 $string['setting:defaultconfirmationmessagedefault'] = 'This is to confirm that you are now booked on the following course:
@@ -354,14 +354,14 @@ $string['setting:defaultconfirmationsubject_caption'] = 'Confirmation subject';
 $string['setting:defaultconfirmationsubjectdefault'] = 'Course booking confirmation: [facetofacename], [starttime]-[finishtime], [sessiondate]';
 $string['setting:defaultreminderinstrmngr'] = 'Default reminder message sent to managers.';
 $string['setting:defaultreminderinstrmngr_caption'] = 'Reminder message (managers)';
-$string['setting:defaultreminderinstrmngrdefault'] = "*** Reminder only ****
+$string['setting:defaultreminderinstrmngrdefault'] = '*** Reminder only ****
 
 Your staff member [firstname] [lastname] is booked to attend and above course and has also received this reminder email.
 
 If you are not their Team Leader / Manager and believe you have received this email by mistake please reply to this email.
 
-*** [firstname] [lastname]'s reminder email is copied below ****
-";
+*** [firstname] [lastname]\'s reminder email is copied below ****
+';
 $string['setting:defaultremindermessage'] = 'Default reminder message sent to users.';
 $string['setting:defaultremindermessage_caption'] = 'Reminder message';
 $string['setting:defaultremindermessagedefault'] = 'This is a reminder that you are booked on the following course:
@@ -508,7 +508,7 @@ $string['usercancelledon'] = 'User cancelled on {$a}';
 $string['usernotsignedup'] = 'Status: not signed up';
 $string['usersignedup'] = 'Status: signed up';
 $string['usersignedupon'] = 'User signed up on {$a}';
-$string['userwillbewaitlisted'] = 'This session is currently full. By clicking the \"Sign-up\" button, you will be placed on the sessions\'s wait-list.';
+$string['userwillbewaitlisted'] = 'This session is currently full. By clicking the "Sign-up" button, you will be placed on the sessions\'s wait-list.';
 $string['validation:needatleastonedate'] = 'You need to provide at least one date or mark the session as wait-listed.';
 $string['venue'] = 'Venue';
 $string['viewallsessions'] = 'View all sessions';
@@ -713,3 +713,5 @@ $string['venue_help'] = '<h1>Venue</h1>
 <p>The <strong>Venue</strong> displays on the \'Sign-up\' page, the \'View all sessions\' page and in all email notifications.</p>';
 
 $string['waitlistedmessage_help'] = '<p>This message is sent out whenever users sign-up for a wait-listed session.</p>';
+
+
