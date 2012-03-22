@@ -54,7 +54,7 @@ else {
     }
 }
 
-require_course_login($course);
+require_course_login($course,true,$cm);
 $errorstr = '';
 $context = get_context_instance(CONTEXT_COURSE, $course->id);
 require_capability('mod/facetoface:editsessions', $context);

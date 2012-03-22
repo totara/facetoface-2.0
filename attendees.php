@@ -78,7 +78,7 @@ $cancellations = facetoface_get_cancellations($session->id);
  */
 
 $context = get_context_instance(CONTEXT_COURSE, $course->id);
-require_course_login($course);
+require_course_login($course,true,$cm);
 
 // Actions the user can perform
 $can_view_attendees = has_capability('mod/facetoface:viewattendees', $context);

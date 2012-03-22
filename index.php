@@ -14,6 +14,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 require_course_login($course);
 $context = get_context_instance(CONTEXT_COURSE, $course->id);
 require_capability('mod/facetoface:view', $context);
+$PAGE->set_pagelayout('incourse');
 
 add_to_log($course->id, 'facetoface', 'view all', "index.php?id=$course->id");
 

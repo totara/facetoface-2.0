@@ -529,31 +529,24 @@ $string['allowoverbook_help'] = '<p>When "Allow overbooking" is checked, learner
 
 <p>When a learner signs up for a session that is already full, they will receive an email advising that they have been waitlisted for the session and will be notified when a booking becomes available.</p>';
 
-$string['approvalreqd_help'] = '<h1>Approval Required</h1>
+$string['approvalreqd_help'] = '<p>When "Approval required" is checked, a learner will need approval from their manager to be permitted to attend a face-to-face session.</p>';
 
-<p>When "Approval required" is checked, a learner will need approval from their manager to be permitted to attend a face-to-face session.</p>';
-
-$string['cancellationinstrmngr'] = '<h1>Notice for manager</h1>';
+$string['cancellationinstrmngr'] = 'Notice for manager';
 $string['cancellationinstrmngr_help'] = '<p>When <strong>Send notice to manager</strong> is checked, the text in the <strong>Notice for manager</strong> field is sent to a learner\'s manager advising that they have cancelled a face-to-face booking.</p>';
 
-$string['cancellationmessage_help'] = '<h1>Cancellation Message</h1>
+$string['cancellationmessage_help'] = '<p>The <strong>cancellation message</strong> is sent out whenever users cancel their booking for a session.</p>';
 
-<p>This message is sent out whenever users cancel their booking for a session.</p>';
-
-$string['capacity_help'] = '<h1>Capacity</h1>
-<p><strong>Capacity</strong> is the number of seats available in a session.</p>
+$string['capacity_help'] = '<p><strong>Capacity</strong> is the number of seats available in a session.</p>
 
 <p>When a face-to-face session reaches capacity the session details do not appear on the course page. The details will appear greyed out on the \'View all sessions\' page and the learner cannot enrol on the session.</p>
 <p>&nbsp;</p>';
 
-$string['confirmationinstrmngr'] = '<h1>Notice for manager</h1>';
+$string['confirmationinstrmngr'] = 'Notice for manager';
 $string['confirmationinstrmngr_help'] = '<p>When "Send notice to manager" is checked, the text in the "Notice for manager" field is sent to a manager advising that a staff member has signed up for a face-to-face session.</p>';
 
 $string['confirmationmessage_help'] = '<p>This message is sent out whenever users sign up for a session.</p>';
 
-$string['description_help'] = '<h1>Description</h1>
-
-<p><strong>Description</strong> is the course description that displays when a learner enrols on a face-to-face session. </p>
+$string['description_help'] = '<p><strong>Description</strong> is the course description that displays when a learner enrols on a face-to-face session. </p>
 <p>The <strong>Description</strong> also displays in the training calendar.</p>';
 
 $string['details_help'] = '<p>Details are tracked per session basis.</p>
@@ -566,10 +559,7 @@ $string['discountcode_help'] = '<p>Discount code is the code required for the di
 $string['discountcost_help'] = '<p>Discount cost is the dollar amount charged to staff members who have a membership id.</p>
 <p>If a staff member enters a membership id when signing-up for a session, the discount cost will appear in the cost column in the course\'s gradebook.</p>';
 
-$string['duration_help'] = '<h1>Duration</h1>
-<p><strong>Duration</strong> is the total length of the training in hours.
-<p>
-
+$string['duration_help'] = '<p><strong>Duration</strong> is the total length of the training in hours.</p>
 For example:
 <ul>
   <li>"2 hours" is enters as <strong>2</strong> or <strong>2:00</strong>
@@ -580,72 +570,43 @@ For example:
 </ul>
 <p>If the training occurs over two or more time periods, the duration is the combined total.</p>';
 
-$string['emailmanagercancellation'] = '<h1>Send notice to manager</h1>';
+$string['emailmanagercancellation'] = 'Send notice to manager';
 $string['emailmanagercancellation_help'] = '<p>When "Send notice to manager" is checked, an email will be sent to the learner\'s manager advising them that the face-to-face booking has been cancelled.</p>';
 
-$string['emailmanagerconfirmation'] = '<h1>Send notice to manager</h1>';
+$string['emailmanagerconfirmation'] = 'Send notice to manager';
 $string['emailmanagerconfirmation_help'] = '<p>When "Send notice to manager" is checked, a confirmation email will be sent to the learner\'s manager when the learner signs up for a face-to-face session.</p>';
 
-$string['emailmanagerreminder'] = '<h1>Send notice to manager</h1>';
+$string['emailmanagerreminder'] = 'Send notice to manager';
 $string['emailmanagerreminder_help'] = '<p>When "Send notice to manager" is checked, a reminder message will be sent to the learner\'s manager a few days before the start date of the face-to-face session.</p>';
 
-$string['location_help'] = '<h1>Location</h1>
-
-<p><strong>Location</strong> describes the vicinity of the session (city, county, region, etc).</p>
-
+$string['location_help'] = '<p><strong>Location</strong> describes the vicinity of the session (city, county, region, etc).</p>
 <p><strong>Location</strong> displays on the course page, \'Sign-up page\', the \'View all sessions\' page, and in all email notifications.</p>
 <p>On the \'View all sessions\' page, the listed sessions can be filtered by location.</p>';
 
-$string['mods_help'] = '<h1>Face-to-face Activity</h1>
-
-<p>Face-to-face activities are used to keep track of in-person trainings
-  which require advance booking.</p>
-
-<p>Each activity is offered in one or more identical sessions.  These
-  sessions can be given over multiple days.</p>
-
-<p>Reminder messages are sent to users and their managers a few days before
-  the session is scheduled to start.  Confirmation messages are sent when
-  users sign-up for a session or cancel.</p>';
+$string['mods_help'] = '<p>Face-to-face activities are used to keep track of in-person trainings which require advance booking.</p>
+<p>Each activity is offered in one or more identical sessions.  These sessions can be given over multiple days.</p>
+<p>Reminder messages are sent to users and their managers a few days before the session is scheduled to start.  Confirmation messages are sent when users sign-up for a session or cancel.</p>';
 
 $string['normalcost_help'] = '<p>Normal cost is the dollar amount charged to staff members who do not have a membership id.</p>
 <p>The normal cost will appear in the cost column in the course\'s gradebook for each staff member who attends the session (unless a discount cost is entered and the staff member enters a membership id when signing of the session).</p>';
 
-$string['notificationtype_help'] = '<h1>Notification Type</h1>
+$string['notificationtype_help'] = '<p>Notification Type allows the learner to select how they would like to be notified of their booking.</p>
+<ul><li>iCalendar appointment only</li><li>Email notification only</li><li>Email notification and iCalendar appointment</li></ul>';
 
-<p>Notification Type allows the learner to select how they would like to be notified of their booking.</p>
-<ul>
-  <li>iCalendar appointment only</i>
-  <li>Email notification only</i>
-  <li>Email notification and iCalendar appointment</i>
-</ul>';
-
-$string['reminderinstrmngr'] = '<h1>Notice for Manager</h1>';
+$string['reminderinstrmngr'] = 'Notice for Manager';
 $string['reminderinstrmngr_help'] = '<p>When <strong>Send notice to manager</strong> is checked, the text in the <strong>Notice for Manager</strong> field is sent to a learner\'s manager advising that they have signed up for a face-to-face session.</p>';
 
-$string['remindermessage_help'] = '<h1>Reminder Message</h1>
+$string['remindermessage_help'] = '<p>This message is sent out a few days before a session\'s start date.</p>';
 
-<p>This message is sent out a few days before a session\'s start date.</p>';
+$string['reminderperiod_help'] = '<p>The reminder message will be sent this many days before the start of the session.</p>';
 
-$string['reminderperiod_help'] = '<h1>Reminder Period</h1>
-
-<p>The reminder message will be sent this many days before the start of the session.</p>';
-
-$string['requestmessage_help'] = '<h1>Request Message</h1>
-<p>When <strong>Approval required</strong> is enabled, the <strong>Request message</strong> section is available.</p>
-
+$string['requestmessage_help'] = '<p>When <strong>Approval required</strong> is enabled, the <strong>Request message</strong> section is available.</p>
 <p>The <strong>Request message</strong> section displays the notices sent to the learner and their manager regarding the approval process for the learner to attend the face-to-face session.</p>
-
 <p><strong>Subject:</strong> is the subject line that appears on the request approval emails sent to the manager and the learner.</p>
-
 <p><strong>Message:</strong> is the email text sent to the learner advising them that their request to attend the face-to-face session has been sent to their manager for approval.</p>
-
 <p><strong>Notice for manager:</strong> is the email text sent to the learner\'s manager requesting approval to attend the face-to-face session.</p>';
 
-$string['room_help'] = '<h1>Room</h1>
-
-<p><strong>Room</strong> is the name/number/identifier of the room being used for the training session.</p>
-
+$string['room_help'] = '<p><strong>Room</strong> is the name/number/identifier of the room being used for the training session.</p>
 <p>The <strong>Room</strong> displays on the \'Sign-up\' page, the \'View all sessions\' page and in all email notifications.</p>';
 
 $string['sessiondate'] = '<p>Session date is the date on which the session occurs.</p>';
@@ -674,42 +635,27 @@ $string['sessiondatetimeknown_help'] = '<p><b>If a session\'s date/time is known
 <li>The staff member\'s manager will not be sent confirmation and cancellation email messages.</li>
 </ul>';
 
-$string['sessionsoncoursepage_help'] = '<h1>Sessions on Course Page</h1>
+$string['sessionsoncoursepage_help'] = '<p>This is the number of sessions for each face-to-face activity that will be shown on the main course page.</p>';
 
-<p>This is the number of sessions for each face-to-face activity that will
-  be shown on the main course page.</p>';
-
-$string['shortname'] = '<h1>Short Name</h1>';
+$string['shortname'] = 'Short Name';
 $string['shortname_help'] = '<p><strong>Short name</strong> is the description of the session that appears on the training calendar when <strong>Show on the calendar</strong> is enabled.</p>';
 
-$string['showoncalendar_help'] = '<h1>Show on the Calendar</h1>
+$string['showoncalendar_help'] = '<p>When <strong>Show on the Calendar</strong> is enabled the face-to-face activity sessions display on the training calendar.</p>';
 
-<p>When <strong>Show on the Calendar</strong> is enabled the face-to-face activity sessions display on the training calendar.</p>';
+$string['suppressemail_help'] = '<p>Use this option if you want to silently add/remove users from a Face-to-face session. When this option is toggled, the usual email confirmation is not sent to the selected users.</p>';
 
-$string['suppressemail_help'] = '<h1>Suppress email notification</h1>
+$string['thirdpartyemailaddress_help'] = '<p><strong>Third-party email address(es)</strong> is an optional field used to specify the email address of a third-party (such as an external instructor) who will then receive confirmation messages whenever a user signs-up for a session.</p>
+<p>When entering <strong>multiple email addresses</strong>, separate each address with a comma. For example: bob@example.com,joe@example.com</p>';
 
-<p>Use this option if you want to silently add/remove users from a
-  Face-to-face session. When this option is toggled, the usual email
-  confirmation is not sent to the selected users.</p>';
-
-$string['thirdpartyemailaddress_help'] = '<h1>Third-party Email Address(es)</h1>
-<p><strong>Third-party email address(es)</strong> is an optional field used to specify the email address of a third-party (such as an external instructor) who will then receive confirmation messages whenever a user signs-up for a session.
-<p>When entering <strong>multiple email addresses</strong>, separate each address with a comma. For example: bob@example.com,joe@example.com';
-
-$string['thirdpartywaitlist_help'] = '<h1>Notify Third-party About Wait-listed Sessions</h1>
-
-<p>When <strong>Notify third-party about wait-listed sessions</strong> is selected the third-party(s) will be notified when a learner signs up for a wait-listed session.</p>
-When <strong>Notify third-party about wait-listed sessions</strong> is not enabled third-party(s) will only be notified when a user signs up (or cancels) for a scheduled session.';
+$string['thirdpartywaitlist_help'] = '<p>When <strong>Notify third-party about wait-listed sessions</strong> is selected the third-party(s) will be notified when a learner signs up for a wait-listed session.</p>
+<p>When <strong>Notify third-party about wait-listed sessions</strong> is not enabled third-party(s) will only be notified when a user signs up (or cancels) for a scheduled session.</p>';
 
 
 $string['timefinish_help'] = '<p>Finish time is the time when the session ends.</p>';
 
 $string['timestart_help'] = '<p>Start time is the time when the session begins.</p>';
 
-$string['venue_help'] = '<h1>Venue</h1>
-
-<p><strong>Venue</strong> is the building the session will be held in.</p>
-
+$string['venue_help'] = '<p><strong>Venue</strong> is the building the session will be held in.</p>
 <p>The <strong>Venue</strong> displays on the \'Sign-up\' page, the \'View all sessions\' page and in all email notifications.</p>';
 
 $string['waitlistedmessage_help'] = '<p>This message is sent out whenever users sign-up for a wait-listed session.</p>';

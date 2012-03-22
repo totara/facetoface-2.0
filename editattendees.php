@@ -29,13 +29,13 @@ if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course
 }
 
 /// Check essential permissions
-require_course_login($course);
+require_course_login($course,true,$cm);
 $context = get_context_instance(CONTEXT_COURSE, $course->id);
 require_capability('mod/facetoface:viewattendees', $context);
 
 /// Get some language strings
 $strsearch = get_string('search');
-$strshowall = get_string('showall');
+$strshowall = get_string('showall','',get_string('users'));
 $strsearchresults = get_string('searchresults');
 $strfacetofaces = get_string('modulenameplural', 'facetoface');
 $strfacetoface = get_string('modulename', 'facetoface');
@@ -145,19 +145,24 @@ $select  = "username <> 'guest' AND deleted = 0 AND confirmed = 1";
 
 /// Apply search terms
 $searchtext = trim($searchtext);
+$params=array();
 if ($searchtext !== '') {   // Search for a subset of remaining users
-    $LIKE      = $DB->sql_ilike();
     $FULLNAME  = $DB->sql_fullname();
 
-    $selectsql = " AND ($FULLNAME $LIKE '%$searchtext%' OR
-                            email $LIKE '%$searchtext%' OR
-                         idnumber $LIKE '%$searchtext%' OR
-                         username $LIKE '%$searchtext%') ";
+    $selectsql = " AND (" . $DB->sql_like($FULLNAME,':searchtext1') . " OR " .
+                            $DB->sql_like('email',':searchtext2') . " OR " .
+                            $DB->sql_like('idnumber',':searchtext3'). " OR " .
+                            $DB->sql_like('username',':searchtext4'). ")";
     $select  .= $selectsql;
+    //Because moodle REQUIRES a 1:1 relationship between variables for some annoying reason
+    $params['searchtext1']="%$searchtext%";
+    $params['searchtext2']="%$searchtext%";
+    $params['searchtext3']="%$searchtext%";
+    $params['searchtext4']="%$searchtext%";
 }
 
 /// All non-signed up system users
-$availableusers = $DB->get_recordset_sql('SELECT id, firstname, lastname, email
+$availableusers = $DB->get_records_sql('SELECT id, firstname, lastname, email
                                        FROM {user}
                                       WHERE '.$select.'
                                         AND id NOT IN
@@ -170,14 +175,11 @@ $availableusers = $DB->get_recordset_sql('SELECT id, firstname, lastname, email
                                                AND ss.statuscode >= '.MDL_F2F_STATUS_BOOKED.'
                                                AND ss.superceded = 0
                                           )
-                                          ORDER BY lastname ASC, firstname ASC');
-
-$usercount = $DB->count_records_select('user', $select) - $existingcount;
-
+                                          ORDER BY lastname ASC, firstname ASC',$params);
 
 // Get all signed up non-attendees
 $nonattendees = 0;
-$nonattendees_rs = $DB->get_recordset_sql(
+$nonattendees_rs = $DB->get_records_sql(
     "
         SELECT
             u.id,
@@ -224,8 +226,6 @@ foreach ($nonattendees_rs as $user) {
 
 /// Prints a form to add/remove users from the session
 include('editattendees.html');
-
-$nonattendees_rs->close();
 
 if (!empty($errors)) {
     $msg = '<p>';

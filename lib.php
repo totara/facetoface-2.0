@@ -1435,7 +1435,8 @@ function facetoface_write_activity_attendance(&$worksheet, $startingrow, $faceto
     }
 
     // Fast version of "facetoface_get_sessions($facetofaceid, $location)"
-    $sql = "SELECT s.id, s.datetimeknown, s.capacity,
+    // First field needs to be unique, even though we don't use it.
+    $sql = "SELECT d.id AS 'unused', s.id, s.datetimeknown, s.capacity,
                    s.duration, d.timestart, d.timefinish
               FROM {facetoface_sessions} s
               JOIN {facetoface_sessions_dates} d ON s.id = d.sessionid

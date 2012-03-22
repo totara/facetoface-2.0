@@ -37,6 +37,7 @@ else {
 }
 
 $context = get_context_instance(CONTEXT_MODULE, $cm->id);
+require_course_login($course,true,$cm);
 
 if (!empty($download)) {
     require_capability('mod/facetoface:viewattendees', $context);
@@ -44,7 +45,6 @@ if (!empty($download)) {
     exit();
 }
 
-require_course_login($course);
 require_capability('mod/facetoface:view', $context);
 
 add_to_log($course->id, 'facetoface', 'view', "view.php?id=$cm->id", $facetoface->id, $cm->id);
