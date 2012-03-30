@@ -55,7 +55,7 @@ Bugs/patches
 
 Feel free to send bug reports (and/or patches!) to the current maintainer:
 
-  Aaron Barnes <alastair.munro@totaralms.com>
+  Alastair Munro <alastair.munro@totaralms.com>
 
 
 Previous maintainer(s)
