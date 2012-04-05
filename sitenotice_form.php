@@ -17,7 +17,7 @@ class mod_facetoface_sitenotice_form extends moodleform {
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->setType('name', PARAM_MULTILANG);
 
-        $mform->addElement('htmleditor', 'text', get_string('noticetext', 'facetoface'), array('rows'  => 10, 'cols'  => 64));
+        $mform->addElement('editor', 'text', get_string('noticetext', 'facetoface'), array('rows'  => 10, 'cols'  => 64));
         $mform->setType('text', PARAM_RAW);
         $mform->addRule('text', null, 'required', null, 'client');
 

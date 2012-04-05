@@ -30,7 +30,7 @@ if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course
 
 /// Check essential permissions
 require_course_login($course);
-$context = get_context_instance(CONTEXT_COURSE, $course->id);
+$context = context_course::instance($course->id);
 require_capability('mod/facetoface:viewattendees', $context);
 
 /// Get some language strings
@@ -67,7 +67,7 @@ if ($frm = data_submitted()) {
 
             if (facetoface_get_user_submissions($facetoface->id, $adduser)) {
                 $erruser = $DB->get_record('user', array('id'=>$adduser),'id, firstname, lastname');
-                $errors[] = fullname($erruser).get_string('error:addalreadysignedupattendee', 'facetoface');
+                $errors[] = get_string('error:addalreadysignedupattendee', 'facetoface', fullname($erruser));
             }
             else {
                 if (!facetoface_session_has_capacity($session, $context)) {
@@ -149,28 +149,30 @@ if ($searchtext !== '') {   // Search for a subset of remaining users
     $LIKE      = $DB->sql_ilike();
     $FULLNAME  = $DB->sql_fullname();
 
-    $selectsql = " AND ($FULLNAME $LIKE '%$searchtext%' OR
-                            email $LIKE '%$searchtext%' OR
-                         idnumber $LIKE '%$searchtext%' OR
-                         username $LIKE '%$searchtext%') ";
+    $fullname_like = $DB->sql_like($LIKE, $searchtext, false);
+    $email_like = $DB->sql_like($LIKE, $searchtext, false);
+    $idnumber_like = $DB->sql_like($LIKE, $searchtext, false);
+    $username_like = $DB->sql_like($LIKE, $searchtext, false);
+
+    $selectsql = " AND ($fullname_like OR $email_like OR $idnumber_like OR $username_like) ";
     $select  .= $selectsql;
 }
 
 /// All non-signed up system users
 $availableusers = $DB->get_recordset_sql('SELECT id, firstname, lastname, email
                                        FROM {user}
-                                      WHERE '.$select.'
-                                        AND id NOT IN
+                                      WHERE ' . $select .
+                                        'AND id NOT IN
                                           (
                                             SELECT u.id
                                               FROM {facetoface_signups} s
                                               JOIN {facetoface_signups_status} ss ON s.id = ss.signupid
                                               JOIN {user} u ON u.id=s.userid
-                                             WHERE s.sessionid='.$session->id.'
-                                               AND ss.statuscode >= '.MDL_F2F_STATUS_BOOKED.'
+                                             WHERE s.sessionid = ?
+                                               AND ss.statuscode >= ?
                                                AND ss.superceded = 0
                                           )
-                                          ORDER BY lastname ASC, firstname ASC');
+                                          ORDER BY lastname ASC, firstname ASC', array($session->id, MDL_F2F_STATUS_BOOKED));
 
 $usercount = $DB->count_records_select('user', $select) - $existingcount;
 
@@ -197,13 +199,12 @@ $nonattendees_rs = $DB->get_recordset_sql(
             {user} u
          ON u.id = su.userid
         WHERE
-            s.id = {$session->id}
+            s.id = ?
         AND ss.superceded != 1
-        AND ss.statuscode = ".MDL_F2F_STATUS_REQUESTED."
+        AND ss.statuscode = ?
         ORDER BY
-            u.lastname, u.firstname
-    "
-);
+            u.lastname, u.firstname", array($session->id, MDL_F2F_STATUS_REQUESTED)
+        );
 
 $table = new html_table();
 $table->head = array(get_string('name'), get_string('email'), get_string('status'));
@@ -230,11 +231,11 @@ $nonattendees_rs->close();
 if (!empty($errors)) {
     $msg = '<p>';
     foreach ($errors as $e) {
-        $msg .= $e.'<br />';
+        $msg .= $e . html_writer::empty_tag('br');
     }
     $msg .= '</p>';
     echo $OUTPUT->box_start('center');
-    notify($msg);
+    echo $OUTPUT->notification($msg);
     echo $OUTPUT->box_end();
 }
 

@@ -18,7 +18,7 @@ $PAGE->set_url('/mod/facetoface/customfield.php', array('id' => $id, 'd'=>$d, 'c
 
 admin_externalpage_setup('managemodules'); // this is hacky, tehre should be a special hidden page for it
 
-$contextsystem = get_context_instance(CONTEXT_SYSTEM);
+$contextsystem = context_system::instance();
 
 require_capability('moodle/site:config', $contextsystem);
 
@@ -31,6 +31,8 @@ if ($field != null) {
     $title = $field->name;
 }
 
+$PAGE->set_title($title);
+
 // Handle deletions
 if (!empty($d)) {
     if (!confirm_sesskey()) {
@@ -38,21 +40,24 @@ if (!empty($d)) {
     }
 
     if (!$confirm) {
-        echo $OUTPUT->header(format_string($title), '', $navigation, '', '', true);
-        notice_yesno(get_string('fielddeleteconfirm', 'facetoface', format_string($field->name)),
-                     "customfield.php?id=$id&amp;d=1&amp;confirm=1&amp;sesskey=$USER->sesskey", $returnurl);
-        print_footer();
+        echo $OUTPUT->header();
+        echo $OUTPUT->heading($title);
+        $optionsyes = array('id'=>$id, 'sesskey'=>$USER->sesskey, 'd'=>1, 'confirm'=>1);
+        echo $OUTPUT->confirm(get_string('fielddeleteconfirm', 'facetoface', format_string($field->name)),
+            new moodle_url("customfield.php", $optionsyes),
+            new moodle_url($returnurl));
+        echo $OUTPUT->footer();
         exit;
     }
     else {
         $transaction = $DB->start_delegated_transaction();
 
         try {
-            if (!$DB->delete_records('facetoface_session_field', 'id', $id)) {
+            if (!$DB->delete_records('facetoface_session_field', array('id', $id))) {
                 throw new Exception(get_string('error:couldnotdeletefield', 'facetoface'));
             }
 
-            if (!$DB->delete_records('facetoface_session_data', 'fieldid', $id)) {
+            if (!$DB->delete_records('facetoface_session_data', array('fieldid', $id))) {
                 throw new Exception(get_string('error:couldnotdeletefield', 'facetoface'));
             }
 
@@ -99,7 +104,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
         }
     }
 
-    $todb = new object();
+    $todb = new stdClass();
     $todb->name = trim($fromform->name);
     $todb->shortname = trim($fromform->shortname);
     $todb->type = $fromform->type;
@@ -125,7 +130,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
 }
 elseif ($field != null) { // Edit mode
     // Set values for the form
-    $toform = new object();
+    $toform = new stdClass();
     $toform->name = $field->name;
     $toform->shortname = $field->shortname;
     $toform->type = $field->type;

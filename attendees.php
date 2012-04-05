@@ -77,7 +77,7 @@ $cancellations = facetoface_get_cancellations($session->id);
  *
  */
 
-$context = get_context_instance(CONTEXT_COURSE, $course->id);
+$context = context_course::instance($course->id);
 require_course_login($course);
 
 // Actions the user can perform
@@ -190,7 +190,7 @@ if ($can_view_attendees || $can_take_attendance) {
     echo $OUTPUT->heading($heading);
 
     if (empty($attendees)) {
-        notify(get_string('nosignedupusers', 'facetoface'));
+        echo $OUTPUT->notification(get_string('nosignedupusers', 'facetoface'));
     }
     else {
         if ($takeattendance) {
@@ -305,7 +305,7 @@ if ($can_approve_requests) {
 
     echo '<br id="unapproved" />';
     if (!$requests) {
-        notify(get_string('noactionableunapprovedrequests', 'facetoface'));
+        echo $OUTPUT->notification(get_string('noactionableunapprovedrequests', 'facetoface'));
     }
     else {
         $OUTPUT->heading(get_string('unapprovedrequests', 'facetoface'));

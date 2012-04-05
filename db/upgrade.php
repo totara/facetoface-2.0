@@ -80,7 +80,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
     }
 
     if ($result && $oldversion < 2008080100) {
-        notify('Processing Face-to-face grades, this may take a while if there are many sessions...', 'notifysuccess');
+        echo $OUTPUT->notification('Processing Face-to-face grades, this may take a while if there are many sessions...', 'notifysuccess');
         require_once $CFG->dirroot.'/mod/facetoface/lib.php';
 
         try {
@@ -187,7 +187,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
     // Migration of old Location, Venue and Room fields
     if ($result && $oldversion < 2009112300) {
         // Create three new custom fields
-        $newfield1 = new object();
+        $newfield1 = new stdClass();
         $newfield1->name = 'Location';
         $newfield1->shortname = 'location';
         $newfield1->type = 0; // free text
@@ -196,7 +196,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
             $result = false;
         }
 
-        $newfield2 = new object();
+        $newfield2 = new stdClass();
         $newfield2->name = 'Venue';
         $newfield2->shortname = 'venue';
         $newfield2->type = 0; // free text
@@ -205,7 +205,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
             $result = false;
         }
 
-        $newfield3 = new object();
+        $newfield3 = new stdClass();
         $newfield3->name = 'Room';
         $newfield3->shortname = 'room';
         $newfield3->type = 0; // free text
@@ -221,22 +221,22 @@ function xmldb_facetoface_upgrade($oldversion=0) {
 
         if ($rs = $DB->get_recordset('facetoface_sessions', array(), '', 'id, location, venue, room')) {
             foreach ($rs as $session) {
-                $locationdata = new object();
+                $locationdata = new stdClass();
                 $locationdata->sessionid = $session->id;
                 $locationdata->fieldid = $locationfieldid;
-                $locationdata->data = addslashes($session->location);
+                $locationdata->data = $session->location;
                 $result = $result && $DB->insert_record('facetoface_session_data', $locationdata);
 
-                $venuedata = new object();
+                $venuedata = new stdClass();
                 $venuedata->sessionid = $session->id;
                 $venuedata->fieldid = $venuefieldid;
-                $venuedata->data = addslashes($session->venue);
+                $venuedata->data = $session->venue;
                 $result = $result && $DB->insert_record('facetoface_session_data', $venuedata);
 
-                $roomdata = new object();
+                $roomdata = new stdClass();
                 $roomdata->sessionid = $session->id;
                 $roomdata->fieldid = $roomfieldid;
-                $roomdata->data = addslashes($session->room);
+                $roomdata->data = $session->room;
                 $result = $result && $DB->insert_record('facetoface_session_data', $roomdata);
             }
             $rs->close();
@@ -276,7 +276,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
 
             if ($rs = $DB->get_recordset('facetoface', array(), '', 'id, ' . implode(', ', $templatedfields))) {
                 foreach ($rs as $activity) {
-                    $todb = new object();
+                    $todb = new stdClass();
                     $todb->id = $activity->id;
 
                     foreach ($templatedfields as $fieldname) {
@@ -284,7 +284,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
                         $s = str_replace('[location]', '[session:location]', $s);
                         $s = str_replace('[venue]', '[session:venue]', $s);
                         $s = str_replace('[room]', '[session:room]', $s);
-                        $todb->$fieldname = addslashes($s);
+                        $todb->$fieldname = $s;
                     }
 
                     $result = $result && $DB->update_record('facetoface', $todb);
@@ -554,7 +554,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         // Remove unused mailed field
         $table = new xmldb_table('facetoface_signups_status');
         $field = new xmldb_field('mailed');
-        if (field_exists($table, $field)) {
+        if ($dbman->field_exists($table, $field)) {
             $result = $result && $dbman->drop_field($table, $field, false, true);
         }
 
@@ -582,9 +582,9 @@ function xmldb_facetoface_upgrade($oldversion=0) {
                 $transaction = $DB->start_delegated_transaction();
 
                 foreach ($badrows as $bad) {
-                    $fixedrow = new object();
+                    $fixedrow = new stdClass();
                     $fixedrow->id = $bad->id;
-                    $fixedrow->possiblevalues = addslashes(str_replace(';', CUSTOMFIELD_DELIMITER, $bad->possiblevalues));
+                    $fixedrow->possiblevalues = str_replace(';', CUSTOMFIELD_DELIMITER, $bad->possiblevalues);
                     $result = $result && $DB->update_record('facetoface_session_field', $fixedrow);
                 }
 
@@ -615,9 +615,9 @@ function xmldb_facetoface_upgrade($oldversion=0) {
                 $transaction = $DB->start_delegated_transaction();
 
                 foreach ($bad_data_rows as $bad) {
-                    $fixedrow = new object();
+                    $fixedrow = new stdClass();
                     $fixedrow->id = $bad->id;
-                    $fixedrow->data = addslashes(str_replace(';', CUSTOMFIELD_DELIMITER, $bad->data));
+                    $fixedrow->data = str_replace(';', CUSTOMFIELD_DELIMITER, $bad->data);
                     $result = $result && $DB->update_record('facetoface_session_data', $fixedrow);
                 }
 

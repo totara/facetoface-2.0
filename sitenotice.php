@@ -20,7 +20,7 @@ $PAGE->set_url('/mod/facetoface/sitenotice.php', array('id' => $id, 'd'=>$d, 'co
 
 admin_externalpage_setup('managemodules'); // this is hacky, tehre should be a special hidden page for it
 
-$contextsystem = get_context_instance(CONTEXT_SYSTEM);
+$contextsystem = context_system::instance();
 
 require_capability('moodle/site:config', $contextsystem);
 
@@ -43,7 +43,7 @@ if (!empty($d)) {
         echo $OUTPUT->header();
         echo $OUTPUT->heading($title);
 
-        $info = new object();
+        $info = new stdClass();
         $info->name = format_string($notice->name);
         $info->text = format_text($notice->text, FORMAT_HTML);
         $optionsyes = array('id'=>$id, 'sesskey'=>$USER->sesskey, 'd'=>1, 'confirm'=>1);
@@ -81,9 +81,11 @@ if ($fromform = $mform->get_data()) { // Form submitted
         print_error('error:unknownbuttonclicked', 'facetoface', $returnurl);
     }
 
-    $todb = new object();
+
+
+    $todb = new stdClass();
     $todb->name = trim($fromform->name);
-    $todb->text = trim($fromform->text);
+    $todb->text = trim($fromform->text['text']);
 
 	try{
         $transaction = $DB->start_delegated_transaction();
@@ -92,7 +94,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
             $DB->update_record('facetoface_notice', $todb);
         }
         else {
-            $notice = new object();
+            $notice = new stdClass();
             $notice->id = $DB->insert_record('facetoface_notice', $todb);
         }
 
@@ -112,9 +114,9 @@ if ($fromform = $mform->get_data()) { // Form submitted
     }
 } elseif ($notice != null) { // Edit mode
     // Set values for the form
-    $toform = new object();
+    $toform = new stdClass();
     $toform->name = $notice->name;
-    $toform->text = $notice->text;
+    $toform->text['text'] = $notice->text;
 
     foreach ($customfields as $field) {
         $fieldname = "custom_$field->shortname";

@@ -145,7 +145,7 @@ $string['message'] = 'Verandering in de boeking van {$a->coursename}!
 
 Er is een plaats vrijgekomen voor {$a->duedate} ({$a->name}) voor de afspraak {$a->coursename}.
 
-U bent voor deze datum ingeschreven. Als u dan verhindert bent, kunt u zich uitschrijven bij <a href=\'{$a->url}\'>$a->url</a>';
+U bent voor deze datum ingeschreven. Als u dan verhindert bent, kunt u zich uitschrijven bij <a href=\'{$a->url}\'>{$a->url}</a>';
 $string['modulename'] = 'Afspraak';
 $string['modulenameplural'] = 'Afspraken';
 $string['moreinfo'] = 'Meer info';
@@ -362,5 +362,3 @@ $string['xhours'] = '{$a} uren';
 $string['xminutes'] = '{$a} minuten';
 $string['youarebooked'] = 'U bent geboekt voor de volgende sessie';
 $string['youremailaddress'] = 'Uw emailadres';
-
-

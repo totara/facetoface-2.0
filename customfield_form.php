@@ -50,10 +50,10 @@ class mod_facetoface_customfield_form extends moodleform {
         global $DB;
 
         $errors = array();
-        $shortname = addslashes($data['shortname']);
-        $where     = "id<>{$data['id']} AND shortname='{$shortname}'";
+        $where     = "id <> ? AND shortname = ?";
+        $params = array($data['id'], $data['shortname']);
 
-        if ($DB->record_exists_select('facetoface_session_field', $where)) {
+        if ($DB->record_exists_select('facetoface_session_field', $where, $params)) {
             $errors['shortname']= get_string('error:shortnametaken', 'facetoface');
         }
 

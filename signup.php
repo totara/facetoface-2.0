@@ -23,7 +23,7 @@ if (!$cm = get_coursemodule_from_instance("facetoface", $facetoface->id, $course
 }
 
 require_course_login($course);
-$context = get_context_instance(CONTEXT_COURSE, $course->id);
+$context = context_course::instance($course->id);
 require_capability('mod/facetoface:view', $context);
 
 $returnurl = "$CFG->wwwroot/course/view.php?id=$course->id";
@@ -47,7 +47,7 @@ if (isguestuser()) {
     }
 
     echo $OUTPUT->header();
-    notice_yesno('<p>' . get_string('guestsno', 'facetoface') . "</p>\n\n</p>" .
+    echo $OUTPUT->confirm('<p>' . get_string('guestsno', 'facetoface') . "</p>\n\n</p>" .
         get_string('liketologin') . '</p>', $loginurl, get_referer(false));
     echo $OUTPUT->footer();
     exit();
@@ -118,7 +118,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
 }
 elseif ($manageremail !== false) {
     // Set values for the form
-    $toform = new object();
+    $toform = new stdClass();
     $toform->manageremail = $manageremail;
     $mform->set_data($toform);
 }

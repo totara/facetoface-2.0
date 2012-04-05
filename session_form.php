@@ -119,7 +119,7 @@ class mod_facetoface_session_form extends moodleform {
             }
         }
 
-        $mform->addElement('htmleditor', 'details', get_string('details', 'facetoface'), '');
+        $mform->addElement('editor', 'details', get_string('details', 'facetoface'), '');
         $mform->setType('details', PARAM_RAW);
         $mform->addHelpButton('details', 'details', 'facetoface');
 
@@ -136,7 +136,7 @@ class mod_facetoface_session_form extends moodleform {
                 $rolename = $rolename->name;
 
                 // Get course context
-                $context = get_context_instance(CONTEXT_COURSE, $this->_customdata['course']->id);
+                $context = context_course::instance($this->_customdata['course']->id);
 
                 // Attempt to load users with this role in this course
                 $rs = $DB->get_recordset_sql("

@@ -56,7 +56,7 @@ else {
 
 require_course_login($course);
 $errorstr = '';
-$context = get_context_instance(CONTEXT_COURSE, $course->id);
+$context = context_course::instance($course->id);
 require_capability('mod/facetoface:editsessions', $context);
 
 $returnurl = "view.php?f=$facetoface->id";
@@ -113,14 +113,14 @@ if ($fromform = $mform->get_data()) { // Form submitted
         $timestartfield = "timestart[$i]";
         $timefinishfield = "timefinish[$i]";
         if (!empty($fromform->$timestartfield) and !empty($fromform->$timefinishfield)) {
-            $date = new object();
+            $date = new stdClass();
             $date->timestart = $fromform->$timestartfield;
             $date->timefinish = $fromform->$timefinishfield;
             $sessiondates[] = $date;
         }
     }
 
-    $todb = new object();
+    $todb = new stdClass();
     $todb->facetoface = $facetoface->id;
     $todb->datetimeknown = $fromform->datetimeknown;
     $todb->capacity = $fromform->capacity;
@@ -128,7 +128,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
     $todb->duration = $fromform->duration;
     $todb->normalcost = $fromform->normalcost;
     $todb->discountcost = $fromform->discountcost;
-    $todb->details = trim($fromform->details);
+    $todb->details = trim($fromform->details['text']);
 
     $sessionid = null;
     $transaction = $DB->start_delegated_transaction();
@@ -200,7 +200,7 @@ if ($fromform = $mform->get_data()) { // Form submitted
 }
 elseif ($session != null) { // Edit mode
     // Set values for the form
-    $toform = new object();
+    $toform = new stdClass();
     $toform->datetimeknown = (1 == $session->datetimeknown);
     $toform->capacity = $session->capacity;
     $toform->allowoverbook = $session->allowoverbook;
