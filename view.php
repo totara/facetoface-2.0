@@ -53,6 +53,7 @@ add_to_log($course->id, 'facetoface', 'view', "view.php?id=$cm->id", $facetoface
 $PAGE->set_url('/mod/facetoface/view.php', array('id' => $cm->id));
 $PAGE->set_context($context);
 $PAGE->set_cm($cm);
+$PAGE->set_pagelayout('standard');
 
 $title = $course->shortname . ': ' . format_string($facetoface->name);
 
