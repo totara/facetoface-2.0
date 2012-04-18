@@ -53,11 +53,11 @@ if (!empty($d)) {
         $transaction = $DB->start_delegated_transaction();
 
         try {
-            if (!$DB->delete_records('facetoface_session_field', array('id', $id))) {
+            if (!$DB->delete_records('facetoface_session_field', array('id' => $id))) {
                 throw new Exception(get_string('error:couldnotdeletefield', 'facetoface'));
             }
 
-            if (!$DB->delete_records('facetoface_session_data', array('fieldid', $id))) {
+            if (!$DB->delete_records('facetoface_session_data', array('fieldid' => $id))) {
                 throw new Exception(get_string('error:couldnotdeletefield', 'facetoface'));
             }
 
