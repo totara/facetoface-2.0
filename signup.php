@@ -163,18 +163,19 @@ echo facetoface_print_session($session, $viewattendees);
 if ($signedup) {
     if (!($session->datetimeknown && facetoface_has_session_started($session, $timenow))) {
         // Cancellation link
-        echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/cancelsignup.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions.'" title="'.get_string('cancelbooking','facetoface').'">'.get_string('cancelbooking', 'facetoface').'</a>';
+        echo html_writer::link('cancelsignup.php?s='.$session->id.'&backtoallsessions='.$backtoallsessions, get_string('cancelbooking', 'facetoface'), array('title' => get_string('cancelbooking', 'facetoface')));
         echo ' &ndash; ';
     }
     // See attendees link
     if ($viewattendees) {
-        echo '<a href="'.$CFG->wwwroot.'/mod/facetoface/attendees.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions.'" title="'.get_string('seeattendees', 'facetoface').'">'.get_string('seeattendees', 'facetoface').'</a>';
+        echo html_writer::link('attendees.php?s='.$session->id.'&amp;backtoallsessions='.$backtoallsessions, get_string('seeattendees', 'facetoface'), array('title' => get_string('seeattendees', 'facetoface')));
     }
 
-    echo '<br/><a href="'.$returnurl.'" title="'.get_string('goback', 'facetoface').'">'.get_string('goback', 'facetoface').'</a>';
+    echo html_writer::empty_tag('br') . html_writer::link($returnurl, get_string('goback', 'facetoface'), array('title' => get_string('goback', 'facetoface')));
+    //echo '<br/><a href="'.$returnurl.'" title="'.get_string('goback', 'facetoface').'">'.get_string('goback', 'facetoface').'</a>';
 }
 // Don't allow signup to proceed if a manager is required
-elseif (facetoface_manager_needed($facetoface) && !facetoface_get_manageremail($USER->id)){
+else if (facetoface_manager_needed($facetoface) && !facetoface_get_manageremail($USER->id)){
     // Check to see if the user has a managers email set
     echo '<p><strong>'.get_string('error:manageremailaddressmissing', 'facetoface').'</strong></p>';
     echo '<br/><a href="'.$returnurl.'" title="'.get_string('goback', 'facetoface').'">'.get_string('goback', 'facetoface').'</a>';
