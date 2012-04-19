@@ -37,7 +37,7 @@ else {
     print_error('error:mustspecifycoursemodulefacetoface', 'facetoface');
 }
 
-$context = context_module::instance($cm->id);
+$context = get_context_instance(CONTEXT_MODULE, $cm->id);
 
 if (!empty($download)) {
     require_capability('mod/facetoface:viewattendees', $context);
@@ -112,7 +112,7 @@ function print_session_list($courseid, $facetofaceid, $location) {
 
     $timenow = time();
 
-    $context = context_course::instance($courseid);
+    $context = get_context_instance(CONTEXT_COURSE, $courseid);
     $viewattendees = has_capability('mod/facetoface:viewattendees', $context);
     $editsessions = has_capability('mod/facetoface:editsessions', $context);
 

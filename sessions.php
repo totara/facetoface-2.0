@@ -56,7 +56,7 @@ else {
 
 require_course_login($course);
 $errorstr = '';
-$context = context_course::instance($course->id);
+$context = get_context_instance(CONTEXT_COURSE, $course->id);
 require_capability('mod/facetoface:editsessions', $context);
 
 $returnurl = "view.php?f=$facetoface->id";

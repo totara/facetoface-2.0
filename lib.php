@@ -2517,11 +2517,11 @@ function facetoface_take_individual_attendance($submissionid, $grading) {
 function facetoface_print_coursemodule_info($coursemodule) {
     global $CFG, $USER, $DB, $OUTPUT;
 
-    $contextmodule = context_module::instance($coursemodule->id);
+    $contextmodule = get_context_instance(CONTEXT_MODULE, $coursemodule->id);
     if (!has_capability('mod/facetoface:view', $contextmodule)) {
         return ''; // not allowed to view this activity
     }
-    $contextcourse = context_course::instance($coursemodule->course);
+    $contextcourse = get_context_instance(CONEXT_COURSE, $coursemodule->course);
     // can view attendees
     $viewattendees = has_capability('mod/facetoface:viewattendees', $contextcourse);
 

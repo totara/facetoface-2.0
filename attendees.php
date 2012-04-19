@@ -77,7 +77,7 @@ $cancellations = facetoface_get_cancellations($session->id);
  *
  */
 
-$context = context_course::instance($course->id);
+$context = get_context_instance(CONTEXT_COURSE, $course->id);
 require_course_login($course);
 
 // Actions the user can perform

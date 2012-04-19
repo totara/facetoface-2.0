@@ -12,7 +12,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 }
 
 require_course_login($course);
-$context = context_course::instance($course->id);
+$context = get_context_instance(CONTEXT_COURSE, $course->id);
 require_capability('mod/facetoface:view', $context);
 
 add_to_log($course->id, 'facetoface', 'view all', "index.php?id=$course->id");

@@ -136,7 +136,7 @@ class mod_facetoface_session_form extends moodleform {
                 $rolename = $rolename->name;
 
                 // Get course context
-                $context = context_course::instance($this->_customdata['course']->id);
+                $context = get_context_instance(CONTEXT_COURSE, $this->_customdata['course']->id);
 
                 // Attempt to load users with this role in this course
                 $rs = $DB->get_recordset_sql("

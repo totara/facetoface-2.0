@@ -18,7 +18,7 @@ $PAGE->set_url('/mod/facetoface/customfield.php', array('id' => $id, 'd'=>$d, 'c
 
 admin_externalpage_setup('managemodules'); // this is hacky, tehre should be a special hidden page for it
 
-$contextsystem = context_system::instance();
+$contextsystem = get_context_instance(CONTEXT_SYSTEM);
 
 require_capability('moodle/site:config', $contextsystem);
 
