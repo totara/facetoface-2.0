@@ -35,7 +35,10 @@ sign-up for a session or cancel.
 Requirements
 -------------
 
-* Moodle 2.1
+* Moodle 2.2
+
+There is a version for Moodle 2.1 which can be found here:
+https://github.com/totara/facetoface-2.0/tree/moodle-2.1.x
 
 
 Installation
