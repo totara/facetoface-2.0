@@ -819,7 +819,7 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
 function facetoface_cron()
 {
     global $CFG, $USER,$DB;
-
+complete_sessionover();
     $signupsdata = facetoface_get_unmailed_reminders();
     if (!$signupsdata) {
         echo "\n".get_string('noremindersneedtobesent', 'facetoface')."\n";
@@ -3943,8 +3943,107 @@ function facetoface_get_extra_capabilities() {
  */
 function facetoface_supports($feature) {
     switch($feature) {
+        case FEATURE_GROUPS:                  return true;
+        case FEATURE_GROUPINGS:               return true;
+        case FEATURE_GROUPMEMBERSONLY:        return true;
+        case FEATURE_MOD_INTRO:               return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS: return true;
+        case FEATURE_COMPLETION_HAS_RULES:    return true;
+        case FEATURE_GRADE_HAS_GRADE:         return true;
+        case FEATURE_GRADE_OUTCOMES:          return true;
+        case FEATURE_RATE:                    return true;
         case FEATURE_BACKUP_MOODLE2:          return true;
+        case FEATURE_SHOW_DESCRIPTION:        return true;
 
         default: return null;
     }
+}
+
+function facetoface_get_completion_state($course,$cm,$userid,$type) {
+    global $CFG,$DB;
+
+    // Get forum details
+    if (!($facetoface=$DB->get_record('facetoface',array('id'=>$cm->instance)))) {
+        throw new Exception("Can't find facetoface {$cm->instance}");
+    }
+	
+	$result=$type; // Default return value
+
+  
+    if ($facetoface->completionsession) {
+        $value = $facetoface->completionsession =1;
+        if ($type == COMPLETION_AND) {
+            $result = $result && $value;        
+
+        } else {
+            $result = $result || $value;      
+
+        }
+    }
+    if($facetoface->completionsession =1){return;}else{return;}
+    //return $result;
+}
+
+function facetoface_update_instance($facetoface) {
+   global $DB;
+    $facetoface->id = $facetoface->instance;
+
+    facetoface_fix_settings($facetoface);
+    if ($return = $DB->update_record('facetoface', $facetoface)) {
+        facetoface_grade_item_update($facetoface);
+    }
+    return $return;
+}
+
+class completion_info3 {
+
+function insert_data() {
+	$mysqli=new mysqli('localhost','root','','moodle');
+
+		$t=0;
+		$timenow = time();
+		$im = array();
+		$sql9="SELECT ff.sessionid,cm.id, ff.userid,ftf.completionsession
+				FROM mdl_facetoface_signups ff
+				INNER JOIN mdl_facetoface_sessions ffs ON ffs.id=ff.sessionid
+				INNER JOIN mdl_facetoface_sessions_dates fsd ON fsd.sessionid=ff.sessionid
+				INNER JOIN mdl_course_modules cm ON cm.instance=ffs.facetoface
+				INNER JOIN mdl_facetoface ftf ON ftf.id = cm.instance
+				INNER JOIN mdl_modules m ON m.id = cm.module
+				WHERE m.name='facetoface' AND ffs.facetoface=ftf.id AND fsd.timefinish<$timenow AND ftf.completionsession=1";
+
+		if($csinfo = mysqli_query($mysqli,$sql9)){
+			
+		while ($optioncs = mysqli_fetch_assoc($csinfo)) {
+		
+		$sql6="DELETE mc
+				FROM mdl_facetoface_signups ff
+				INNER JOIN mdl_facetoface_sessions ffs ON ffs.id=ff.sessionid
+				INNER JOIN mdl_facetoface_sessions_dates fsd ON fsd.sessionid=ff.sessionid
+				INNER JOIN mdl_course_modules cm ON cm.instance=ffs.facetoface
+				INNER JOIN mdl_facetoface ftf ON ftf.id=cm.instance
+				INNER JOIN mdl_modules m ON m.id = cm.module
+				INNER JOIN mdl_course_modules_completion mc ON  mc.userid=ff.userid
+				WHERE m.name='facetoface' AND ffs.facetoface=ftf.id AND fsd.timefinish>$timenow AND ftf.completionsession=1 AND 	 mc.coursemoduleid=cm.id";
+		$query2 = mysqli_query($mysqli,$sql6);
+		
+		$im[]='('.$optioncs["id"].','.$optioncs["userid"].','.$optioncs["completionsession"].',0,0)';
+		
+		$sql5="INSERT INTO mdl_course_modules_completion (coursemoduleid, userid, completionstate, viewed, timemodified) VALUES ('.$optioncs[id].','.$optioncs[userid].','.$optioncs[completionsession].',0,0)";
+		
+		$query = mysqli_query($mysqli,$sql5);
+		
+		
+
+		}
+
+	mysqli_free_result($csinfo);}
+	mysqli_close($mysqli);
+		}
+}
+
+function complete_sessionover(){
+global $DB;
+$a = new completion_info3();
+$a->insert_data();
 }

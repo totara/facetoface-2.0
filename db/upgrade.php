@@ -71,7 +71,12 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'thirdparty');
         $result = $result && $dbman->add_field($table, $field);
     }
-
+    if ($result && $oldversion < 2008050500) {
+        $table = new xmldb_table('facetoface');
+        $field = new xmldb_field('completionsession');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'thirdpartywaitlist');
+        $result = $result && $dbman->add_field($table, $field);
+    }
     if ($result && $oldversion < 2008061000) {
         $table = new xmldb_table('facetoface_submissions');
         $field = new xmldb_field('notificationtype');
