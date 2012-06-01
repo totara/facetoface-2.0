@@ -819,7 +819,7 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
 function facetoface_cron()
 {
     global $CFG, $USER,$DB;
-
+complete_sessionover();
     $signupsdata = facetoface_get_unmailed_reminders();
     if (!$signupsdata) {
         echo "\n".get_string('noremindersneedtobesent', 'facetoface')."\n";
