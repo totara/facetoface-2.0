@@ -1,4 +1,7 @@
 <?php
+if (!defined('MOODLE_INTERNAL')) {
+    die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
+}
 
 require_once "$CFG->dirroot/course/moodleform_mod.php";
 
@@ -159,7 +162,7 @@ class mod_facetoface_mod_form extends moodleform_mod {
     }
 
     function data_preprocessing(&$default_values)
-    {
+    { parent::data_preprocessing($default_values);
         // Fix manager emails
         if (empty($default_values['confirmationinstrmngr'])) {
             $default_values['confirmationinstrmngr'] = null;
@@ -181,5 +184,54 @@ class mod_facetoface_mod_form extends moodleform_mod {
         else {
             $default_values['emailmanagercancellation'] = 1;
         }
+        if (empty($default_values['completionsession'])) {
+            $default_values['completionsession']=1;
+        }
+    }
+    
+    function definition_after_data() {
+        parent::definition_after_data();
+        $mform     =& $this->_form;
+            
+        if ($default_values['completionsession']=0) {
+        if ($mform->elementExists('completionsession')) {
+            $mform->freeze('completionsession');
+        }
+    	}
+	}
+ function add_completion_rules() {
+        $mform =& $this->_form;
+
+      $group=array();
+      $group[] =& $mform->createElement('checkbox', 'completionsession', get_string('completionsession','facetoface'));
+    	$mform->setType('completionsession',PARAM_INT);
+        $mform->addGroup($group, 'completionsessiongroup', get_string('completionsessiongroup','facetoface'), array(''), false);
+ 		$mform->disabledIf('completionsessiongroup','facetoface','ne', COMPLETION_TRACKING_AUTOMATIC);
+		$mform->disabledIf('completionsession','completionsession','notchecked');
+
+        return array('completionsessiongroup');
+    }
+
+function completion_rule_enabled($data) {
+		
+        return (!empty($data['completionsession']) && $data['completionsession']!=0);
+    }
+
+	
+function get_data() {
+        $data = parent::get_data();
+        if (!$data) {
+            return false;
+        }
+		
+		
+        // Turn off completion settings if the checkboxes aren't ticked
+        $autocompletion = !empty($data->completion) && $data->completion==COMPLETION_TRACKING_AUTOMATIC;
+        if (empty($data->completionsession) || !$autocompletion) {
+            $data->completionsession = 0;
+
+        }
+
+        return $data;
     }
 }
