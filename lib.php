@@ -1,7 +1,7 @@
 <?php
 /*
  * This file is part of Totara LMS
- *fff
+ *
  * Copyright (C) 2010, 2011 Totara Learning Solutions LTD
  *
  * This program is free software; you can redistribute it and/or modify
