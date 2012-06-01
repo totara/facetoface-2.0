@@ -3,6 +3,7 @@
 require_once '../../config.php';
 require_once 'lib.php';
 require_once 'renderer.php';
+require_once($CFG->libdir . '/completionlib.php');
 
 global $DB, $OUTPUT;
 
@@ -49,7 +50,8 @@ require_course_login($course);
 require_capability('mod/facetoface:view', $context);
 
 add_to_log($course->id, 'facetoface', 'view', "view.php?id=$cm->id", $facetoface->id, $cm->id);
-
+$completion = new completion_info($course);
+$completion->set_module_viewed($cm);
 
 $PAGE->set_url('/mod/facetoface/view.php', array('id' => $cm->id));
 $PAGE->set_context($context);
