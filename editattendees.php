@@ -162,7 +162,7 @@ if ($searchtext !== '') {   // Search for a subset of remaining users
 $availableusers = $DB->get_recordset_sql('SELECT id, firstname, lastname, email
                                        FROM {user}
                                       WHERE ' . $select .
-                                        'AND id NOT IN
+                                        ' AND id NOT IN
                                           (
                                             SELECT u.id
                                               FROM {facetoface_signups} s
