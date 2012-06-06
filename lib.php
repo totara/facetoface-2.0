@@ -26,10 +26,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 
-require_once $CFG->libdir.'/gradelib.php';
-require_once $CFG->dirroot.'/grade/lib.php';
-require_once $CFG->dirroot.'/lib/adminlib.php';
-
+require_once($CFG->libdir.'/gradelib.php');
+require_once($CFG->dirroot.'/grade/lib.php');
+require_once($CFG->dirroot.'/lib/adminlib.php');
+require_once($CFG->dirroot . '/user/selector/lib.php');
 /**
  * Definitions for setting notification types
  */
