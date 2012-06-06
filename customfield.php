@@ -9,12 +9,12 @@ $confirm = optional_param('confirm', false, PARAM_BOOL); // delete confirmationx
 
 $field = null;
 if ($id > 0) {
-    if (!$field = $DB->get_record('facetoface_session_field', array('id'=>$id))) {
-        error('Field ID is incorrect: '. $id);
+    if (!$field = $DB->get_record('facetoface_session_field', array('id' => $id))) {
+        print_error('error:fieldidincorrect', 'facetoface', '', $id);
     }
 }
 
-$PAGE->set_url('/mod/facetoface/customfield.php', array('id' => $id, 'd'=>$d, 'confirm'=>$confirm));
+$PAGE->set_url('/mod/facetoface/customfield.php', array('id' => $id, 'd' => $d, 'confirm' => $confirm));
 
 admin_externalpage_setup('managemodules'); // this is hacky, tehre should be a special hidden page for it
 
@@ -42,7 +42,7 @@ if (!empty($d)) {
     if (!$confirm) {
         echo $OUTPUT->header();
         echo $OUTPUT->heading($title);
-        $optionsyes = array('id'=>$id, 'sesskey'=>$USER->sesskey, 'd'=>1, 'confirm'=>1);
+        $optionsyes = array('id' => $id, 'sesskey' => $USER->sesskey, 'd' => 1, 'confirm' => 1);
         echo $OUTPUT->confirm(get_string('fielddeleteconfirm', 'facetoface', format_string($field->name)),
             new moodle_url("customfield.php", $optionsyes),
             new moodle_url($returnurl));
@@ -71,7 +71,7 @@ if (!empty($d)) {
 }
 
 $mform = new mod_facetoface_customfield_form(null, compact('id'));
-if ($mform->is_cancelled()){
+if ($mform->is_cancelled()) {
     redirect($returnurl);
 }
 

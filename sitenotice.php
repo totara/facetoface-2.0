@@ -16,7 +16,7 @@ if ($id > 0) {
     }
 }
 
-$PAGE->set_url('/mod/facetoface/sitenotice.php', array('id' => $id, 'd'=>$d, 'confirm'=>$confirm));
+$PAGE->set_url('/mod/facetoface/sitenotice.php', array('id' => $id, 'd' => $d, 'confirm' => $confirm));
 
 admin_externalpage_setup('managemodules'); // this is hacky, tehre should be a special hidden page for it
 
@@ -46,7 +46,7 @@ if (!empty($d)) {
         $info = new stdClass();
         $info->name = format_string($notice->name);
         $info->text = format_text($notice->text, FORMAT_HTML);
-        $optionsyes = array('id'=>$id, 'sesskey'=>$USER->sesskey, 'd'=>1, 'confirm'=>1);
+        $optionsyes = array('id' => $id, 'sesskey' => $USER->sesskey, 'd' => 1, 'confirm' => 1);
         echo $OUTPUT->confirm(get_string('noticedeleteconfirm', 'facetoface', $info),
             new moodle_url("sitenotice.php", $optionsyes),
             new moodle_url($returnurl));
@@ -54,24 +54,18 @@ if (!empty($d)) {
         exit;
     }
     else {
-        try{
-            $transaction = $DB->start_delegated_transaction();
-            $DB->delete_records('facetoface_notice', array('id'=>$id));
-            $DB->delete_records('facetoface_notice_data', array('noticeid'=>$id));
-            $transaction->allow_commit();
-            redirect($returnurl);
-        }
-        catch(Exception $e){
-            $transaction->rollback($e);
-            print_error('error:couldnotdeletenotice', 'facetoface', $returnurl);
-        }
+        $transaction = $DB->start_delegated_transaction();
+        $DB->delete_records('facetoface_notice', array('id' => $id));
+        $DB->delete_records('facetoface_notice_data', array('noticeid' => $id));
+        $transaction->allow_commit();
+        redirect($returnurl);
     }
 }
 
 $customfields = facetoface_get_session_customfields();
 
 $mform = new mod_facetoface_sitenotice_form(null, compact('id', 'customfields'));
-if ($mform->is_cancelled()){
+if ($mform->is_cancelled()) {
     redirect($returnurl);
 }
 

@@ -13,17 +13,17 @@ class mod_facetoface_mod_form extends moodleform_mod {
         // GENERAL
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        $mform->addElement('text', 'name', get_string('name'), array('size'=>'64'));
+        $mform->addElement('text', 'name', get_string('name'), array('size' => '64'));
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
         } else {
-            $mform->setType('name', PARAM_CLEAN);
+            $mform->setType('name', PARAM_CLEANHTML);
         }
         $mform->addRule('name', null, 'required', null, 'client');
 
         $this->add_intro_editor(true);
 
-        $mform->addElement('text', 'thirdparty', get_string('thirdpartyemailaddress', 'facetoface'), array('size'=>'64'));
+        $mform->addElement('text', 'thirdparty', get_string('thirdpartyemailaddress', 'facetoface'), array('size' => '64'));
         $mform->setType('name', PARAM_NOTAGS);
         $mform->addHelpButton('thirdparty', 'thirdpartyemailaddress', 'facetoface');
 
@@ -57,7 +57,7 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->addElement('header', 'request', get_string('requestmessage', 'facetoface'));
         $mform->addHelpButton('request', 'requestmessage', 'facetoface');
 
-        $mform->addElement('text', 'requestsubject', get_string('email:subject', 'facetoface'), array('size'=>'55'));
+        $mform->addElement('text', 'requestsubject', get_string('email:subject', 'facetoface'), array('size' => '55'));
         $mform->setType('requestsubject', PARAM_TEXT);
         $mform->setDefault('requestsubject', get_string('setting:defaultrequestsubjectdefault', 'facetoface'));
         $mform->disabledIf('requestsubject', 'approvalreqd');
@@ -74,7 +74,7 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->addElement('header', 'confirmation', get_string('confirmationmessage', 'facetoface'));
         $mform->addHelpButton('confirmation', 'confirmationmessage', 'facetoface');
 
-        $mform->addElement('text', 'confirmationsubject', get_string('email:subject', 'facetoface'), array('size'=>'55'));
+        $mform->addElement('text', 'confirmationsubject', get_string('email:subject', 'facetoface'), array('size' => '55'));
         $mform->setType('confirmationsubject', PARAM_TEXT);
         $mform->setDefault('confirmationsubject', get_string('setting:defaultconfirmationsubjectdefault', 'facetoface'));
 
@@ -93,7 +93,7 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->addElement('header', 'reminder', get_string('remindermessage', 'facetoface'));
         $mform->addHelpButton('reminder', 'remindermessage', 'facetoface');
 
-        $mform->addElement('text', 'remindersubject', get_string('email:subject', 'facetoface'), array('size'=>'55'));
+        $mform->addElement('text', 'remindersubject', get_string('email:subject', 'facetoface'), array('size' => '55'));
         $mform->setType('remindersubject', PARAM_TEXT);
         $mform->setDefault('remindersubject', get_string('setting:defaultremindersubjectdefault', 'facetoface'));
 
@@ -120,7 +120,7 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->addElement('header', 'waitlisted', get_string('waitlistedmessage', 'facetoface'));
         $mform->addHelpButton('waitlisted', 'waitlistedmessage', 'facetoface');
 
-        $mform->addElement('text', 'waitlistedsubject', get_string('email:subject', 'facetoface'), array('size'=>'55'));
+        $mform->addElement('text', 'waitlistedsubject', get_string('email:subject', 'facetoface'), array('size' => '55'));
         $mform->setType('waitlistedsubject', PARAM_TEXT);
         $mform->setDefault('waitlistedsubject', get_string('setting:defaultwaitlistedsubjectdefault', 'facetoface'));
 
@@ -131,7 +131,7 @@ class mod_facetoface_mod_form extends moodleform_mod {
         $mform->addElement('header', 'cancellation', get_string('cancellationmessage', 'facetoface'));
         $mform->addHelpButton('cancellation', 'cancellationmessage', 'facetoface');
 
-        $mform->addElement('text', 'cancellationsubject', get_string('email:subject', 'facetoface'), array('size'=>'55'));
+        $mform->addElement('text', 'cancellationsubject', get_string('email:subject', 'facetoface'), array('size' => '55'));
         $mform->setType('cancellationsubject', PARAM_TEXT);
         $mform->setDefault('cancellationsubject', get_string('setting:defaultcancellationsubjectdefault', 'facetoface'));
 

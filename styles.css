@@ -4,17 +4,16 @@ body.mod-facetoface table.f2fsession td.c0 {
 body.mod-facetoface table.f2fsession td.c1 {
     width: 100%;
 }
-body#mod-facetoface-signup div#content div.generalbox {
-    text-align: center;
+table.table90 {
+    width: 90%;
 }
-body#mod-facetoface-view div#content div.generalbox {
-    text-align: center;
+table.table50 {
+    width: 50%;
+    align: left;
 }
-body#mod-facetoface-view div#content div.generalbox div#description {
-    text-align: left;
-}
-body#mod-facetoface-attendees div#content div.generalbox {
-    text-align: center;
+table.inlinetable {
+    display: inline-table;
+    border: 0;
 }
 tr.highlight td.cell {
     background-color: #AAFFAA;
@@ -23,4 +22,15 @@ a.f2fsessionlinks, td.f2fsessionnotice, span.f2fsessionnotice {
     font-size: 11px;
     font-weight: bold;
     line-height: 14px;
+}
+span.f2fonepointfive {
+    line-height:1.5;
+}
+span.errorstring {
+    font-size: 12px;
+    line-height: 18px;
+}
+
+body#page-mod-facetoface-view div#page-content table.generaltable {
+    width: 100%;
 }
