@@ -64,7 +64,9 @@ Feel free to send bug reports (and/or patches!) to the current maintainer:
 Previous maintainer(s)
 -----------------------
 
-  Aaron Barnes <aaron.barnes@totaralms.com>
+  Aaron Barnes <aaronb@catalyst.net.nz>
+  Jonathan Newman <jonathan.newman@catalyst.net.nz>
+  Francois Marier <francois@catalyst.net.nz>
 
 
 Changes
