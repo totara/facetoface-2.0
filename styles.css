@@ -9,7 +9,7 @@ table.table90 {
 }
 table.table50 {
     width: 50%;
-    align: left;
+    text-align: left;
 }
 table.inlinetable {
     display: inline-table;
@@ -31,6 +31,6 @@ span.errorstring {
     line-height: 18px;
 }
 
-body#page-mod-facetoface-view div#page-content table.generaltable {
+body#page-mod-facetoface-view div#page-content table.sessions {
     width: 100%;
 }
