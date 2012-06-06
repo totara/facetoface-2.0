@@ -354,59 +354,40 @@ function facetoface_delete_instance($id) {
 
     $result = true;
 
-    try {
-        $transaction = $DB->start_delegated_transaction();
+    $transaction = $DB->start_delegated_transaction();
 
-        if (!$DB->delete_records_select(
-            'facetoface_signups_status',
-            "signupid IN
-            (
-                SELECT
-                id
-                FROM
-        {facetoface_signups}
-        WHERE
-        sessionid IN
+    $DB->delete_records_select(
+        'facetoface_signups_status',
+        "signupid IN
         (
             SELECT
             id
             FROM
-        {facetoface_sessions}
-        WHERE
-        facetoface = ? ))
-        ", array($facetoface->id))) {
-            $result = false;
-            throw new Exception('Delete signup status records');
-        }
+    {facetoface_signups}
+    WHERE
+    sessionid IN
+    (
+        SELECT
+        id
+        FROM
+    {facetoface_sessions}
+    WHERE
+    facetoface = ? ))
+    ", array($facetoface->id));
 
-        if (!$DB->delete_records_select('facetoface_signups', "sessionid IN (SELECT id FROM {facetoface_sessions} WHERE facetoface = ?)", array($facetoface->id))) {
-            throw new Exception('Error deleting signups');
-        }
+    $DB->delete_records_select('facetoface_signups', "sessionid IN (SELECT id FROM {facetoface_sessions} WHERE facetoface = ?)", array($facetoface->id));
 
-        if (!$DB->delete_records_select('facetoface_sessions_dates', "sessionid in (SELECT id FROM {facetoface_sessions} WHERE facetoface = ?)", array($facetoface->id))) {
-            throw new Exception('Error deleting session dates');
-        }
+    $DB->delete_records_select('facetoface_sessions_dates', "sessionid in (SELECT id FROM {facetoface_sessions} WHERE facetoface = ?)", array($facetoface->id));
 
-        if (!$DB->delete_records('facetoface_sessions', array('facetoface'=>$facetoface->id))) {
-            throw new Exception('Error deleting sessions');
-        }
+    $DB->delete_records('facetoface_sessions', array('facetoface' => $facetoface->id));
 
-        if (!$DB->delete_records('facetoface', array('id'=>$facetoface->id))) {
-            throw new Exception('Error deleting facetoface activity');
-        }
+    $DB->delete_records('facetoface', array('id' => $facetoface->id));
 
-        if (!$DB->delete_records('event', array('modulename'=>'facetoface', 'instance'=>$facetoface->id))) {
-            throw new Exception('Error deleting facetoface event record');
-        }
+    $DB->delete_records('event', array('modulename' => 'facetoface', 'instance' => $facetoface->id));
 
-        if (!facetoface_grade_item_delete($facetoface)) {
-            throw new Exception('Error deleting facetoface grade item');
-        }
+    facetoface_grade_item_delete($facetoface);
 
-        $transaction->allow_commit();
-    } catch (Exception $e) {
-        $transaction->rollback($e);
-    }
+    $transaction->allow_commit();
 
     return $result;
 }
@@ -492,15 +473,11 @@ function facetoface_update_session($session, $sessiondates) {
     $session->timemodified = time();
     $session = cleanup_session_data($session);
 
-    if (!$DB->update_record('facetoface_sessions', $session)) {
-    //    rollback_sql();
-        return false;
-    }
+    $transaction = $DB->start_delegated_transaction();
 
-    if (!$DB->delete_records('facetoface_sessions_dates', array('sessionid'=>$session->id))) {
-    //    rollback_sql();
-        return false;
-    }
+    $DB->update_record('facetoface_sessions', $session);
+
+    $DB->delete_records('facetoface_sessions_dates', array('sessionid' => $session->id));
 
     if (empty($sessiondates)) {
         // Insert a dummy date record
@@ -508,31 +485,22 @@ function facetoface_update_session($session, $sessiondates) {
         $date->sessionid = $session->id;
         $date->timestart = 0;
         $date->timefinish = 0;
-        if (!$DB->insert_record('facetoface_sessions_dates', $date)) {
-        //    rollback_sql();
-            return false;
-        }
+        $DB->insert_record('facetoface_sessions_dates', $date);
     }
     else {
         foreach ($sessiondates as $date) {
             $date->sessionid = $session->id;
-            if (!$DB->insert_record('facetoface_sessions_dates', $date)) {
-          //      rollback_sql();
-                return false;
-            }
+            $DB->insert_record('facetoface_sessions_dates', $date);
         }
     }
 
     // Update Calendar entries for students and teachers
     $session->sessiondates = $sessiondates;
-    if (!facetoface_update_calendar_events($session, 'booking')) {
-     //   rollback_sql();
-        return false;
-    }
-    if (!facetoface_update_calendar_events($session, 'session')) {
-      //  rollback_sql();
-        return false;
-    }
+    facetoface_update_calendar_events($session, 'booking');
+
+    facetoface_update_calendar_events($session, 'session');
+
+    $transaction->allow_commit();
 
     return facetoface_update_attendees($session);
 }
@@ -544,14 +512,10 @@ function facetoface_update_attendees($session) {
     global $USER, $DB;
 
     // Get facetoface
-    if (!$facetoface = $DB->get_record('facetoface', array('id'=>$session->facetoface))) {
-        print_error('Could not load facetoface record');
-    }
+    $facetoface = $DB->get_record('facetoface', array('id' => $session->facetoface));
 
     // Get course
-    if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
-        print_error('Could not load course record');
-    }
+    $course = $DB->get_record('course', array('id' => $facetoface->course));
 
     // Update user status'
     $users = facetoface_get_attendees($session->id);
@@ -670,16 +634,13 @@ function facetoface_delete_session($session) {
         }
     }
 
-    //begin_sql();
+    $transaction = $DB->start_delegated_transaction();
 
     // Remove entries from the teacher calendars
-    if (!$DB->delete_records_select('event', "modulename = 'facetoface' AND
+    $DB->delete_records_select('event', "modulename = 'facetoface' AND
                                          eventtype = 'facetofacesession' AND
                                          instance = ? AND description LIKE ?",
-                                         array($facetoface->id, "%attendees.php?s={$session->id}%"))) {
-        //rollback_sql();
-        return false;
-    }
+                                         array($facetoface->id, "%attendees.php?s={$session->id}%"));
 
     // Remove entry from site-wide calendar
     facetoface_remove_session_from_site_calendar($session);
@@ -688,16 +649,11 @@ function facetoface_delete_session($session) {
     facetoface_remove_session_from_site_calendar($session);
 
     // Delete session details
-    if (!$DB->delete_records('facetoface_sessions', array('id'=>$session->id))) {
-    //    rollback_sql();
-        return false;
-    }
-    if (!$DB->delete_records('facetoface_sessions_dates', array('sessionid'=>$session->id))) {
-     //   rollback_sql();
-        return false;
-    }
+    $DB->delete_records('facetoface_sessions', array('id' => $session->id));
 
-    if (!$DB->delete_records_select(
+    $DB->delete_records('facetoface_sessions_dates', array('sessionid' => $session->id));
+
+    $DB->delete_records_select(
         'facetoface_signups_status',
         "signupid IN
         (
@@ -708,16 +664,12 @@ function facetoface_delete_session($session) {
             WHERE
                 sessionid = {$session->id}
         )
-        ")) {
-        $result = false;
-    }
+        ");
 
-    if (!$DB->delete_records('facetoface_signups', array('sessionid'=>$session->id))) {
-    //    rollback_sql();
-        return false;
-    }
+    $DB->delete_records('facetoface_signups', array('sessionid' => $session->id));
 
-   // commit_sql();
+    $transaction->allow_commit();
+
     return true;
 }
 
@@ -1340,6 +1292,7 @@ function facetoface_write_activity_attendance(&$worksheet, $startingrow, $faceto
     $i = $startingrow;
 
     $locationcondition = '';
+    $locationparam = array();
     if (!empty($location)) {
         $locationcondition = "AND s.location = ?";
         $locationparam = array($location);
@@ -1429,7 +1382,7 @@ function facetoface_write_activity_attendance(&$worksheet, $startingrow, $faceto
     }
 
     // Fast version of "facetoface_get_sessions($facetofaceid, $location)"
-    $sql = "SELECT s.id, s.datetimeknown, s.capacity,
+    $sql = "SELECT d.id as dateid, s.id, s.datetimeknown, s.capacity,
                    s.duration, d.timestart, d.timefinish
               FROM {facetoface_sessions} s
               JOIN {facetoface_sessions_dates} d ON s.id = d.sessionid
@@ -1437,147 +1390,53 @@ function facetoface_write_activity_attendance(&$worksheet, $startingrow, $faceto
                 s.facetoface = ?
               AND d.sessionid = s.id
                    $locationcondition
-              ORDER BY s.datetimeknown, d.timestart";
+                   ORDER BY s.datetimeknown, d.timestart";
 
-    if ($sessions = $DB->get_records_sql($sql, array_merge(array($facetofaceid), $locationparams))) {
-        $i = $i - 1; // will be incremented BEFORE each row is written
+    $sessions = $DB->get_records_sql($sql, array_merge(array($facetofaceid), $locationparam));
 
-        foreach ($sessions as $session) {
-            $customdata = $DB->get_records('facetoface_session_data', array('sessionid'=>$session->id), '', 'fieldid, data');
+    $i = $i - 1; // will be incremented BEFORE each row is written
 
-            $sessiondate = false;
-            $starttime   = get_string('wait-listed', 'facetoface');
-            $finishtime  = get_string('wait-listed', 'facetoface');
-            $status      = get_string('wait-listed', 'facetoface');
+    foreach ($sessions as $session) {
+        $customdata = $DB->get_records('facetoface_session_data', array('sessionid' => $session->id), '', 'fieldid, data');
 
-            $sessiontrainers = facetoface_get_trainers($session->id);
+        $sessiondate = false;
+        $starttime   = get_string('wait-listed', 'facetoface');
+        $finishtime  = get_string('wait-listed', 'facetoface');
+        $status      = get_string('wait-listed', 'facetoface');
 
-            if ($session->datetimeknown) {
-                // Display only the first date
-                if (method_exists($worksheet, 'write_date')) {
-                    // Needs the patch in MDL-20781
-                    $sessiondate = (int)$session->timestart;
-                }
-                else {
-                    $sessiondate = userdate($session->timestart, get_string('strftimedate', 'langconfig'));
-                }
-                $starttime   = userdate($session->timestart, get_string('strftimetime', 'langconfig'));
-                $finishtime  = userdate($session->timefinish, get_string('strftimetime', 'langconfig'));
+        $sessiontrainers = facetoface_get_trainers($session->id);
 
-                if ($session->timestart < $timenow) {
-                    $status = get_string('sessionover', 'facetoface');
-                }
-                else {
-                    $signupcount = 0;
-                    if (!empty($sessionsignups[$session->id])) {
-                        $signupcount = count($sessionsignups[$session->id]);
-                    }
-
-                    if ($signupcount >= $session->capacity) {
-                        $status = get_string('bookingfull', 'facetoface');
-                    } else {
-                        $status = get_string('bookingopen', 'facetoface');
-                    }
-                }
-            }
-
-            if (!empty($sessionsignups[$session->id])) {
-                foreach ($sessionsignups[$session->id] as $attendee) {
-                    $i++; $j=0;
-
-                    // Custom session fields
-                    foreach ($customsessionfields as $field) {
-                        if (empty($field->showinsummary)) {
-                            continue; // skip
-                        }
-
-                        $data = '-';
-                        if (!empty($customdata[$field->id])) {
-                            if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
-                                $data = str_replace(CUSTOMFIELD_DELIMITER, "\n", $customdata[$field->id]->data);
-                            } else {
-                                $data = $customdata[$field->id]->data;
-                            }
-                        }
-                        $worksheet->write_string($i, $j++, $data);
-                    }
-
-                    if (empty($sessiondate)) {
-                        $worksheet->write_string($i, $j++, $status); // session date
-                    }
-                    else {
-                        if (method_exists($worksheet, 'write_date')) {
-                            $worksheet->write_date($i, $j++, $sessiondate, $dateformat);
-                        }
-                        else {
-                            $worksheet->write_string($i, $j++, $sessiondate);
-                        }
-                    }
-                    $worksheet->write_string($i,$j++,$starttime);
-                    $worksheet->write_string($i,$j++,$finishtime);
-                    $worksheet->write_number($i,$j++,(int)$session->duration);
-                    $worksheet->write_string($i,$j++,$status);
-
-                    if ($trainerroles) {
-                        foreach (array_keys($trainerroles) as $roleid) {
-                            if (!empty($sessiontrainers[$roleid])) {
-                                $trainers = array();
-                                foreach ($sessiontrainers[$roleid] as $trainer) {
-                                    $trainers[] = fullname($trainer);
-                                }
-
-                                $trainers = implode(', ', $trainers);
-                            }
-                            else {
-                                $trainers = '-';
-                            }
-
-                            $worksheet->write_string($i, $j++, $trainers);
-                        }
-                    }
-
-                    foreach ($userfields as $shortname => $fullname) {
-                        $value = '-';
-                        if (!empty($attendee->$shortname)) {
-                            $value = $attendee->$shortname;
-                        }
-
-                        if ('firstaccess' == $shortname or 'lastaccess' == $shortname or
-                            'lastlogin' == $shortname or 'currentlogin' == $shortname) {
-
-                            if (method_exists($worksheet, 'write_date')) {
-                                $worksheet->write_date($i, $j++, (int)$value, $dateformat);
-                            }
-                            else {
-                                $worksheet->write_string($i, $j++, userdate($value, get_string('strftimedate', 'langconfig')));
-                            }
-                        }
-                        else {
-                            $worksheet->write_string($i,$j++,$value);
-                        }
-                    }
-                    $worksheet->write_string($i,$j++,$attendee->grade);
-
-                    if (method_exists($worksheet,'write_date')) {
-                        $worksheet->write_date($i, $j++, (int)$attendee->timecreated, $dateformat);
-                    } else {
-                        $signupdate = userdate($attendee->timecreated, get_string('strftimedatetime', 'langconfig'));
-                        if (empty($signupdate)) {
-                            $signupdate = '-';
-                        }
-                        $worksheet->write_string($i,$j++, $signupdate);
-                    }
-
-                    if (!empty($coursename)) {
-                        $worksheet->write_string($i, $j++, $coursename);
-                    }
-                    if (!empty($activityname)) {
-                        $worksheet->write_string($i, $j++, $activityname);
-                    }
-                }
+        if ($session->datetimeknown) {
+            // Display only the first date
+            if (method_exists($worksheet, 'write_date')) {
+                // Needs the patch in MDL-20781
+                $sessiondate = (int)$session->timestart;
             }
             else {
-                // no one is sign-up, so let's just print the basic info
+                $sessiondate = userdate($session->timestart, get_string('strftimedate', 'langconfig'));
+            }
+            $starttime   = userdate($session->timestart, get_string('strftimetime', 'langconfig'));
+            $finishtime  = userdate($session->timefinish, get_string('strftimetime', 'langconfig'));
+
+            if ($session->timestart < $timenow) {
+                $status = get_string('sessionover', 'facetoface');
+            }
+            else {
+                $signupcount = 0;
+                if (!empty($sessionsignups[$session->id])) {
+                    $signupcount = count($sessionsignups[$session->id]);
+                }
+
+                if ($signupcount >= $session->capacity) {
+                    $status = get_string('bookingfull', 'facetoface');
+                } else {
+                    $status = get_string('bookingopen', 'facetoface');
+                }
+            }
+        }
+
+        if (!empty($sessionsignups[$session->id])) {
+            foreach ($sessionsignups[$session->id] as $attendee) {
                 $i++; $j=0;
 
                 // Custom session fields
@@ -1612,10 +1471,56 @@ function facetoface_write_activity_attendance(&$worksheet, $startingrow, $faceto
                 $worksheet->write_string($i,$j++,$finishtime);
                 $worksheet->write_number($i,$j++,(int)$session->duration);
                 $worksheet->write_string($i,$j++,$status);
-                foreach ($userfields as $unused) {
-                    $worksheet->write_string($i,$j++,'-');
+
+                if ($trainerroles) {
+                    foreach (array_keys($trainerroles) as $roleid) {
+                        if (!empty($sessiontrainers[$roleid])) {
+                            $trainers = array();
+                            foreach ($sessiontrainers[$roleid] as $trainer) {
+                                $trainers[] = fullname($trainer);
+                            }
+
+                            $trainers = implode(', ', $trainers);
+                        }
+                        else {
+                            $trainers = '-';
+                        }
+
+                        $worksheet->write_string($i, $j++, $trainers);
+                    }
                 }
-                $worksheet->write_string($i,$j++,'-');
+
+                foreach ($userfields as $shortname => $fullname) {
+                    $value = '-';
+                    if (!empty($attendee->$shortname)) {
+                        $value = $attendee->$shortname;
+                    }
+
+                    if ('firstaccess' == $shortname or 'lastaccess' == $shortname or
+                        'lastlogin' == $shortname or 'currentlogin' == $shortname) {
+
+                            if (method_exists($worksheet, 'write_date')) {
+                                $worksheet->write_date($i, $j++, (int)$value, $dateformat);
+                            }
+                            else {
+                                $worksheet->write_string($i, $j++, userdate($value, get_string('strftimedate', 'langconfig')));
+                            }
+                        }
+                    else {
+                        $worksheet->write_string($i,$j++,$value);
+                    }
+                }
+                $worksheet->write_string($i,$j++,$attendee->grade);
+
+                if (method_exists($worksheet,'write_date')) {
+                    $worksheet->write_date($i, $j++, (int)$attendee->timecreated, $dateformat);
+                } else {
+                    $signupdate = userdate($attendee->timecreated, get_string('strftimedatetime', 'langconfig'));
+                    if (empty($signupdate)) {
+                        $signupdate = '-';
+                    }
+                    $worksheet->write_string($i,$j++, $signupdate);
+                }
 
                 if (!empty($coursename)) {
                     $worksheet->write_string($i, $j++, $coursename);
@@ -1623,6 +1528,54 @@ function facetoface_write_activity_attendance(&$worksheet, $startingrow, $faceto
                 if (!empty($activityname)) {
                     $worksheet->write_string($i, $j++, $activityname);
                 }
+            }
+        }
+        else {
+            // no one is sign-up, so let's just print the basic info
+            $i++; $j=0;
+
+            // Custom session fields
+            foreach ($customsessionfields as $field) {
+                if (empty($field->showinsummary)) {
+                    continue; // skip
+                }
+
+                $data = '-';
+                if (!empty($customdata[$field->id])) {
+                    if (CUSTOMFIELD_TYPE_MULTISELECT == $field->type) {
+                        $data = str_replace(CUSTOMFIELD_DELIMITER, "\n", $customdata[$field->id]->data);
+                    } else {
+                        $data = $customdata[$field->id]->data;
+                    }
+                }
+                $worksheet->write_string($i, $j++, $data);
+            }
+
+            if (empty($sessiondate)) {
+                $worksheet->write_string($i, $j++, $status); // session date
+            }
+            else {
+                if (method_exists($worksheet, 'write_date')) {
+                    $worksheet->write_date($i, $j++, $sessiondate, $dateformat);
+                }
+                else {
+                    $worksheet->write_string($i, $j++, $sessiondate);
+                }
+            }
+            $worksheet->write_string($i,$j++,$starttime);
+            $worksheet->write_string($i,$j++,$finishtime);
+            $worksheet->write_number($i,$j++,(int)$session->duration);
+            $worksheet->write_string($i,$j++,$status);
+            foreach ($userfields as $unused) {
+                $worksheet->write_string($i,$j++,'-');
+            }
+            $worksheet->write_string($i,$j++,'-');
+
+            if (!empty($coursename)) {
+                $worksheet->write_string($i, $j++, $coursename);
+            }
+            if (!empty($activityname)) {
+                $worksheet->write_string($i, $j++, $activityname);
             }
         }
     }
@@ -1658,12 +1611,11 @@ function facetoface_get_user_customfields($userid, $fieldstoinclude=false)
               JOIN {user_info_data} id ON id.fieldid = uif.id
               WHERE id.userid = ?";
 
-    if ($customfields = $DB->get_records_sql($sql, $array($userid))) {
-        foreach ($customfields as $field) {
-            $fieldname = $field->shortname;
-            if (false === $fieldstoinclude or !empty($fieldstoinclude[$fieldname])) {
-                $ret->$fieldname = $field->data;
-            }
+    $customfields = $DB->get_records_sql($sql, array($userid));
+    foreach ($customfields as $field) {
+        $fieldname = $field->shortname;
+        if (false === $fieldstoinclude or !empty($fieldstoinclude[$fieldname])) {
+            $ret->$fieldname = $field->data;
         }
     }
 
@@ -1932,7 +1884,7 @@ function facetoface_send_request_notice($facetoface, $session, $userid) {
  * @returns integer ID of newly created signup status, or false
  *
  */
-function facetoface_update_signup_status($signupid, $statuscode, $createdby, $note='', $grade=NULL, $usetransaction=true) {
+function facetoface_update_signup_status($signupid, $statuscode, $createdby, $note='', $grade=NULL) {
     global $DB;
     $timenow = time();
 
@@ -1946,31 +1898,16 @@ function facetoface_update_signup_status($signupid, $statuscode, $createdby, $no
     $signupstatus->superceded = 0;
     $signupstatus->mailed = 0;
 
-    /*if ($usetransaction) {
-         //SCANMSG: transactions may need additional fixing
-            $transaction = $DB->start_delegated_transaction();
+    $transaction = $DB->start_delegated_transaction();
 
-        }*/
-        if ($statusid = $DB->insert_record('facetoface_signups_status', $signupstatus)) {
-            // mark any previous signup_statuses as superceded
-            $where = "signupid = ? AND ( superceded = 0 OR superceded IS NULL ) AND id != ?";
-            $whereparams = array($signupid, $statusid);
-
-            if ($DB->set_field_select('facetoface_signups_status', 'superceded', 1, $where, $whereparams)) {
-                /*if ($usetransaction) {
-            $transaction->allow_commit();
-            }*/
-            return $statusid;
-        } else {
-            /*if ($usetransaction) {
-                rollback_sql();
-            }*/
-            return false;
-        }
+    if ($statusid = $DB->insert_record('facetoface_signups_status', $signupstatus)) {
+        // mark any previous signup_statuses as superceded
+        $where = "signupid = ? AND ( superceded = 0 OR superceded IS NULL ) AND id != ?";
+        $whereparams = array($signupid, $statusid);
+        $DB->set_field_select('facetoface_signups_status', 'superceded', 1, $where, $whereparams);
+        $transaction->allow_commit();
+        return $statusid;
     } else {
-        /*if ($usetransaction) {
-            rollback_sql();
-        }*/
         return false;
     }
 }
@@ -3151,10 +3088,10 @@ function facetoface_add_session_to_user_calendar($session, $eventname, $userid, 
         $newevent->visible = 1;
         $newevent->timemodified = time();
 
-        $result = $result && $DB->insert_record('event', $newevent);
+        $DB->insert_record('event', $newevent);
     }
 
-    return $result;
+    return true;
 }
 
 /**
@@ -3275,16 +3212,15 @@ function facetoface_update_calendar_events($session, $eventtype) {
     $result = true;
     if ($users && count($users) > 0) {
         // Delete the existing events
-        $result = $result && $DB->delete_records_select('event', $whereclause, $whereparams);
+        $DB->delete_records_select('event', $whereclause, $whereparams);
 
         // Add this session to these users' calendar
         $eventname = $DB->get_field('facetoface', 'name', array('id' => $session->facetoface));
         foreach ($users as $user) {
-            $result = $result && facetoface_add_session_to_user_calendar($session, $eventname, $user->userid, $eventtype);
+            facetoface_add_session_to_user_calendar($session, $eventname, $user->userid, $eventtype);
         }
     }
 
-    return $result;
     return true;
 }
 
@@ -3639,6 +3575,7 @@ function facetoface_get_trainer_roles() {
 
     // Parse roles
     $cleanroles = clean_param($CFG->facetoface_session_roles, PARAM_SEQUENCE);
+    list($rolesql, $param) = $DB->get_in_or_equal($cleanroles);
 
     // Load role names
     $rolenames = $DB->get_records_sql("
@@ -3648,9 +3585,9 @@ function facetoface_get_trainer_roles() {
         FROM
             {role} r
         WHERE
-            r.id IN (?)
+            r.id {$rolesql}
         AND r.id <> 0
-    ", array($cleanroles));
+    ", $params);
 
     // Return roles and names
     if (!$rolenames) {
@@ -3676,9 +3613,7 @@ function facetoface_get_trainer_roles() {
 function facetoface_get_trainers($sessionid, $roleid = null) {
     global $CFG, $DB;
 
-    $params = array($sessionid, $roleid);
-
-    $rs = $DB->get_recordset_sql("
+    $sql = "
         SELECT
             u.id,
             u.firstname,
@@ -3691,24 +3626,23 @@ function facetoface_get_trainers($sessionid, $roleid = null) {
          ON u.id = r.userid
         WHERE
             r.sessionid = ?
-        ".
-        ($roleid ? "AND r.roleid = ?" : '')
-    , $params);
+        ";
+    $params = array($sessionid);
 
-    if (!$rs) {
-        return false;
+    if ($roleid) {
+        $sql .= "AND r.roleid = ?";
+        $params[] = $roleid;
     }
 
+    $rs = $DB->get_recordset_sql($sql , $params);
     $return = array();
     foreach ($rs as $record) {
         // Create new array for this role
         if (!isset($return[$record->roleid])) {
             $return[$record->roleid] = array();
         }
-
         $return[$record->roleid][$record->id] = $record;
     }
-
     $rs->close();
 
     // If we are only after one roleid
@@ -3817,13 +3751,14 @@ function facetoface_add_customfields_to_form(&$mform, $customfields, $alloptiona
  *
  * @access  public
  * @param   integer $sessionid
- * @return  array|false
+ * @return  array
  */
 function facetoface_get_cancellations($sessionid) {
     global $CFG, $DB;
 
     $fullname = $DB->sql_fullname('u.firstname', 'u.lastname');
-
+    $instatus = array(MDL_F2F_STATUS_BOOKED, MDL_F2F_STATUS_WAITLISTED, MDL_F2F_STATUS_REQUESTED);
+    list($insql, $inparams) = $DB->get_in_or_equal($instatus);
     // Nasty SQL follows:
     // Load currently cancelled users,
     // include most recent booked/waitlisted time also
@@ -3844,16 +3779,12 @@ function facetoface_get_cancellations($sessionid) {
             JOIN
                 {facetoface_signups_status} c
              ON su.id = c.signupid
-            AND c.statuscode = ".MDL_F2F_STATUS_USER_CANCELLED."
+            AND c.statuscode = ?
             AND c.superceded = 0
             LEFT JOIN
                 {facetoface_signups_status} ss
              ON su.id = ss.signupid
-             AND ss.statuscode IN (
-                 ".MDL_F2F_STATUS_BOOKED.",
-                 ".MDL_F2F_STATUS_WAITLISTED.",
-                 ".MDL_F2F_STATUS_REQUESTED."
-             )
+             AND ss.statuscode $insql
             AND ss.superceded = 1
             WHERE
                 su.sessionid = ?
@@ -3868,7 +3799,9 @@ function facetoface_get_cancellations($sessionid) {
                 {$fullname},
                 c.timecreated
     ";
-    return $DB->get_records_sql($sql, array($sessionid));
+    $params = array_merge(array(MDL_F2F_STATUS_USER_CANCELLED), $inparams);
+    $params[] = $sessionid;
+    return $DB->get_records_sql($sql, $params);
 }
 
 
@@ -3877,7 +3810,7 @@ function facetoface_get_cancellations($sessionid) {
  *
  * @access  public
  * @param   integer $sessionid
- * @return  array|false
+ * @return  array
  */
 function facetoface_get_requests($sessionid) {
     global $CFG, $DB;
@@ -3903,7 +3836,7 @@ function facetoface_get_requests($sessionid) {
  *
  * @access  public
  * @param   integer $sessionid
- * @return  array|false
+ * @return  array
  */
 function facetoface_get_declines($sessionid) {
     global $CFG, $DB;
@@ -3919,7 +3852,7 @@ function facetoface_get_declines($sessionid) {
               JOIN {user} u ON u.id = su.userid
              WHERE su.sessionid = ? AND ss.superceded != 1 AND ss.statuscode = ?
           ORDER BY $fullname, ss.timecreated";
-    return $DB->get_records_sql($sql);
+    return $DB->get_records_sql($sql, $params);
 }
 
 

@@ -43,8 +43,8 @@ requires session custom fields to have unique shortnames. Since some of your
 custom fields had duplicate shortnames, they have been renamed to remove
 duplicates (see table below). This could impact on your email messages if you
 reference those custom fields in the message templates.';
-    $message  = "<html><head><title>{$title}</title></head>";
-    $message .= '<body><p>' . $note . '</p>' . html_writer::table($table,true).'<body></html>';
+    $message  = html_writer::start_tag('html') . html_writer::start_tag('head') . html_writer::tag('title', $title) . html_writer::end_tag('head');
+    $message .= html_writer::start_tag('body') . html_writer::tag('p', $note). html_writer::table($table,true) . html_writer::end_tag('body') . html_writer::end_tag('html');
 
     $admin = get_admin();
 
@@ -80,50 +80,46 @@ function xmldb_facetoface_upgrade($oldversion=0) {
     }
 
     if ($result && $oldversion < 2008080100) {
-        echo $OUTPUT->notification('Processing Face-to-face grades, this may take a while if there are many sessions...', 'notifysuccess');
+        echo $OUTPUT->notification(get_string('upgradeprocessinggrades', 'facetoface'), 'notifysuccess');
         require_once $CFG->dirroot.'/mod/facetoface/lib.php';
 
-        try {
-            $transaction = $DB->start_delegated_transaction();
-            $DB->debug = false; // too much debug output
+        $transaction = $DB->start_delegated_transaction();
+        $DB->debug = false; // too much debug output
 
-            // Migrate the grades to the gradebook
-            $sql = "SELECT f.id, f.name, f.course, s.grade, s.timegraded, s.userid,
-                cm.idnumber as cmidnumber
-                FROM {facetoface_submissions} s
-                JOIN {facetoface} f ON s.facetoface = f.id
-                JOIN {course_modules} cm ON cm.instance = f.id
-                JOIN {modules} m ON m.id = cm.module
-                WHERE m.name='facetoface'";
-            if ($rs = $DB->get_recordset_sql($sql)) {
-                foreach ($rs as $facetoface) {
-                    $grade = new stdclass();
-                    $grade->userid = $facetoface->userid;
-                    $grade->rawgrade = $facetoface->grade;
-                    $grade->rawgrademin = 0;
-                    $grade->rawgrademax = 100;
-                    $grade->timecreated = $facetoface->timegraded;
-                    $grade->timemodified = $facetoface->timegraded;
+        // Migrate the grades to the gradebook
+        $sql = "SELECT f.id, f.name, f.course, s.grade, s.timegraded, s.userid,
+            cm.idnumber as cmidnumber
+            FROM {facetoface_submissions} s
+            JOIN {facetoface} f ON s.facetoface = f.id
+            JOIN {course_modules} cm ON cm.instance = f.id
+            JOIN {modules} m ON m.id = cm.module
+            WHERE m.name='facetoface'";
+        if ($rs = $DB->get_recordset_sql($sql)) {
+            foreach ($rs as $facetoface) {
+                $grade = new stdclass();
+                $grade->userid = $facetoface->userid;
+                $grade->rawgrade = $facetoface->grade;
+                $grade->rawgrademin = 0;
+                $grade->rawgrademax = 100;
+                $grade->timecreated = $facetoface->timegraded;
+                $grade->timemodified = $facetoface->timegraded;
 
-                    $result = $result && (GRADE_UPDATE_OK == facetoface_grade_item_update($facetoface, $grade));
-                }
-                $rs->close();
+                $result = $result && (GRADE_UPDATE_OK == facetoface_grade_item_update($facetoface, $grade));
             }
-            $DB->debug = true;
-
-            // Remove the grade and timegraded fields from facetoface_submissions
-            if ($result) {
-                $table = new xmldb_table('facetoface_submissions');
-                $field1 = new xmldb_field('grade');
-                $field2 = new xmldb_field('timegraded');
-                $result = $result && $dbman->drop_field($table, $field1, false, true);
-                $result = $result && $dbman->drop_field($table, $field2, false, true);
-            }
-
-            $transaction->allow_commit();
-        } catch (Exception $e) {
-            $transaction->rollback($e);
+            $rs->close();
         }
+        $DB->debug = true;
+
+        // Remove the grade and timegraded fields from facetoface_submissions
+        if ($result) {
+            $table = new xmldb_table('facetoface_submissions');
+            $field1 = new xmldb_field('grade');
+            $field2 = new xmldb_field('timegraded');
+            $result = $result && $dbman->drop_field($table, $field1, false, true);
+            $result = $result && $dbman->drop_field($table, $field2, false, true);
+        }
+
+        $transaction->allow_commit();
     }
 
     if ($result && $oldversion < 2008090800) {
@@ -252,52 +248,41 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         $result = $result && $dbman->drop_field($table, $oldfield2);
         $oldfield3 = new xmldb_field('room');
         $result = $result && $dbman->drop_field($table, $oldfield3);
-
-        if ($result) {
-           // commit_sql();
-        }
-        else {
-            // rollback_sql();
-        }
     }
 
     // Migration of old Location, Venue and Room placeholders in email templates
     if ($result && $oldversion < 2009112400) {
-        try {
-            $transaction = $DB->start_delegated_transaction();
+        $transaction = $DB->start_delegated_transaction();
 
-            $olddebug = $DB->debug;
-            $DB->debug = false; // too much debug output
+        $olddebug = $DB->debug;
+        $DB->debug = false; // too much debug output
 
-            $templatedfields = array('confirmationsubject', 'confirmationinstrmngr', 'confirmationmessage',
-                'cancellationsubject', 'cancellationinstrmngr', 'cancellationmessage',
-                'remindersubject', 'reminderinstrmngr', 'remindermessage',
-                'waitlistedsubject', 'waitlistedmessage');
+        $templatedfields = array('confirmationsubject', 'confirmationinstrmngr', 'confirmationmessage',
+            'cancellationsubject', 'cancellationinstrmngr', 'cancellationmessage',
+            'remindersubject', 'reminderinstrmngr', 'remindermessage',
+            'waitlistedsubject', 'waitlistedmessage');
 
-            if ($rs = $DB->get_recordset('facetoface', array(), '', 'id, ' . implode(', ', $templatedfields))) {
-                foreach ($rs as $activity) {
-                    $todb = new stdClass();
-                    $todb->id = $activity->id;
+        if ($rs = $DB->get_recordset('facetoface', array(), '', 'id, ' . implode(', ', $templatedfields))) {
+            foreach ($rs as $activity) {
+                $todb = new stdClass();
+                $todb->id = $activity->id;
 
-                    foreach ($templatedfields as $fieldname) {
-                        $s = $activity->$fieldname;
-                        $s = str_replace('[location]', '[session:location]', $s);
-                        $s = str_replace('[venue]', '[session:venue]', $s);
-                        $s = str_replace('[room]', '[session:room]', $s);
-                        $todb->$fieldname = $s;
-                    }
-
-                    $result = $result && $DB->update_record('facetoface', $todb);
+                foreach ($templatedfields as $fieldname) {
+                    $s = $activity->$fieldname;
+                    $s = str_replace('[location]', '[session:location]', $s);
+                    $s = str_replace('[venue]', '[session:venue]', $s);
+                    $s = str_replace('[room]', '[session:room]', $s);
+                    $todb->$fieldname = $s;
                 }
-                $rs->close();
+
+                $result = $result && $DB->update_record('facetoface', $todb);
             }
-
-            $DB->debug = $olddebug;
-
-            $transaction->allow_commit();
-        } catch (Exception $e) {
-            $transaction->rollback($e);
+            $rs->close();
         }
+
+        $DB->debug = $olddebug;
+
+        $transaction->allow_commit();
     }
 
     if ($result && $oldversion < 2009120900) {
@@ -377,85 +362,72 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         if ($dbman->table_exists($table)) {
             require_once $CFG->dirroot.'/mod/facetoface/lib.php';
 
-            try {
-                $transaction = $DB->start_delegated_transaction();
+            $transaction = $DB->start_delegated_transaction();
 
-                // Get all submissions and loop through
-                $rs = $DB->get_recordset('facetoface_submissions');
+            // Get all submissions and loop through
+            $rs = $DB->get_recordset('facetoface_submissions');
 
-                foreach ($rs as $submission) {
+            foreach ($rs as $submission) {
 
-                    // Insert signup
-                    $signup = new stdClass();
-                    $signup->sessionid = $submission->sessionid;
-                    $signup->userid = $submission->userid;
-                    $signup->mailedreminder = $submission->mailedreminder;
-                    $signup->discountcode = $submission->discountcode;
-                    $signup->notificationtype = $submission->notificationtype;
+                // Insert signup
+                $signup = new stdClass();
+                $signup->sessionid = $submission->sessionid;
+                $signup->userid = $submission->userid;
+                $signup->mailedreminder = $submission->mailedreminder;
+                $signup->discountcode = $submission->discountcode;
+                $signup->notificationtype = $submission->notificationtype;
 
-                    if (!$id = $DB->insert_record('facetoface_signups', $signup)) {
-                        throw new Exception('Could not insert facetoface signup');
-                    }
+                $id = $DB->insert_record('facetoface_signups', $signup);
 
-                    $signup->id = $id;
+                $signup->id = $id;
 
-                    // Check facetoface still exists (some of them are missing)
-                    // Also, we need the course id so we can load the grade
-                    $facetoface = $DB->get_record('facetoface', 'id', $submission->facetoface);
-                    if (!$facetoface) {
-                        // If facetoface delete, ignore as it's of no use to us now
-                        mtrace('Could not find facetoface instance '.$submission->facetoface);
-                        continue;
-                    }
-
-                    // Get grade
-                    $grade = facetoface_get_grade($submission->userid, $facetoface->course, $facetoface->id);
-
-                    // Create initial "booked" signup status
-                    $status = new stdClass();
-                    $status->signupid = $signup->id;
-                    $status->statuscode = MDL_F2F_STATUS_BOOKED;
-                    $status->superceded = ($grade->grade > 0 || $submission->timecancelled) ? 1 : 0;
-                    $status->createdby = $USER->id;
-                    $status->timecreated = $submission->timecreated;
-                    $status->mailed = 0;
-
-                    if (!$DB->insert_record('facetoface_signups_status', $status)) {
-                        throw new Exception('Could not insert facetoface booked status');
-                    }
-
-                    // Create attended signup status
-                    if ($grade->grade > 0) {
-                        $status->statuscode = MDL_F2F_STATUS_FULLY_ATTENDED;
-                        $status->grade = $grade->grade;
-                        $status->timecreated = $grade->dategraded;
-                        $status->superceded = $submission->timecancelled ? 1 : 0;
-
-                        if (!$DB->insert_record('facetoface_signups_status', $status)) {
-                            throw new Exception('Could not insert facetoface attended status');
-                        }
-                    }
-
-                    // If cancelled, create status
-                    if ($submission->timecancelled) {
-                        $status->statuscode = MDL_F2F_STATUS_USER_CANCELLED;
-                        $status->timecreated = $submission->timecancelled;
-                        $status->superceded = 0;
-
-                        if (!$DB->insert_record('facetoface_signups_status', $status)) {
-                            throw new Exception('Could not insert facetoface booked status');
-                        }
-                    }
+                // Check facetoface still exists (some of them are missing)
+                // Also, we need the course id so we can load the grade
+                $facetoface = $DB->get_record('facetoface', 'id', $submission->facetoface);
+                if (!$facetoface) {
+                    // If facetoface delete, ignore as it's of no use to us now
+                    mtrace('Could not find facetoface instance '.$submission->facetoface);
+                    continue;
                 }
 
-                $rs->close();
-                $transaction->allow_commit();
+                // Get grade
+                $grade = facetoface_get_grade($submission->userid, $facetoface->course, $facetoface->id);
 
-            } catch (Exception $e) {
-                $transaction->rollback($e);
+                // Create initial "booked" signup status
+                $status = new stdClass();
+                $status->signupid = $signup->id;
+                $status->statuscode = MDL_F2F_STATUS_BOOKED;
+                $status->superceded = ($grade->grade > 0 || $submission->timecancelled) ? 1 : 0;
+                $status->createdby = $USER->id;
+                $status->timecreated = $submission->timecreated;
+                $status->mailed = 0;
+
+                $DB->insert_record('facetoface_signups_status', $status);
+
+                // Create attended signup status
+                if ($grade->grade > 0) {
+                    $status->statuscode = MDL_F2F_STATUS_FULLY_ATTENDED;
+                    $status->grade = $grade->grade;
+                    $status->timecreated = $grade->dategraded;
+                    $status->superceded = $submission->timecancelled ? 1 : 0;
+
+                    $DB->insert_record('facetoface_signups_status', $status);
+                }
+
+                // If cancelled, create status
+                if ($submission->timecancelled) {
+                    $status->statuscode = MDL_F2F_STATUS_USER_CANCELLED;
+                    $status->timecreated = $submission->timecancelled;
+                    $status->superceded = 0;
+
+                    $DB->insert_record('facetoface_signups_status', $status);
+                }
             }
 
-        /// Drop table facetoface_submissions
+            $rs->close();
+            $transaction->allow_commit();
+
+            /// Drop table facetoface_submissions
             $table = new xmldb_table('facetoface_submissions');
             $result = $result && $dbman->drop_table($table);
         }
@@ -501,36 +473,24 @@ function xmldb_facetoface_upgrade($oldversion=0) {
 
     if ($result && $oldversion < 2010051000) {
         // Create Calendar events for all existing Face-to-face sessions
-        try {
-            $transaction = $DB->start_delegated_transaction();
+        $transaction = $DB->start_delegated_transaction();
 
-            if ($records = $DB->get_records('facetoface_sessions', '', '', '', 'id, facetoface')) {
-                // Remove all exising site-wide events (there shouldn't be any)
-                foreach ($records as $record) {
-                    if (!facetoface_remove_session_from_site_calendar($record)) {
-                        $result = false;
-                        throw new Exception('failed to remove session from site calendar');
-                        break;
-                    }
-                }
-
-                // Add new site-wide events
-                foreach ($records as $record) {
-                    $session = facetoface_get_session($record->id);
-                    $facetoface = $DB->get_record('facetoface', 'id', $record->facetoface);
-
-                    if (!facetoface_add_session_to_site_calendar($session, $facetoface)) {
-                        $result = false;
-                        throw new Exception('failed to add session to site calendar');
-                        break;
-                    }
-                }
+        if ($records = $DB->get_records('facetoface_sessions', '', '', '', 'id, facetoface')) {
+            // Remove all exising site-wide events (there shouldn't be any)
+            foreach ($records as $record) {
+                facetoface_remove_session_from_site_calendar($record);
             }
 
-            $transaction->allow_commit();
-        } catch (Exception $e) {
-            $transaction->rollback($e);
+            // Add new site-wide events
+            foreach ($records as $record) {
+                $session = facetoface_get_session($record->id);
+                $facetoface = $DB->get_record('facetoface', 'id', $record->facetoface);
+
+                facetoface_add_session_to_site_calendar($session, $facetoface);
+            }
         }
+
+        $transaction->allow_commit();
 
         // Add tables required for site notices
         $table1 = new xmldb_table('facetoface_notice');
@@ -578,20 +538,16 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         );
 
         if ($badrows) {
-            try {
-                $transaction = $DB->start_delegated_transaction();
+            $transaction = $DB->start_delegated_transaction();
 
-                foreach ($badrows as $bad) {
-                    $fixedrow = new stdClass();
-                    $fixedrow->id = $bad->id;
-                    $fixedrow->possiblevalues = str_replace(';', CUSTOMFIELD_DELIMITER, $bad->possiblevalues);
-                    $result = $result && $DB->update_record('facetoface_session_field', $fixedrow);
-                }
-
-                $transaction->allow_commit();
-            } catch(Exception $e) {
-                $transaction->rollback($e);
+            foreach ($badrows as $bad) {
+                $fixedrow = new stdClass();
+                $fixedrow->id = $bad->id;
+                $fixedrow->possiblevalues = str_replace(';', CUSTOMFIELD_DELIMITER, $bad->possiblevalues);
+                $DB->update_record('facetoface_session_field', $fixedrow);
             }
+
+            $transaction->allow_commit();
         }
 
         $bad_data_rows = $DB->get_records_sql(
@@ -611,20 +567,16 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         );
 
         if ($bad_data_rows) {
-            try {
-                $transaction = $DB->start_delegated_transaction();
+            $transaction = $DB->start_delegated_transaction();
 
-                foreach ($bad_data_rows as $bad) {
-                    $fixedrow = new stdClass();
-                    $fixedrow->id = $bad->id;
-                    $fixedrow->data = str_replace(';', CUSTOMFIELD_DELIMITER, $bad->data);
-                    $result = $result && $DB->update_record('facetoface_session_data', $fixedrow);
-                }
-
-                $transaction->allow_commit();
-            } catch (Exception $e) {
-                $transaction->rollback($e);
+            foreach ($bad_data_rows as $bad) {
+                $fixedrow = new stdClass();
+                $fixedrow->id = $bad->id;
+                $fixedrow->data = str_replace(';', CUSTOMFIELD_DELIMITER, $bad->data);
+                $DB->update_record('facetoface_session_data', $fixedrow);
             }
+
+            $transaction->allow_commit();
         }
 
         upgrade_mod_savepoint(true, 2011120701, 'facetoface');
@@ -642,49 +594,42 @@ function xmldb_facetoface_upgrade($oldversion=0) {
                 //check for duplicate records and make them unique
                 $replacements = array();
 
-                try {
-                    $transaction = $DB->start_delegated_transaction();
+                $transaction = $DB->start_delegated_transaction();
 
-                    $sql = 'SELECT
-                                l.id,
-                                l.shortname
-                            FROM
-                                {facetoface_session_field} l,
-                                ( SELECT
-                                        MIN(id) AS id,
-                                        shortname
-                                  FROM
-                                        {facetoface_session_field}
-                                  GROUP BY
-                                        shortname
-                                  HAVING COUNT(*)>1
-                                 ) a
-                            WHERE
-                                l.id<>a.id
-                            AND l.shortname = a.shortname
-                    ';
+                $sql = 'SELECT
+                            l.id,
+                            l.shortname
+                        FROM
+                            {facetoface_session_field} l,
+                            ( SELECT
+                                    MIN(id) AS id,
+                                    shortname
+                              FROM
+                                    {facetoface_session_field}
+                              GROUP BY
+                                    shortname
+                              HAVING COUNT(*)>1
+                             ) a
+                        WHERE
+                            l.id<>a.id
+                        AND l.shortname = a.shortname
+                ';
 
-                    $rs = $DB->get_recordset_sql($sql, null);
+                $rs = $DB->get_recordset_sql($sql, null);
 
-                    //$rs = facetoface_tbl_duplicate_values('facetoface_session_field','shortname');
-                    if ($rs !== false) {
-                        foreach ($rs as $item) {
-                            $data = (object)$item;
-                            //randomize the value
-                            $data->shortname = $DB->escape($data->shortname.'_'.$data->id);
-                            $result = $DB->update_record('facetoface_session_field', $data);
-                            if (!$result) {
-                                break;
-                            }
-                            $replacements[]=array($item['id'], $item['shortname'], $data->shortname);
-                        }
+                //$rs = facetoface_tbl_duplicate_values('facetoface_session_field','shortname');
+                if ($rs !== false) {
+                    foreach ($rs as $item) {
+                        $data = (object)$item;
+                        //randomize the value
+                        $data->shortname = $DB->escape($data->shortname.'_'.$data->id);
+                        $DB->update_record('facetoface_session_field', $data);
+                        $replacements[]=array($item['id'], $item['shortname'], $data->shortname);
                     }
-
-                    $transaction->allow_commit();
-                    facetoface_send_admin_upgrade_msg($replacements);
-                } catch (Exception $e) {
-                    $transaction->rollback($e);
                 }
+
+                $transaction->allow_commit();
+                facetoface_send_admin_upgrade_msg($replacements);
 
                 //Apply the index
                 $dbman->add_index($table, $index);
