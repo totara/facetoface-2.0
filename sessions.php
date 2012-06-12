@@ -16,13 +16,13 @@ $nbdays = 1; // default number to show
 
 $session = null;
 if ($id) {
-    if (!$cm = $DB->get_record('course_modules', array('id'=>$id))) {
+    if (!$cm = $DB->get_record('course_modules', array('id' => $id))) {
         print_error('error:incorrectcoursemoduleid', 'facetoface');
     }
-    if (!$course = $DB->get_record('course', array('id'=>$cm->course))) {
+    if (!$course = $DB->get_record('course', array('id' => $cm->course))) {
         print_error('error:coursemisconfigured', 'facetoface');
     }
-    if (!$facetoface =$DB->get_record('facetoface',array('id'=>$cm->instance))) {
+    if (!$facetoface =$DB->get_record('facetoface',array('id' => $cm->instance))) {
         print_error('error:incorrectcoursemodule', 'facetoface');
     }
 }
@@ -30,7 +30,7 @@ elseif ($s) {
      if (!$session = facetoface_get_session($s)) {
          print_error('error:incorrectcoursemodulesession', 'facetoface');
      }
-     if (!$facetoface = $DB->get_record('facetoface',array('id'=>$session->facetoface))) {
+     if (!$facetoface = $DB->get_record('facetoface',array('id' => $session->facetoface))) {
          print_error('error:incorrectfacetofaceid', 'facetoface');
      }
      if (!$course = $DB->get_record('course', array('id'=> $facetoface->course))) {
@@ -43,10 +43,10 @@ elseif ($s) {
      $nbdays = count($session->sessiondates);
 }
 else {
-    if (!$facetoface = $DB->get_record('facetoface', array('id'=>$f))) {
+    if (!$facetoface = $DB->get_record('facetoface', array('id' => $f))) {
         print_error('error:incorrectfacetofaceid', 'facetoface');
     }
-    if (!$course = $DB->get_record('course', array('id'=>$facetoface->course))) {
+    if (!$course = $DB->get_record('course', array('id' => $facetoface->course))) {
         print_error('error:coursemisconfigured', 'facetoface');
     }
     if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
@@ -80,7 +80,7 @@ if ($d and $confirm) {
 $customfields = facetoface_get_session_customfields();
 
 $mform = new mod_facetoface_session_form(null, compact('id', 'f', 's', 'c', 'nbdays', 'customfields', 'course'));
-if ($mform->is_cancelled()){
+if ($mform->is_cancelled()) {
     redirect($returnurl);
 }
 
@@ -256,13 +256,13 @@ echo $OUTPUT->box_start();
 echo $OUTPUT->heading($heading);
 
 if (!empty($errorstr)) {
-    echo '<div class="notifyproblem" align="center"><span style="font-size: 12px; line-height: 18px;">'.$errorstr.'</span></div>';
+    echo $OUTPUT->container(html_writer::tag('span', $errorstr, array('class' => 'errorstring')), array('class' => 'notifyproblem'));
 }
 
 if ($d) {
     $viewattendees = has_capability('mod/facetoface:viewattendees', $context);
     facetoface_print_session($session, $viewattendees);
-    $optionsyes = array('sesskey'=>sesskey(), 's'=>$session->id, 'd'=>1, 'confirm'=>1);
+    $optionsyes = array('sesskey' => sesskey(), 's' => $session->id, 'd' => 1, 'confirm' => 1);
     echo $OUTPUT->confirm(get_string('deletesessionconfirm', 'facetoface', format_string($facetoface->name)),
         new moodle_url('sessions.php', $optionsyes),
         new moodle_url($returnurl));

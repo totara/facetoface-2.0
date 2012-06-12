@@ -5,51 +5,6 @@ defined('MOODLE_INTERNAL') || die();
 
 class mod_facetoface_renderer extends plugin_renderer_base {
     /**
-     * Builds edit attendees page
-     */
-    public function edit_attendees_page() {
-        $output = '';
-
-        return $output;
-    }
-
-    /**
-     * Builds attendees requested table
-     */
-    public function edit_attendees_requested_table($nonattendees_rs) {
-        $output = '';
-
-        return $output;
-    }
-
-    /**
-     * Builds attendees page
-     */
-    public function attendees_page() {
-        $output = '';
-
-        return $output;
-    }
-
-    /**
-     * Builds sessions page
-     */
-    public function sessions_page() {
-        $output = '';
-
-        return $output;
-    }
-
-    /**
-     * Builds session list page
-     */
-    public function session_list_page() {
-        $output = '';
-
-        return $output;
-    }
-
-    /**
      * Builds session list table given an array of sessions
      */
     public function print_session_list_table($customfields, $sessions, $viewattendees, $editsessions) {
@@ -77,7 +32,6 @@ class mod_facetoface_renderer extends plugin_renderer_base {
         $table = new html_table();
         $table->summary = get_string('previoussessionslist', 'facetoface');
         $table->head = $tableheader;
-        $table->width = '100%';
         $table->data = array();
 
         foreach ($sessions as $session) {
@@ -136,7 +90,7 @@ class mod_facetoface_renderer extends plugin_renderer_base {
             // Capacity
             $signupcount = facetoface_get_num_attendees($session->id, MDL_F2F_STATUS_APPROVED);
             $stats = $session->capacity - $signupcount;
-            if ($viewattendees){
+            if ($viewattendees) {
                 $stats = $signupcount.' / '.$session->capacity;
             }
             else {
@@ -170,12 +124,12 @@ class mod_facetoface_renderer extends plugin_renderer_base {
             // Options
             $options = '';
             if ($editsessions) {
-                $options .= $this->output->action_link('sessions.php?s='.$session->id, html_writer::tag('img', '', array('src' => $this->output->pix_url('t/edit')), get_string('edit', 'facetoface'), 'facetoface'), null, array ('title=' => get_string('editsession', 'facetoface'))) . ' ';
-                $options .= $this->output->action_link('sessions.php?s='.$session->id.'&amp;c=1', html_writer::tag('img', '', array('src' => $this->output->pix_url('t/copy')), get_string('copy', 'facetoface'), 'facetoface'), null, array ('title=' => get_string('copysession', 'facetoface'))) . ' ';
-                $options .= $this->output->action_link('sessions.php?s='.$session->id.'&amp;d=1', html_writer::tag('img', '', array('src' => $this->output->pix_url('t/delete')), get_string('delete'), 'facetoface'), null, array ('title=' => get_string('deletesession', 'facetoface')));
+                $options .= $this->output->action_icon(new moodle_url('sessions.php', array('s' => $session->id)), new pix_icon('t/edit', get_string('edit', 'facetoface')), null, array('title' => get_string('editsession', 'facetoface'))) . ' ';
+                $options .= $this->output->action_icon(new moodle_url('sessions.php', array('s' => $session->id, 'c' => 1)), new pix_icon('t/copy', get_string('copy', 'facetoface')), null, array('title' => get_string('copysession', 'facetoface'))) . ' ';
+                $options .= $this->output->action_icon(new moodle_url('sessions.php', array('s' => $session->id, 'd' => 1)), new pix_icon('t/delete', get_string('delete', 'facetoface')), null, array('title' => get_string('deletesession', 'facetoface'))) . ' ';
                 $options .= html_writer::empty_tag('br');
             }
-            if ($viewattendees){
+            if ($viewattendees) {
                 $options .= html_writer::link('attendees.php?s='.$session->id.'&backtoallsessions='.$session->facetoface, get_string('attendees', 'facetoface'), array('title' => get_string('seeattendees', 'facetoface'))) . html_writer::empty_tag('br');
             }
             if ($isbookedsession) {

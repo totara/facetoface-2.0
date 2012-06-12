@@ -73,11 +73,11 @@ foreach ($facetofaces as $facetoface) {
 
     if (!$facetoface->visible) {
         //Show dimmed if the mod is hidden
-        $link = "<a class=\"dimmed\" href=\"view.php?f=$facetoface->id\">$facetoface->name</a>";
+        $link = html_writer::link("view.php?f=$facetoface->id", $facetoface->name, array('class' => 'dimmed'));
     }
     else {
         //Show normal if the mod is visible
-        $link = "<a href=\"view.php?f=$facetoface->id\">$facetoface->name</a>";
+        $link = html_writer::link("view.php?f=$facetoface->id", $facetoface->name);
     }
 
     $printsection = '';
@@ -97,8 +97,8 @@ foreach ($facetofaces as $facetoface) {
             }
         }
     }
-
-    $courselink = '<a title="'.$course->shortname.'" href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'">'.$course->shortname.'</a>';
+    $url = new moodle_url('/course/view.php', array('id' => $course->id));
+    $courselink = html_writer::link($url, $course->shortname, array('title' => $course->shortname));
     if ($course->format == 'weeks' or $course->format == 'topics') {
         if (has_capability('mod/facetoface:viewattendees', $context)) {
             $table->data[] = array ($courselink, $link, $totalsignupcount);
@@ -112,7 +112,7 @@ foreach ($facetofaces as $facetoface) {
     }
 }
 
-echo "<br />";
+echo html_writer::empty_tag('br');
 
 echo html_writer::table($table);
 echo $OUTPUT->footer($course);

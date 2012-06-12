@@ -11,12 +11,10 @@ $confirm = optional_param('confirm', false, PARAM_BOOL); // delete confirmation
 
 $notice = null;
 if ($id > 0) {
-    if (!$notice = $DB->get_record('facetoface_notice', array('id'=>$id))) {
-        error('Notice ID is incorrect: '. $id);
-    }
+    $notice = $DB->get_record('facetoface_notice', array('id' => $id));
 }
 
-$PAGE->set_url('/mod/facetoface/sitenotice.php', array('id' => $id, 'd'=>$d, 'confirm'=>$confirm));
+$PAGE->set_url('/mod/facetoface/sitenotice.php', array('id' => $id, 'd' => $d, 'confirm' => $confirm));
 
 admin_externalpage_setup('managemodules'); // this is hacky, tehre should be a special hidden page for it
 
@@ -46,7 +44,7 @@ if (!empty($d)) {
         $info = new stdClass();
         $info->name = format_string($notice->name);
         $info->text = format_text($notice->text, FORMAT_HTML);
-        $optionsyes = array('id'=>$id, 'sesskey'=>$USER->sesskey, 'd'=>1, 'confirm'=>1);
+        $optionsyes = array('id' => $id, 'sesskey' => $USER->sesskey, 'd' => 1, 'confirm' => 1);
         echo $OUTPUT->confirm(get_string('noticedeleteconfirm', 'facetoface', $info),
             new moodle_url("sitenotice.php", $optionsyes),
             new moodle_url($returnurl));
@@ -54,24 +52,18 @@ if (!empty($d)) {
         exit;
     }
     else {
-        try{
-            $transaction = $DB->start_delegated_transaction();
-            $DB->delete_records('facetoface_notice', array('id'=>$id));
-            $DB->delete_records('facetoface_notice_data', array('noticeid'=>$id));
-            $transaction->allow_commit();
-            redirect($returnurl);
-        }
-        catch(Exception $e){
-            $transaction->rollback($e);
-            print_error('error:couldnotdeletenotice', 'facetoface', $returnurl);
-        }
+        $transaction = $DB->start_delegated_transaction();
+        $DB->delete_records('facetoface_notice', array('id' => $id));
+        $DB->delete_records('facetoface_notice_data', array('noticeid' => $id));
+        $transaction->allow_commit();
+        redirect($returnurl);
     }
 }
 
 $customfields = facetoface_get_session_customfields();
 
 $mform = new mod_facetoface_sitenotice_form(null, compact('id', 'customfields'));
-if ($mform->is_cancelled()){
+if ($mform->is_cancelled()) {
     redirect($returnurl);
 }
 
@@ -87,32 +79,26 @@ if ($fromform = $mform->get_data()) { // Form submitted
     $todb->name = trim($fromform->name);
     $todb->text = trim($fromform->text['text']);
 
-	try{
-        $transaction = $DB->start_delegated_transaction();
-        if ($notice != null) {
-            $todb->id = $notice->id;
-            $DB->update_record('facetoface_notice', $todb);
-        }
-        else {
-            $notice = new stdClass();
-            $notice->id = $DB->insert_record('facetoface_notice', $todb);
-        }
+    $transaction = $DB->start_delegated_transaction();
+    if ($notice != null) {
+        $todb->id = $notice->id;
+        $DB->update_record('facetoface_notice', $todb);
+    } else {
+        $notice = new stdClass();
+        $notice->id = $DB->insert_record('facetoface_notice', $todb);
+    }
 
-        foreach ($customfields as $field) {
-            $fieldname = "custom_$field->shortname";
-            if (empty($fromform->$fieldname)) {
-                $fromform->$fieldname = ''; // need to be able to clear fields
-            }
-            facetoface_save_customfield_value($field->id, $fromform->$fieldname, $notice->id, 'notice');
+    foreach ($customfields as $field) {
+        $fieldname = "custom_$field->shortname";
+        if (empty($fromform->$fieldname)) {
+            $fromform->$fieldname = ''; // need to be able to clear fields
         }
-        $transaction->allow_commit();
-        redirect($returnurl);
+        facetoface_save_customfield_value($field->id, $fromform->$fieldname, $notice->id, 'notice');
     }
-    catch(Exception $e){
-        $transaction->rollback($e);
-        print_error('error:couldnotupdatesitenotice', 'facetoface', $returnurl);
-    }
-} elseif ($notice != null) { // Edit mode
+    $transaction->allow_commit();
+    redirect($returnurl);
+
+} else if ($notice != null) { // Edit mode
     // Set values for the form
     $toform = new stdClass();
     $toform->name = $notice->name;

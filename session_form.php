@@ -50,19 +50,19 @@ class mod_facetoface_session_form extends moodleform {
 
         // Hack to put help files on these custom fields.
         // TODO: add to the admin page a feature to put help text on custom fields
-        if ($mform->elementExists('custom_location')){
+        if ($mform->elementExists('custom_location')) {
             $mform->addHelpButton('custom_location', 'location', 'facetoface');
         }
-        if ($mform->elementExists('custom_venue')){
+        if ($mform->elementExists('custom_venue')) {
             $mform->addHelpButton('custom_venue', 'venue', 'facetoface');
         }
-        if ($mform->elementExists('custom_room')){
+        if ($mform->elementExists('custom_room')) {
             $mform->addHelpButton('custom_room', 'room', 'facetoface');
         }
 
         $formarray  = array();
         $formarray[] = $mform->createElement('selectyesno', 'datetimeknown', get_string('sessiondatetimeknown', 'facetoface'));
-        $formarray[] = $mform->createElement('static', 'datetimeknownhint', '','<span class="hint-text">'.get_string('datetimeknownhinttext','facetoface').'</span>');
+        $formarray[] = $mform->createElement('static', 'datetimeknownhint', '', html_writer::tag('span', get_string('datetimeknownhinttext','facetoface'), array('class' => 'hint-text')));
         $mform->addGroup($formarray,'datetimeknown_group', get_string('sessiondatetimeknown','facetoface'), array(' '),false);
         $mform->addGroupRule('datetimeknown_group', null, 'required', null, 'client');
         $mform->setDefault('datetimeknown', false);
@@ -75,7 +75,7 @@ class mod_facetoface_session_form extends moodleform {
         $checkboxelement = &$mform->createElement('checkbox', 'datedelete', '', get_string('dateremove', 'facetoface'));
         unset($checkboxelement->_attributes['id']); // necessary until MDL-20441 is fixed
         $repeatarray[] = $checkboxelement;
-        $repeatarray[] = &$mform->createElement('html', '<br/>'); // spacer
+        $repeatarray[] = &$mform->createElement('html', html_writer::empty_tag('br')); // spacer
 
         $repeatcount = $this->_customdata['nbdays'];
 
@@ -104,7 +104,7 @@ class mod_facetoface_session_form extends moodleform {
         if (!get_config(NULL, 'facetoface_hidecost')) {
             $formarray  = array();
             $formarray[] = $mform->createElement('text', 'normalcost', get_string('normalcost', 'facetoface'), 'size="5"');
-            $formarray[] = $mform->createElement('static', 'normalcosthint', '','<span class="hint-text">'.get_string('normalcosthinttext','facetoface').'</span>');
+            $formarray[] = $mform->createElement('static', 'normalcosthint', '', html_writer::tag('span', get_string('normalcosthinttext','facetoface'), array('class' => 'hint-text')));
             $mform->addGroup($formarray,'normalcost_group', get_string('normalcost','facetoface'), array(' '),false);
             $mform->setType('normalcost', PARAM_TEXT);
             $mform->addHelpButton('normalcost_group', 'normalcost', 'facetoface');
@@ -112,7 +112,7 @@ class mod_facetoface_session_form extends moodleform {
             if (!get_config(NULL, 'facetoface_hidediscount')) {
                 $formarray  = array();
                 $formarray[] = $mform->createElement('text', 'discountcost', get_string('discountcost', 'facetoface'), 'size="5"');
-                $formarray[] = $mform->createElement('static', 'discountcosthint', '','<span class="hint-text">'.get_string('discountcosthinttext','facetoface').'</span>');
+                $formarray[] = $mform->createElement('static', 'discountcosthint', '', html_writer::tag('span', get_string('discountcosthinttext','facetoface'), array('class' => 'hint-text')));
                 $mform->addGroup($formarray,'discountcost_group', get_string('discountcost','facetoface'), array(' '),false);
                 $mform->setType('discountcost', PARAM_TEXT);
                 $mform->addHelpButton('discountcost_group', 'discountcost', 'facetoface');

@@ -40,12 +40,18 @@ $settings->add(new admin_setting_configcheckbox('facetoface_disableicalcancel', 
 
 // List of existing custom fields
 $html = facetoface_list_of_customfields();
-$html .= '<p><a href="'.$CFG->wwwroot.'/mod/facetoface/customfield.php?id=0">' . get_string('addnewfieldlink', 'facetoface') . '</a></p>';
+$html .= html_writer::start_tag('p');
+$url = new moodle_url('/mod/facetoface/customfield.php', array('id' => 0));
+$html .= html_writer::link($url, get_string('addnewfieldlink', 'facetoface'));
+$html .= html_writer::end_tag('p');
 
 $settings->add(new admin_setting_heading('facetoface_customfields_header', get_string('customfieldsheading', 'facetoface'), $html));
 
 // List of existing site notices
 $html = facetoface_list_of_sitenotices();
-$html .= '<p><a href="'.$CFG->wwwroot.'/mod/facetoface/sitenotice.php?id=0">' . get_string('addnewnoticelink', 'facetoface') . '</a></p>';
+$html .= html_writer::start_tag('p');
+$url = new moodle_url('/mod/facetoface/sitenotice.php', array('id' => 0));
+$html .= html_writer::link($url, get_string('addnewnoticelink', 'facetoface'));
+$html .= html_writer::end_tag('p');
 
 $settings->add(new admin_setting_heading('facetoface_sitenotices_header', get_string('sitenoticesheading', 'facetoface'), $html));
