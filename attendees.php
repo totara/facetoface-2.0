@@ -119,7 +119,7 @@ if ($form = data_submitted()) {
         print_error('confirmsesskeybad', 'error');
     }
 
-    $return = "{$CFG->wwwroot}/mod/facetoface/attendees.php?s={$s}&amp;backtoallsessions={$backtoallsessions}";
+    $return = "{$CFG->wwwroot}/mod/facetoface/attendees.php?s={$s}&backtoallsessions={$backtoallsessions}";
 
     if ($cancelform) {
         redirect($return);
@@ -138,7 +138,7 @@ if ($form = data_submitted()) {
         } else {
             add_to_log($course->id, 'facetoface', 'take attendance (FAILED)', "view.php?id=$cm->id", $face->id, $cm->id);
         }
-        redirect($return.'&amp;takeattendance=1');
+        redirect($return.'&takeattendance=1');
     }
 }
 
@@ -195,7 +195,7 @@ if ($can_view_attendees || $can_take_attendance) {
     else {
         if ($takeattendance) {
             $attendees_url = new moodle_url('attendees.php', array('s' => $s, 'takeattendance' => '1'));
-            echo html_writer::empty_tag('form', array('action' => $attendees_url->out(), 'method' => 'post'));
+            echo html_writer::start_tag('form', array('action' => $attendees_url, 'method' => 'post'));
             echo html_writer::tag('p', get_string('attendanceinstructions', 'facetoface'));
             echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'sesskey', 'value' => $USER->sesskey));
             echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 's', 'value' => $s));
