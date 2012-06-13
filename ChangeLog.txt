@@ -1,3 +1,11 @@
+2.2.0 (2012-06-14):
+
+Improvements:
+- Ported to Moodle 2 codebase
+
+Bug fixes:
+- Various bug caused by porting
+
 1.8.0 (2011-11-24):
 Bug fixes:
 - Check mailed field exists before dropping to prevent errors on upgrade

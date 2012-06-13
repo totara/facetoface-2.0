@@ -5,6 +5,9 @@
 //  This fragment is called by /admin/index.php
 ////////////////////////////////////////////////////////////////////////////////
 
-$module->version  = 2011120703;
-$module->requires = 2010080300;  // Requires this Moodle version
-$module->cron     = 60;
+$module->version   = 2012140600;
+$module->requires  = 2011120100;  // Requires this Moodle version
+$module->release   = '2.2.0 (2012140600)'; // User-friendly version number
+$module->component = 'mod_facetoface';
+$module->maturity  = MATURITY_STABLE
+$module->cron      = 60;
