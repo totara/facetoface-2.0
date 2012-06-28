@@ -30,6 +30,10 @@ require_once($CFG->libdir.'/gradelib.php');
 require_once($CFG->dirroot.'/grade/lib.php');
 require_once($CFG->dirroot.'/lib/adminlib.php');
 require_once($CFG->dirroot . '/user/selector/lib.php');
+if (file_exists($CFG->libdir.'/completionlib.php')) {
+    require_once $CFG->libdir.'/completionlib.php';
+}
+
 /**
  * Definitions for setting notification types
  */
@@ -1763,6 +1767,22 @@ function facetoface_user_signup($session, $facetoface, $course, $discountcode,
     // Add to calendar
     if (in_array($new_status, array(MDL_F2F_STATUS_BOOKED, MDL_F2F_STATUS_WAITLISTED))) {
         facetoface_add_session_to_user_calendar($session, $facetoface->name, $userid, 'booking');
+    }
+
+    // Course completion
+    if (in_array($new_status, array(MDL_F2F_STATUS_BOOKED, MDL_F2F_STATUS_WAITLISTED))) {
+
+        $completion = new completion_info($course);
+        if ($completion->is_enabled()) {
+
+            $ccdetails = array(
+                'course'        => $course->id,
+                'userid'        => $userid,
+            );
+
+            $cc = new completion_completion($ccdetails);
+            $cc->mark_inprogress($timenow);
+        }
     }
 
     // If session has already started, do not send a notification
