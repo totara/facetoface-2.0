@@ -772,8 +772,7 @@ function facetoface_email_substitutions($msg, $facetofacename, $reminderperiod, 
  * Function to be run periodically according to the moodle cron
  * Finds all facetoface notifications that have yet to be mailed out, and mails them.
  */
-function facetoface_cron()
-{
+function facetoface_cron() {
     global $CFG, $USER,$DB;
 
     $signupsdata = facetoface_get_unmailed_reminders();
@@ -809,8 +808,10 @@ function facetoface_cron()
         // Convert the period from business days (no weekends) to calendar days
         for ($reminderday = 0; $reminderday < $reminderperiod + 1; $reminderday++ ) {
             $reminderdaytime = $earlieststarttime - ($reminderday * 24 * 3600);
-            $reminderdaycheck = userdate($reminderdaytime, '%u');
-            if ($reminderdaycheck > 5) {
+            //use %w instead of %u for Windows compatability
+            $reminderdaycheck = userdate($reminderdaytime, '%w');
+            // note w runs from Sun=0 to Sat=6
+            if ($reminderdaycheck == 0 || $reminderdaycheck == 6) {
                 // Saturdays and Sundays are not included in the
                 // reminder period as entered by the user, extend
                 // that period by 1
