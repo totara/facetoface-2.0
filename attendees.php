@@ -78,6 +78,7 @@ $cancellations = facetoface_get_cancellations($session->id);
  */
 
 $context = context_course::instance($course->id);
+$contextmodule = get_context_instance(CONTEXT_MODULE, $cm->id);
 require_course_login($course);
 
 // Actions the user can perform
@@ -310,7 +311,14 @@ if ($can_approve_requests) {
         echo $OUTPUT->notification(get_string('noactionableunapprovedrequests', 'facetoface'));
     }
     else {
+        $can_book_user = (facetoface_session_has_capacity($session, $contextmodule) || $session->allowoverbook);
+
         $OUTPUT->heading(get_string('unapprovedrequests', 'facetoface'));
+
+        if (!$can_book_user) {
+            echo '<p>' . get_string('cannotapproveatcapacity', 'facetoface') . '</p>';
+        }
+
 
         $action = new moodle_url('attendees.php', array('s' => $s));
         echo html_writer::start_tag('form', array('action' => $action->out(), 'method' => 'post'));
@@ -331,7 +339,8 @@ if ($can_approve_requests) {
             $data[] = userdate($attendee->timerequested, get_string('strftimedatetime'));
             $data[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'requests['.$attendee->id.']', 'value' => '0', 'checked' => 'checked'));
             $data[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'requests['.$attendee->id.']', 'value' => '1'));
-            $data[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'requests['.$attendee->id.']', 'value' => '2'));
+            $disabled = ($can_book_user) ? array() : array('disabled' => 'disabled');
+            $data[] = html_writer::empty_tag('input', array_merge(array('type' => 'radio', 'name' => 'requests['.$attendee->id.']', 'value' => '2'), $disabled));
             $table->data[] = $data;
         }
 

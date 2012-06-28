@@ -45,6 +45,7 @@ $string['changemanageremailaddress'] = 'Change manager email address';
 $string['changemanageremailinstruction'] = 'Please enter the email address for your current manager below.';
 $string['cannotsignupsessioninprogress'] = 'You cannot sign up, this session is in progress';
 $string['cannotsignupsessionover'] = 'You cannot sign up, this session is over.';
+$string['cannotapproveatcapacity'] = 'You cannot approve any more attendees as this session is full.';
 $string['clearall'] = 'Clear all';
 $string['closed'] = 'Closed';
 $string['conditions'] = 'Conditions';

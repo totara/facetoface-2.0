@@ -2354,7 +2354,7 @@ function facetoface_approve_requests($data) {
 
     // Load course
     if (!$course = $DB->get_record('course', array('id' => $facetoface->course))) {
-        error_log('F2F: Could nto load course');
+        error_log('F2F: Could not load course');
         return false;
     }
 
@@ -2396,8 +2396,14 @@ function facetoface_approve_requests($data) {
                         $USER->id
                 );
 
+                if (!$cm = get_coursemodule_from_instance('facetoface', $facetoface->id, $course->id)) {
+                    print_error('error:incorrectcoursemodule', 'facetoface');
+                }
+
+                $contextmodule = get_context_instance(CONTEXT_MODULE, $cm->id);
+
                 // Check if there is capacity
-                if (facetoface_session_has_capacity($session)) {
+                if (facetoface_session_has_capacity($session, $contextmodule)) {
                     $status = MDL_F2F_STATUS_BOOKED;
                 } else {
                     if ($session->allowoverbook) {
