@@ -4077,3 +4077,27 @@ class facetoface_existing_selector extends user_selector_base {
         return $options;
     }
 }
+
+
+/**
+ * Event that is triggered when a user is deleted.
+ *
+ * Cancels a user from any future sessions when they are deleted
+ * this make sure deleted users aren't using space is sessions when
+ * there is limited capacity.
+ *
+ * @param object $user
+ *
+ */
+function facetoface_eventhandler_user_deleted($user) {
+    global $DB;
+
+    if ($signups = $DB->get_records('facetoface_signups', array('userid' => $user->id))) {
+        foreach ($signups as $signup) {
+            $session = facetoface_get_session($signup->sessionid);
+            // using $null, null fails because of passing by reference
+            facetoface_user_cancel($session, $user->id, false, $null, get_string('userdeletedcancel', 'facetoface'));
+        }
+    }
+    return true;
+}
