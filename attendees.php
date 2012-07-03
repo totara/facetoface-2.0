@@ -316,7 +316,7 @@ if ($can_approve_requests) {
         $OUTPUT->heading(get_string('unapprovedrequests', 'facetoface'));
 
         if (!$can_book_user) {
-            echo '<p>' . get_string('cannotapproveatcapacity', 'facetoface') . '</p>';
+            echo html_writer::tag('p', get_string('cannotapproveatcapacity', 'facetoface'));
         }
 
 
@@ -324,7 +324,7 @@ if ($can_approve_requests) {
         echo html_writer::start_tag('form', array('action' => $action->out(), 'method' => 'post'));
         echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'sesskey', 'value' => $USER->sesskey));
         echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 's', 'value' => $s));
-        echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'backtoallsessions', 'value' => $backtoallsessions)) . '</p>';
+        echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'backtoallsessions', 'value' => $backtoallsessions)) . html_writer::end_tag('p');
 
         $table = new html_table();
         $table->summary = get_string('requeststablesummary', 'facetoface');
