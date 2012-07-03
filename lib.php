@@ -2498,7 +2498,7 @@ function facetoface_print_coursemodule_info($coursemodule) {
         return '';
     }
 
-    $htmlactivitynameonly = $OUTPUT->pix_icon('mod/facetoface/icon', $facetoface->name, 'facetoface', array('class' => 'activityicon')) . $facetoface->name;
+    $htmlactivitynameonly = $OUTPUT->pix_icon('icon', $facetoface->name, 'facetoface', array('class' => 'activityicon')) . $facetoface->name;
     $strviewallsessions = get_string('viewallsessions', 'facetoface');
     $sessions_url = new moodle_url('/mod/facetoface/view.php', array('f' => $facetofaceid));
     $htmlviewallsessions = html_writer::link($sessions_url, $strviewallsessions, array('class' => 'f2fsessionlinks f2fviewallsessions', 'title' => $strviewallsessions));
