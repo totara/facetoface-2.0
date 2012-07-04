@@ -2553,7 +2553,7 @@ function facetoface_print_coursemodule_info($coursemodule) {
             // don't include the link to view attendees if user is lacking capability
             $attendeeslink = '';
             if ($viewattendees) {
-                $attendees_url = new moodle_url('attendees.php', array('s' => $session->id));
+                $attendees_url = new moodle_url('/mod/facetoface/attendees.php', array('s' => $session->id));
                 $attendeeslink = html_writer::tag('tr', html_writer::tag('td', html_writer::link($attendees_url, $strseeattendees, array('class' => 'f2fsessionlinks f2fviewattendees', 'title' => $strseeattendees))));
             }
 
@@ -2572,7 +2572,7 @@ function facetoface_print_coursemodule_info($coursemodule) {
                 .html_writer::tag('td', $venue)
                 .html_writer::tag('td', $sessiondate)
                 .html_writer::tag('td', $sessiontime)
-                .html_writer::start_tag('td', html_writer::start_tag('table', array('border' => '0')) . html_writer::start_tag('tr') . html_writer::tag('td', html_writer::link($signup_url, $strmoreinfo, array('class' => 'f2fsessionlinks f2fsessioninfolink', 'title' => $strmoreinfo))))
+                .html_writer::tag('td', html_writer::start_tag('table', array('border' => '0')) . html_writer::start_tag('tr') . html_writer::tag('td', html_writer::link($signup_url, $strmoreinfo, array('class' => 'f2fsessionlinks f2fsessioninfolink', 'title' => $strmoreinfo))))
                 .html_writer::end_tag('tr')
                 .$attendeeslink
                 .$cancellink
