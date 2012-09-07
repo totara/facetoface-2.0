@@ -156,6 +156,15 @@ $capabilities = array(
         ),
     ),
 
+    // Ability to add a new facetoface activity to a course
+    'mod/facetoface:addinstance' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        ),
+    ),
 );
 
 ?>
