@@ -65,8 +65,13 @@ Previous maintainer(s)
 -----------------------
 
   Aaron Barnes <aaronb@catalyst.net.nz>
-  Jonathan Newman <jonathan.newman@catalyst.net.nz>
   Francois Marier <francois@catalyst.net.nz>
+
+
+Original design and development
+--------------------------------
+
+  Jonathan Newman <jonathan.newman@catalyst.net.nz>
 
 
 Changes

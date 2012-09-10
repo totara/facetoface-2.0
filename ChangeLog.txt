@@ -1,5 +1,28 @@
-2.2.0 (2012-06-14):
+2.2.1 (2012-09-10):
+New Features
+- Add activity completion support
+- Add support for marking a course as in progress
+- Add event trigger to remove deleted users from session, this prevents
+deleted users from taking up space in a session after they are deleted.
 
+Improvements
+- Remove various unused files from Moodle 1.9 version
+- Change date format used to better support Windows (only effects servers)
+- Stop manager approving full sessions unless they have overbook permissions
+(previously threw an error)
+- Added module help (for new activity/resource panel in Moodle 2.3)
+
+Bug fixes:
+- Fix syntax error in version.php
+- Fix wording in default waitlist message
+- Fix logic around displaying sessions on course page
+- Fix issue where session isn't correctly marked as waitlisted
+- Fix displaying of Facetoface icon
+- Fix layout and link in module display on course page
+- Fix SQL that breaks in MSSQL when cancelling a session
+- Add addinstance capability (required for Moodle 2.3 compatibility)
+
+2.2.0 (2012-06-14):
 Improvements:
 - Ported to Moodle 2 codebase
 
