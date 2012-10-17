@@ -77,7 +77,7 @@ echo $OUTPUT->heading(get_string('allsessionsin', 'facetoface', $facetoface->nam
 
 if ($facetoface->intro) {
     echo $OUTPUT->box_start('generalbox','description');
-    echo format_text($facetoface->intro, $facetoface->introformat);
+    echo format_module_intro('facetoface', $facetoface, $cm->id);
     echo $OUTPUT->box_end();
 }
 
