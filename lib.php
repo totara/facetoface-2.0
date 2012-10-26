@@ -864,12 +864,15 @@ function facetoface_cron() {
                                                              $user, $signupdata, $signupdata->sessionid);
 
         $posthtml = ''; // FIXME
-        $fromaddress = get_config(NULL, 'facetoface_fromaddress');
-        if (!$fromaddress) {
-            $fromaddress = '';
+        if ($fromaddress = get_config(NULL, 'facetoface_fromaddress')) {
+            $from = new stdClass();
+            $from->maildisplay = true;
+            $from->email = $fromaddress;
+        } else {
+            $from = null;
         }
 
-        if (email_to_user($user, $fromaddress, $postsubject, $posttext, $posthtml)) {
+        if (email_to_user($user, $from, $postsubject, $posttext, $posthtml)) {
             echo "\n".get_string('sentreminderuser', 'facetoface').": $user->firstname $user->lastname $user->email";
 
             $newsubmission = new stdClass();
@@ -892,7 +895,7 @@ function facetoface_cron() {
             }
 
             // Send email to mamager
-            if (email_to_user($manager, $fromaddress, $postsubject, $managertext, $posthtml)) {
+            if (email_to_user($manager, $from, $postsubject, $managertext, $posthtml)) {
                 echo "\n".get_string('sentremindermanager', 'facetoface').": $user->firstname $user->lastname $manager->email";
             }
             else {
@@ -1846,9 +1849,12 @@ function facetoface_send_request_notice($facetoface, $session, $userid) {
         return 'error:invaliduserid';
     }
 
-    $fromaddress = get_config(NULL, 'facetoface_fromaddress');
-    if (!$fromaddress) {
-        $fromaddress = '';
+    if ($fromaddress = get_config(NULL, 'facetoface_fromaddress')) {
+        $from = new stdClass();
+        $from->maildisplay = true;
+        $from->email = $fromaddress;
+    } else {
+        $from = null;
     }
 
     $postsubject = facetoface_email_substitutions(
@@ -1879,14 +1885,14 @@ function facetoface_send_request_notice($facetoface, $session, $userid) {
     );
 
     // Send to user
-    if (!email_to_user($user, $fromaddress, $postsubject, $posttext)) {
+    if (!email_to_user($user, $from, $postsubject, $posttext)) {
         return 'error:cannotsendrequestuser';
     }
 
     // Send to manager
     $user->email = $manageremail;
 
-    if (!email_to_user($user, $fromaddress, $postsubject, $posttextmgrheading.$posttext)) {
+    if (!email_to_user($user, $from, $postsubject, $posttextmgrheading.$posttext)) {
         return 'error:cannotsendrequestmanager';
     }
 
@@ -2065,9 +2071,12 @@ function facetoface_send_notice($postsubject, $posttext, $posttextmgrheading,
                                                          $user, $session, $session->id);
 
     $posthtml = ''; // FIXME
-    $fromaddress = get_config(NULL, 'facetoface_fromaddress');
-    if (!$fromaddress) {
-        $fromaddress = '';
+    if ($fromaddress = get_config(NULL, 'facetoface_fromaddress')) {
+        $from = new stdClass();
+        $from->maildisplay = true;
+        $from->email = $fromaddress;
+    } else {
+        $from = null;
     }
 
     $usercheck = $DB->get_record('user', array('id' => $userid));
@@ -2075,7 +2084,7 @@ function facetoface_send_notice($postsubject, $posttext, $posttextmgrheading,
     // Send email with iCal attachment
     if ($notificationtype & MDL_F2F_ICAL) {
         foreach ($icalattachments as $attachment) {
-            if (!email_to_user($user, $fromaddress, $attachment['subject'], $attachment['body'],
+            if (!email_to_user($user, $from, $attachment['subject'], $attachment['body'],
                     $attachment['htmlbody'], $attachment['filename'], $attachmentfilename)) {
 
                 return 'error:cannotsendconfirmationuser';
@@ -2086,7 +2095,7 @@ function facetoface_send_notice($postsubject, $posttext, $posttextmgrheading,
 
     // Send plain text email
     if ($notificationtype & MDL_F2F_TEXT) {
-        if (!email_to_user($user, $fromaddress, $postsubject, $posttext, $posthtml)) {
+        if (!email_to_user($user, $from, $postsubject, $posttext, $posthtml)) {
             return 'error:cannotsendconfirmationuser';
         }
     }
@@ -2099,7 +2108,7 @@ function facetoface_send_notice($postsubject, $posttext, $posttextmgrheading,
         $manager->email = $manageremail;
 
         // Leave out the ical attachments in the managers notification
-        if (!email_to_user($manager, $fromaddress, $postsubject, $managertext, $posthtml)) {
+        if (!email_to_user($manager, $from, $postsubject, $managertext, $posthtml)) {
             return 'error:cannotsendconfirmationmanager';
         }
     }
@@ -2114,7 +2123,7 @@ function facetoface_send_notice($postsubject, $posttext, $posttextmgrheading,
             $thirdparty->email = trim($recipient);
 
             // Leave out the ical attachments in the 3rd parties notification
-            if (!email_to_user($thirdparty, $fromaddress, $postsubject, $posttext, $posthtml)) {
+            if (!email_to_user($thirdparty, $from, $postsubject, $posttext, $posthtml)) {
                 return 'error:cannotsendconfirmationthirdparty';
             }
         }
