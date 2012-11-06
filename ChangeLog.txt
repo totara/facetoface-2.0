@@ -1,3 +1,16 @@
+2.2.2 (2012-11-06):
+Bug fixes:
+- Prevent direct access to conditional activities
+- Ensure site calendar is updated when activity is updated
+- Fix hardcoded language string in attendees.php
+- Make sure notices are sent from email specified in settings
+- Fix fatal error when deleting data from custom session field
+- Fix display of images in facetoface description
+- Stop error being thrown when creating session
+
+Improvements:
+- Create new iCal UID for every session re-signup
+
 2.2.1 (2012-09-10):
 New Features
 - Add activity completion support
