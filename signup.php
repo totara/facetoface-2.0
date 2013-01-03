@@ -47,7 +47,9 @@ if (isguestuser()) {
     }
 
     echo $OUTPUT->header();
-    $out = html_writer::tag('p', get_string('guestsno', 'facetoface')) . '\n\n' . html_writer::tag('p', get_string('liketologin', 'facetoface'));
+    $out = html_writer::tag('p', get_string('guestsno', 'facetoface')) .
+        html_writer::empty_tag('br') .
+        html_writer::tag('p', get_string('continuetologin', 'facetoface'));
     echo $OUTPUT->confirm($out, $loginurl, get_referer(false));
     echo $OUTPUT->footer();
     exit();

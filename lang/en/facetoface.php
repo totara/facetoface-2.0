@@ -62,6 +62,7 @@ $string['confirmationsent'] = 'You should immediately receive a confirmation ema
 $string['confirmationsentmgr'] = 'You and your manager should immediately receive a confirmation email.';
 $string['copyingsession'] = 'Copying as a new session in {$a}';
 $string['copysession'] = 'Copy session';
+$string['continuetologin'] = 'Click continue to login';
 $string['copy'] = 'Copy';
 $string['cost'] = 'Cost';
 $string['cancelbooking'] = 'Cancel booking';
