@@ -1,3 +1,13 @@
+2.2.3 (2013-01-03):
+Bug fixes:
+- Fix details editor for session so it saves correctly
+
+Improvements:
+- Make calendar events more configurable
+- Add new SVG icon (Moodle 2.4 compatibility)
+- Change style of table on session signup page to better display
+large amounts of content in the details of the session
+
 2.2.2 (2012-11-06):
 Bug fixes:
 - Prevent direct access to conditional activities

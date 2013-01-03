@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 Face-to-face module for Moodle
 Copyright (C) 2007-2011 Catalyst IT (http://www.catalyst.net.nz)
-Copyright (C) 2011-2012 Totara LMS (http://www.totaralms.com)
+Copyright (C) 2011-2013 Totara LMS (http://www.totaralms.com)
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the Free
@@ -35,7 +35,7 @@ sign-up for a session or cancel.
 Requirements
 -------------
 
-* Moodle 2.2
+* Moodle 2.2+
 
 There is a version for Moodle 2.1 which can be found here:
 https://github.com/totara/facetoface-2.0/tree/moodle-2.1.x
