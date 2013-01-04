@@ -674,12 +674,14 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         upgrade_mod_savepoint(true, 2011120703, 'facetoface');
     }
 
-    if ($oldversion < 2013010200) {
+    if ($oldversion < 2013010300) {
         // Add a field for the user calendar entry checkbox
         $table = new xmldb_table('facetoface');
         $field = new xmldb_field('usercalentry');
         $field->set_attributes(XMLDB_TYPE_INTEGER, 1, XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 1);
-        $result = $result && $dbman->add_field($table, $field);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
 
         // Update the existing showoncalendar field, change true to F2F_CAL_SITE
         $sql = 'UPDATE {facetoface}
@@ -692,7 +694,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
             facetoface_update_instance($facetoface, false);
         }
 
-        upgrade_mod_savepoint(true, 2013010200, 'facetoface');
+        upgrade_mod_savepoint(true, 2013010300, 'facetoface');
     }
 
     return $result;
