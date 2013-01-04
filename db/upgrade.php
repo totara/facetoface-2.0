@@ -674,7 +674,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
         upgrade_mod_savepoint(true, 2011120703, 'facetoface');
     }
 
-    if ($oldversion < 2013010300) {
+    if ($oldversion < 2013010400) {
         // Add a field for the user calendar entry checkbox
         $table = new xmldb_table('facetoface');
         $field = new xmldb_field('usercalentry');
@@ -694,7 +694,7 @@ function xmldb_facetoface_upgrade($oldversion=0) {
             facetoface_update_instance($facetoface, false);
         }
 
-        upgrade_mod_savepoint(true, 2013010300, 'facetoface');
+        upgrade_mod_savepoint(true, 2013010400, 'facetoface');
     }
 
     return $result;
