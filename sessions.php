@@ -122,6 +122,14 @@ if ($fromform = $mform->get_data()) { // Form submitted
         $fromform->discountcost = 0;
     }
 
+    if (empty($fromform->disablenewenrolldays)) {
+        $fromform->disablenewenrolldays = 0;
+    }
+
+    if (empty($fromform->disablesignup)) {
+        $fromform->disablesignup = 0;
+    }
+
     $sessiondates = array();
     for ($i = 0; $i < $fromform->date_repeats; $i++) {
         if (!empty($fromform->datedelete[$i])) {
@@ -146,6 +154,10 @@ if ($fromform = $mform->get_data()) { // Form submitted
     $todb->duration = $fromform->duration;
     $todb->normalcost = $fromform->normalcost;
     $todb->discountcost = $fromform->discountcost;
+
+    $todb->details = $fromform->details;
+    $todb->disablenewenrolldays = $fromform->disablenewenrolldays;
+    $todb->disablesignup = $fromform->disablesignup;
 
     $sessionid = null;
     $transaction = $DB->start_delegated_transaction();
@@ -227,6 +239,10 @@ elseif ($session != null) { // Edit mode
     $toform->duration = $session->duration;
     $toform->normalcost = $session->normalcost;
     $toform->discountcost = $session->discountcost;
+
+    $toform->details = $session->details;
+    $toform->disablesignup = $session->disablesignup;
+    $toform->disablenewenrolldays = $session->disablenewenrolldays;
 
     if ($session->sessiondates) {
         $i = 0;

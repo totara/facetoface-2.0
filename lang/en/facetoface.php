@@ -538,9 +538,9 @@ $string['error:shortnametaken'] = 'Custom field with this short name already exi
 // -------------------------------------------------------
 // Help Text
 
-$string['allowoverbook_help'] = 'When "Allow overbooking" is checked, learners will be able to sign up for a face-to-face session even if it is already full.</p>
+$string['allowoverbook_help'] = 'When "Allow overbooking" is checked, learners will be able to sign up for a face-to-face session even if it is already full.<br />
 
-<p>When a learner signs up for a session that is already full, they will receive an email advising that they have been waitlisted for the session and will be notified when a booking becomes available.';
+When a learner signs up for a session that is already full, they will receive an email advising that they have been waitlisted for the session and will be notified when a booking becomes available.';
 
 $string['approvalreqd_help'] = 'When "Approval required" is checked, a learner will need approval from their manager to be permitted to attend a face-to-face session.';
 
@@ -695,3 +695,15 @@ $string['venue_help'] = '**Venue** is the building the session will be held in.
 The **Venue** displays on the \'Sign-up\' page, the \'View all sessions\' page and in all email notifications.';
 
 $string['waitlistedmessage_help'] = 'This message is sent out whenever users sign-up for a wait-listed session.';
+
+$string['disableautoenroll'] = 'Disable Auto Enrollment';
+$string['disableautoenroll_help'] = 'Disable the waitlist auto enrollment option when within X days of a session';
+$string['disablewithindays'] = 'Days before a session starts';
+$string['disablewithindays_help'] = 'Set how many days before a session starts';
+
+$string['disablesignup'] = 'Disable New Enrollment';
+$string['disablesignup_help'] = 'Disable a new enrollment option when within X days of a session. 0 day means an user will not be enrolled on the same day the session is ';
+$string['disablenewenrolldays'] = 'Days before a session starts';
+$string['disablenewenrolldays_help'] = 'Set how many days before a session starts. 0 day means an user will not be enrolled on the same day the session is';
+$string['showall'] = 'Show all';
+

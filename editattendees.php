@@ -64,8 +64,9 @@ if (optional_param('add', false, PARAM_BOOL) && confirm_sesskey()) {
                 }
             }
 
+            $usernamefields = get_all_user_name_fields(true);
             if (facetoface_get_user_submissions($facetoface->id, $adduser)) {
-                $erruser = $DB->get_record('user', array('id' => $adduser),'id, firstname, lastname');
+                $erruser = $DB->get_record('user', array('id' => $adduser), "id, {$usernamefields}");
                 $errors[] = get_string('error:addalreadysignedupattendee', 'facetoface', fullname($erruser));
             } else {
                 if (!facetoface_session_has_capacity($session, $context)) {
@@ -80,7 +81,7 @@ if (optional_param('add', false, PARAM_BOOL) && confirm_sesskey()) {
                 }
                 if (!facetoface_user_signup($session, $facetoface, $course, '', MDL_F2F_BOTH,
                 $status, $adduser, !$suppressemail)) {
-                    $erruser = $DB->get_record('user', array('id' => $adduser),'id, firstname, lastname');
+                    $erruser = $DB->get_record('user', array('id' => $adduser), "id, {$usernamefields}");
                     $errors[] = get_string('error:addattendee', 'facetoface', fullname($erruser));
                 }
             }
@@ -108,7 +109,8 @@ if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
                 }
             } else {
                 $errors[] = $cancelerr;
-                $erruser = $DB->get_record('user', array('id' => $removeuser),'id, firstname, lastname');
+                $usernamefields = get_all_user_name_fields(true);
+                $erruser = $DB->get_record('user', array('id' => $removeuser),"id, {$usernamefields}");
                 $errors[] = get_string('error:removeattendee', 'facetoface', fullname($erruser));
             }
         }
@@ -170,11 +172,11 @@ $out .=  html_writer::table($table);
 
     // Get all signed up non-attendees
     $nonattendees = 0;
+    $usernamefields = get_all_user_name_fields(true, 'u');
     $nonattendees_rs = $DB->get_recordset_sql(
          "SELECT
                 u.id,
-                u.firstname,
-                u.lastname,
+                {$usernamefields},
                 u.email,
                 ss.statuscode
             FROM

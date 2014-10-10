@@ -1,3 +1,22 @@
+2.3.1 (2014-03-06):
+Bug fixes:
+- fix SQL group by
+- fix candidate selector status check
+
+Improvements:
+- fix ChangeLog dates/versions from previous bumps
+
+2.3.0 (2014-03-01):
+Bug fixes:
+- add extended username support
+- fix system roles global config setting
+
+2.2.4.1 (2014-02-27):
+Bug fixes:
+- Fix Moodleform missing param types
+- Fix broken HTML tag in help text
+- Fix SQL compare text missing usage
+
 2.2.3.1 (2013-01-04):
 Bug fixes:
 - Fix upgrade version number problem

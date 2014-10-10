@@ -8,6 +8,7 @@ class mod_facetoface_renderer extends plugin_renderer_base {
      * Builds session list table given an array of sessions
      */
     public function print_session_list_table($customfields, $sessions, $viewattendees, $editsessions) {
+        global $DB;
         $output = '';
 
         $tableheader = array();
@@ -32,6 +33,7 @@ class mod_facetoface_renderer extends plugin_renderer_base {
         $table = new html_table();
         $table->summary = get_string('previoussessionslist', 'facetoface');
         $table->head = $tableheader;
+        $table->attributes['class'] = 'sessionlisttable';
         $table->data = array();
 
         foreach ($sessions as $session) {
@@ -138,8 +140,22 @@ class mod_facetoface_renderer extends plugin_renderer_base {
                 $options .= html_writer::link('cancelsignup.php?s='.$session->id.'&backtoallsessions='.$session->facetoface, get_string('cancelbooking', 'facetoface'), array('title' => get_string('cancelbooking', 'facetoface')));
             }
             elseif (!$sessionstarted and !$bookedsession) {
-                $options .= html_writer::link('signup.php?s='.$session->id.'&backtoallsessions='.$session->facetoface, get_string('signup', 'facetoface'));
-            }
+                $diffdays = ceil((abs(strtotime($sessionrow[0]) - time()))/86400); 
+                $disableddaysDB = $DB->get_record('facetoface_sessions', array('id'=>$session->id));
+                $disableddays = $disableddaysDB->disablenewenrolldays;
+                $disablesignup = $disableddaysDB->disablesignup;
+
+                if ($disablesignup) {
+                    if($diffdays > $disableddays) {
+                        //$options .= new moodle_url('signup.php', array('s' => $session->id, 'backtoallsessions' => $session->facetoface), get_string('signup', 'facetoface'));
+                        $options .= html_writer::link('signup.php?s='.$session->id.'&backtoallsessions='.$session->facetoface, get_string('signup', 'facetoface'));
+                    }
+                } else {
+                    // $options .= new moodle_url('signup.php', array('s' => $session->id, 'backtoallsessions' => $session->facetoface), get_string('signup', 'facetoface'));
+                    $options .= html_writer::link('signup.php?s='.$session->id.'&backtoallsessions='.$session->facetoface, get_string('signup', 'facetoface'));
+                }
+	    }
+
             if (empty($options)) {
                 $options = get_string('none', 'facetoface');
             }

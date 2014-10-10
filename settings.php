@@ -4,11 +4,11 @@ require_once "$CFG->dirroot/mod/facetoface/lib.php";
 
 $settings->add(new admin_setting_configtext('facetoface_fromaddress', get_string('setting:fromaddress_caption', 'facetoface'),get_string('setting:fromaddress', 'facetoface'), get_string('setting:fromaddressdefault', 'facetoface'), "/^((?:[\w\.\-])+\@(?:(?:[a-zA-Z\d\-])+\.)+(?:[a-zA-Z\d]{2,4}))$/",30));
 
-// Load roles
+// Load roles.
 $choices = array();
-if ($roles = $DB->get_records('role')) {
+if ($roles = role_fix_names(get_all_roles(), context_system::instance())) {
     foreach ($roles as $role) {
-        $choices[$role->id] = format_string($role->name);
+        $choices[$role->id] = format_string($role->localname);
     }
 }
 

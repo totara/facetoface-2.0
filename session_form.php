@@ -37,10 +37,21 @@ class mod_facetoface_session_form extends moodleform {
 
         $mform =& $this->_form;
 
+        // Course Module ID.
         $mform->addElement('hidden', 'id', $this->_customdata['id']);
+        $mform->setType('id', PARAM_INT);
+
+        // Facetoface Instance ID.
         $mform->addElement('hidden', 'f', $this->_customdata['f']);
+        $mform->setType('f', PARAM_INT);
+
+        // Facetoface Session ID.
         $mform->addElement('hidden', 's', $this->_customdata['s']);
+        $mform->setType('s', PARAM_INT);
+
+        // Copy Session Flag.
         $mform->addElement('hidden', 'c', $this->_customdata['c']);
+        $mform->setType('c', PARAM_INT);
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
@@ -72,6 +83,7 @@ class mod_facetoface_session_form extends moodleform {
 
         $repeatarray = array();
         $repeatarray[] = &$mform->createElement('hidden', 'sessiondateid', 0);
+        $mform->setType('sessiondateid', PARAM_INT);
         $repeatarray[] = &$mform->createElement('date_time_selector', 'timestart', get_string('timestart', 'facetoface'));
         $repeatarray[] = &$mform->createElement('date_time_selector', 'timefinish', get_string('timefinish', 'facetoface'));
         $checkboxelement = &$mform->createElement('checkbox', 'datedelete', '', get_string('dateremove', 'facetoface'));
@@ -124,6 +136,21 @@ class mod_facetoface_session_form extends moodleform {
         $mform->addElement('editor', 'details_editor', get_string('details', 'facetoface'), null, $editoroptions);
         $mform->setType('details_editor', PARAM_RAW);
         $mform->addHelpButton('details_editor', 'details', 'facetoface');
+
+        $mform->addElement('checkbox', 'disablesignup', get_string('disablesignup','facetoface'));
+        $mform->setType('disablesignup', PARAM_INT);
+        $mform->setDefault('disablesignup', 0);
+        $mform->addHelpButton('disablesignup', 'disablesignup', 'facetoface');
+
+        $disableperiod = array();
+        for ($i=0; $i<=60; $i += 1) {
+                $disableperiod[$i] = $i;
+        }
+        $mform->addElement('select', 'disablenewenrolldays', get_string('disablenewenrolldays', 'facetoface'), $disableperiod);
+        $mform->setType('disablenewenrolldays', PARAM_INT);
+        $mform->setDefault('disablenewenrolldays', 0);
+        $mform->disabledIf('disablenewenrolldays', 'disablesignup');
+        $mform->addHelpButton('disablenewenrolldays', 'disablenewenrolldays', 'facetoface');
 
         // Choose users for trainer roles
         $rolenames = facetoface_get_trainer_roles();
